@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@postlight/parser": "file:../parser"
+    "@postlight/parser": "^2.2.3"
   }
 }
