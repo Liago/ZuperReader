@@ -16,14 +16,12 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 		{ value: 'sans', label: 'Sans Serif', preview: 'font-sans' },
 		{ value: 'serif', label: 'Serif', preview: 'font-serif' },
 		{ value: 'mono', label: 'Monospace', preview: 'font-mono' },
+		{ value: 'roboto', label: 'Roboto', preview: 'font-roboto' },
+		{ value: 'lato', label: 'Lato', preview: 'font-lato' },
+		{ value: 'openSans', label: 'Open Sans', preview: 'font-open-sans' },
+		{ value: 'ubuntu', label: 'Ubuntu', preview: 'font-ubuntu' },
 	];
 
-	const fontSizeOptions: { value: FontSize; label: string; size: string }[] = [
-		{ value: 'small', label: 'Small', size: 'text-sm' },
-		{ value: 'normal', label: 'Normal', size: 'text-base' },
-		{ value: 'large', label: 'Large', size: 'text-lg' },
-		{ value: 'xlarge', label: 'Extra Large', size: 'text-xl' },
-	];
 
 	const colorThemeOptions: { value: ColorTheme; label: string; bg: string; text: string; border: string }[] = [
 		{ value: 'default', label: 'Default', bg: 'bg-white', text: 'text-gray-900', border: 'border-gray-200' },
@@ -85,7 +83,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 							<label className="block text-sm font-semibold text-gray-700 mb-3">
 								Font Family
 							</label>
-							<div className="grid grid-cols-3 gap-3">
+							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
 								{fontFamilyOptions.map((option) => (
 									<button
 										key={option.value}
@@ -107,24 +105,29 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 						{/* Font Size */}
 						<div>
 							<label className="block text-sm font-semibold text-gray-700 mb-3">
-								Font Size
+								Font Size: {preferences.fontSize}px
 							</label>
-							<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-								{fontSizeOptions.map((option) => (
-									<button
-										key={option.value}
-										onClick={() => updatePreferences({ fontSize: option.value })}
-										className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-											preferences.fontSize === option.value
-												? 'border-pink-500 bg-pink-50 shadow-md text-pink-900'
-												: 'border-gray-200 hover:border-pink-300 hover:bg-pink-50/50 text-gray-900'
-										}`}
-									>
-										<span className={`block font-medium ${option.size}`}>
-											{option.label}
-										</span>
-									</button>
-								))}
+							<div className="space-y-4">
+								<input
+									type="range"
+									min="12"
+									max="50"
+									value={preferences.fontSize}
+									onChange={(e) => updatePreferences({ fontSize: parseInt(e.target.value) })}
+									className="w-full h-2 bg-gradient-to-r from-pink-200 to-pink-500 rounded-lg appearance-none cursor-pointer slider"
+									style={{
+										background: `linear-gradient(to right, #fbcfe8 0%, #ec4899 ${((preferences.fontSize - 12) / (50 - 12)) * 100}%, #fce7f3 ${((preferences.fontSize - 12) / (50 - 12)) * 100}%, #fce7f3 100%)`
+									}}
+								/>
+								<div className="flex justify-between text-xs text-gray-500">
+									<span>12px</span>
+									<span>50px</span>
+								</div>
+								<div className="p-4 bg-pink-50 rounded-xl border-2 border-pink-200">
+									<p style={{ fontSize: `${preferences.fontSize}px` }} className="text-gray-900 text-center">
+										Sample text preview
+									</p>
+								</div>
 							</div>
 						</div>
 

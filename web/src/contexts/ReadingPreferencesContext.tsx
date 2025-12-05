@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type FontFamily = 'sans' | 'serif' | 'mono';
-export type FontSize = 'small' | 'normal' | 'large' | 'xlarge';
+export type FontFamily = 'sans' | 'serif' | 'mono' | 'roboto' | 'lato' | 'openSans' | 'ubuntu';
+export type FontSize = number; // Font size in pixels (12-50)
 export type ColorTheme = 'default' | 'sepia' | 'dark' | 'night';
 export type LineHeight = 'compact' | 'normal' | 'relaxed' | 'loose';
 export type ContentWidth = 'narrow' | 'normal' | 'wide';
@@ -24,7 +24,7 @@ interface ReadingPreferencesContextType {
 
 const defaultPreferences: ReadingPreferences = {
 	fontFamily: 'serif',
-	fontSize: 'normal',
+	fontSize: 16,
 	colorTheme: 'default',
 	lineHeight: 'relaxed',
 	contentWidth: 'normal',
