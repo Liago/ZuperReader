@@ -43,15 +43,25 @@ export async function saveArticle(parsedData: any, userId: string): Promise<Arti
 	return data;
 }
 
-export async function getArticles(userId: string): Promise<Article[]> {
+export async function getArticles(userId: string, limit: number = 10, offset: number = 0): Promise<{ articles: Article[], hasMore: boolean }> {
+	// Fetch limit + 1 to check if there are more articles
 	const { data, error } = await supabase
 		.from('articles')
 		.select('*')
 		.eq('user_id', userId)
-		.order('created_at', { ascending: false });
+		.order('created_at', { ascending: false })
+		.range(offset, offset + limit);
 
 	if (error) throw new Error(error.message);
-	return data || [];
+
+	const articles = data || [];
+	const hasMore = articles.length > limit;
+
+	// Return only the requested limit
+	return {
+		articles: hasMore ? articles.slice(0, limit) : articles,
+		hasMore
+	};
 }
 
 export async function getArticleById(id: string): Promise<Article | null> {
