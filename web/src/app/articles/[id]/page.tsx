@@ -30,18 +30,20 @@ export default function ArticleReaderPage() {
 			case 'sans': return 'font-sans';
 			case 'serif': return 'font-serif';
 			case 'mono': return 'font-mono';
+			case 'roboto': return 'font-roboto';
+			case 'lato': return 'font-lato';
+			case 'openSans': return 'font-open-sans';
+			case 'ubuntu': return 'font-ubuntu';
 			default: return 'font-serif';
 		}
 	};
 
-	const getFontSizeClass = () => {
-		switch (preferences.fontSize) {
-			case 'small': return 'prose-sm';
-			case 'normal': return 'prose-base';
-			case 'large': return 'prose-lg';
-			case 'xlarge': return 'prose-xl';
-			default: return 'prose-lg';
-		}
+	const getFontSizeStyle = () => {
+		// Map font size to appropriate prose class based on size range
+		if (preferences.fontSize <= 14) return 'prose-sm';
+		if (preferences.fontSize <= 18) return 'prose-base';
+		if (preferences.fontSize <= 22) return 'prose-lg';
+		return 'prose-xl';
 	};
 
 	const getColorThemeClasses = () => {
@@ -363,7 +365,7 @@ export default function ArticleReaderPage() {
 						{/* Article Content - Ottimizzato per lettura */}
 						<div
 							ref={articleContentRef}
-							className={`prose ${getFontSizeClass()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+							className={`prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
 								prose-headings:font-bold ${colorTheme.proseHeadings}
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
@@ -377,6 +379,7 @@ export default function ArticleReaderPage() {
 								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
 								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
 								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
+							style={{ fontSize: `${preferences.fontSize}px` }}
 							dangerouslySetInnerHTML={{ __html: article.content || '' }}
 						/>
 					</div>
