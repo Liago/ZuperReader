@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getArticleById } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
 import ReadingPreferencesModal from '../../../components/ReadingPreferencesModal';
+import LinkPreviewModal from '../../../components/LinkPreviewModal';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -18,6 +19,8 @@ export default function ArticleReaderPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+	const [linkPreviewUrl, setLinkPreviewUrl] = useState<string | null>(null);
+	const articleContentRef = useRef<HTMLDivElement>(null);
 
 	const id = params?.id as string;
 
@@ -186,6 +189,41 @@ export default function ArticleReaderPage() {
 		fetchArticle();
 	}, [id, user, authLoading, router]);
 
+	// Intercetta i click sui link all'interno del contenuto dell'articolo
+	useEffect(() => {
+		const contentElement = articleContentRef.current;
+		if (!contentElement) return;
+
+		const handleLinkClick = (e: MouseEvent) => {
+			const target = e.target as HTMLElement;
+
+			// Trova il link più vicino (supporta click su elementi nested dentro link)
+			const link = target.closest('a');
+			if (!link) return;
+
+			// Verifica se è un link esterno (non un anchor nella pagina)
+			const href = link.getAttribute('href');
+			if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+				return;
+			}
+
+			// Previeni la navigazione di default
+			e.preventDefault();
+			e.stopPropagation();
+
+			// Apri la modale di preview
+			setLinkPreviewUrl(href);
+		};
+
+		// Aggiungi event listener
+		contentElement.addEventListener('click', handleLinkClick);
+
+		// Cleanup
+		return () => {
+			contentElement.removeEventListener('click', handleLinkClick);
+		};
+	}, [article]);
+
 	if (authLoading || loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
@@ -324,13 +362,14 @@ export default function ArticleReaderPage() {
 
 						{/* Article Content - Ottimizzato per lettura */}
 						<div
+							ref={articleContentRef}
 							className={`prose ${getFontSizeClass()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
 								prose-headings:font-bold ${colorTheme.proseHeadings}
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
 								prose-h3:text-xl prose-h3:mb-3 prose-h3:mt-4
 								${colorTheme.proseParagraphs} prose-p:mb-4
-								${colorTheme.proseLinks} prose-a:no-underline hover:prose-a:underline
+								${colorTheme.proseLinks} prose-a:no-underline hover:prose-a:underline prose-a:cursor-pointer
 								${colorTheme.proseStrong} prose-strong:font-bold
 								prose-ul:my-4 prose-ol:my-4
 								${colorTheme.proseLi} prose-li:my-2
@@ -371,6 +410,18 @@ export default function ArticleReaderPage() {
 				isOpen={showPreferencesModal}
 				onClose={() => setShowPreferencesModal(false)}
 			/>
+
+			{/* Link Preview Modal */}
+			{linkPreviewUrl && (
+				<LinkPreviewModal
+					url={linkPreviewUrl}
+					onClose={() => setLinkPreviewUrl(null)}
+					onArticleSaved={() => {
+						// Opzionalmente puoi ricaricare la lista degli articoli o mostrare un messaggio
+						console.log('Article saved from link preview');
+					}}
+				/>
+			)}
 		</div>
 	);
 }
