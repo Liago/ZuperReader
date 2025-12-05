@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { getArticles } from '../lib/api';
 import { Article } from '../lib/supabase';
 
@@ -8,6 +9,8 @@ interface ArticleListProps {
 	userId: string;
 	refreshTrigger: number;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 // Skeleton Loader per Grid View
 function GridSkeleton() {
@@ -40,24 +43,85 @@ function ListSkeleton() {
 export default function ArticleList({ userId, refreshTrigger }: ArticleListProps) {
 	const [articles, setArticles] = useState<Article[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [loadingMore, setLoadingMore] = useState(false);
 	const [error, setError] = useState('');
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+	const [hasMore, setHasMore] = useState(true);
+	const [offset, setOffset] = useState(0);
+	const router = useRouter();
 
-	useEffect(() => {
-		const fetchArticles = async () => {
+	const observerTarget = useRef<HTMLDivElement>(null);
+
+	// Funzione per caricare gli articoli
+	const loadArticles = useCallback(async (reset: boolean = false) => {
+		const currentOffset = reset ? 0 : offset;
+
+		if (reset) {
 			setLoading(true);
-			try {
-				const data = await getArticles(userId);
-				setArticles(data);
-			} catch (err) {
-				setError('Failed to load articles');
-			} finally {
-				setLoading(false);
+		} else {
+			setLoadingMore(true);
+		}
+
+		try {
+			const { articles: newArticles, hasMore: more } = await getArticles(userId, ITEMS_PER_PAGE, currentOffset);
+
+			if (reset) {
+				setArticles(newArticles);
+				setOffset(ITEMS_PER_PAGE);
+			} else {
+				setArticles((prev) => [...prev, ...newArticles]);
+				setOffset((prev) => prev + ITEMS_PER_PAGE);
+			}
+
+			setHasMore(more);
+			setError('');
+		} catch (err) {
+			setError('Failed to load articles');
+			console.error(err);
+		} finally {
+			setLoading(false);
+			setLoadingMore(false);
+		}
+	}, [userId, offset]);
+
+	// Carica articoli iniziali o quando refreshTrigger cambia
+	useEffect(() => {
+		setOffset(0);
+		loadArticles(true);
+	}, [userId, refreshTrigger]);
+
+	// Intersection Observer per infinite scrolling
+	useEffect(() => {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+					loadArticles(false);
+				}
+			},
+			{ threshold: 0.1 }
+		);
+
+		const currentTarget = observerTarget.current;
+		if (currentTarget) {
+			observer.observe(currentTarget);
+		}
+
+		return () => {
+			if (currentTarget) {
+				observer.unobserve(currentTarget);
 			}
 		};
+	}, [hasMore, loading, loadingMore, loadArticles]);
 
-		fetchArticles();
-	}, [userId, refreshTrigger]);
+	// Funzione per navigare all'articolo
+	const handleArticleClick = (articleId: string) => {
+		router.push(`/articles/${articleId}`);
+	};
+
+	// Previeni la propagazione del click per i link esterni
+	const handleExternalLinkClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+	};
 
 	if (loading) {
 		return (
@@ -112,7 +176,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 			<div className="flex justify-between items-center mb-6">
 				<h2 className="text-xl sm:text-2xl font-bold text-gray-800">
 					My Articles
-					<span className="ml-2 text-sm font-normal text-gray-500">({articles.length})</span>
+					<span className="ml-2 text-sm font-normal text-gray-500">({articles.length}{!hasMore ? '' : '+'})</span>
 				</h2>
 				<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-1 flex border border-gray-200">
 					<button
@@ -150,14 +214,15 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 					{articles.map((article, index) => (
 						<article
 							key={article.id}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1"
+							onClick={() => handleArticleClick(article.id)}
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1 cursor-pointer"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
 						>
 							{/* Immagine con overlay gradient */}
 							{article.image_url && (
-								<a href={`/articles/${article.id}`} className="block relative overflow-hidden">
+								<div className="block relative overflow-hidden">
 									<div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 									<img
 										src={article.image_url}
@@ -165,15 +230,13 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 										className="w-full h-48 sm:h-52 object-cover transform group-hover:scale-105 transition-transform duration-500"
 										loading="lazy"
 									/>
-								</a>
+								</div>
 							)}
 
 							{/* Content */}
 							<div className="p-5">
 								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
-									<a href={`/articles/${article.id}`} className="hover:underline">
-										{article.title}
-									</a>
+									{article.title}
 								</h3>
 								<p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
 
@@ -200,6 +263,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 									href={article.url}
 									target="_blank"
 									rel="noopener noreferrer"
+									onClick={handleExternalLinkClick}
 									className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-pink-600 font-medium transition-colors"
 								>
 									View Original
@@ -217,29 +281,28 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 					{articles.map((article, index) => (
 						<article
 							key={article.id}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200"
+							onClick={() => handleArticleClick(article.id)}
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 cursor-pointer"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
 						>
 							{/* Immagine */}
 							{article.image_url && (
-								<a href={`/articles/${article.id}`} className="flex-shrink-0">
+								<div className="flex-shrink-0">
 									<img
 										src={article.image_url}
 										alt={article.title}
 										className="w-20 h-20 sm:w-28 sm:h-28 object-cover rounded-xl transform group-hover:scale-105 transition-transform duration-300"
 										loading="lazy"
 									/>
-								</a>
+								</div>
 							)}
 
 							{/* Content */}
 							<div className="flex-1 min-w-0 flex flex-col">
 								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
-									<a href={`/articles/${article.id}`}>
-										{article.title}
-									</a>
+									{article.title}
 								</h3>
 								<p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{article.excerpt}</p>
 
@@ -263,6 +326,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 										href={article.url}
 										target="_blank"
 										rel="noopener noreferrer"
+										onClick={handleExternalLinkClick}
 										className="ml-auto text-purple-600 hover:text-pink-600 font-medium inline-flex items-center gap-1"
 									>
 										View Original
@@ -274,6 +338,26 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 							</div>
 						</article>
 					))}
+				</div>
+			)}
+
+			{/* Loading indicator per infinite scrolling */}
+			{loadingMore && (
+				<div className="flex justify-center items-center py-8">
+					<div className="flex flex-col items-center gap-3">
+						<div className="w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+						<p className="text-purple-600 text-sm font-medium">Loading more articles...</p>
+					</div>
+				</div>
+			)}
+
+			{/* Elemento osservatore per infinite scrolling */}
+			<div ref={observerTarget} className="h-4"></div>
+
+			{/* Messaggio fine lista */}
+			{!hasMore && articles.length > 0 && (
+				<div className="text-center py-8">
+					<p className="text-gray-500 text-sm">You've reached the end of your articles</p>
 				</div>
 			)}
 
