@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getArticles } from '../lib/api';
+import { getArticles, deleteArticle } from '../lib/api';
 import { Article } from '../lib/supabase';
 
 interface ArticleListProps {
@@ -48,6 +48,9 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [hasMore, setHasMore] = useState(true);
 	const [offset, setOffset] = useState(0);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
 
 	const observerTarget = useRef<HTMLDivElement>(null);
@@ -121,6 +124,36 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	// Previeni la propagazione del click per i link esterni
 	const handleExternalLinkClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
+	};
+
+	// Gestione eliminazione articolo
+	const handleDeleteClick = (e: React.MouseEvent, article: Article) => {
+		e.stopPropagation();
+		setArticleToDelete(article);
+		setShowDeleteConfirm(true);
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!articleToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			await deleteArticle(articleToDelete.id);
+			setShowDeleteConfirm(false);
+			setArticleToDelete(null);
+			// Ricarica la lista articoli
+			setOffset(0);
+			loadArticles(true);
+		} catch (error) {
+			console.error('Failed to delete article:', error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	const handleDeleteCancel = () => {
+		setShowDeleteConfirm(false);
+		setArticleToDelete(null);
 	};
 
 	if (loading) {
@@ -215,11 +248,22 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 						<article
 							key={article.id}
 							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1 cursor-pointer"
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1 cursor-pointer relative"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
 						>
+							{/* Delete Button */}
+							<button
+								onClick={(e) => handleDeleteClick(e, article)}
+								className="absolute top-3 right-3 z-20 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+								title="Delete article"
+							>
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+							</button>
+
 							{/* Immagine con overlay gradient */}
 							{article.image_url && (
 								<div className="block relative overflow-hidden">
@@ -282,7 +326,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 						<article
 							key={article.id}
 							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 cursor-pointer"
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 cursor-pointer relative"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
@@ -336,6 +380,17 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 									</a>
 								</div>
 							</div>
+
+							{/* Delete Button */}
+							<button
+								onClick={(e) => handleDeleteClick(e, article)}
+								className="self-start p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+								title="Delete article"
+							>
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+							</button>
 						</article>
 					))}
 				</div>
@@ -358,6 +413,56 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 			{!hasMore && articles.length > 0 && (
 				<div className="text-center py-8">
 					<p className="text-gray-500 text-sm">You've reached the end of your articles</p>
+				</div>
+			)}
+
+			{/* Delete Confirmation Modal */}
+			{showDeleteConfirm && articleToDelete && (
+				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+					<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+						<div className="flex items-center gap-4 mb-4">
+							<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+								<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+								</svg>
+							</div>
+							<div>
+								<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
+								<p className="text-sm text-gray-600">This action cannot be undone</p>
+							</div>
+						</div>
+						<p className="text-gray-700 mb-6">
+							Are you sure you want to delete "{articleToDelete.title}"? This will permanently remove the article from your library.
+						</p>
+						<div className="flex gap-3 justify-end">
+							<button
+								onClick={handleDeleteCancel}
+								disabled={isDeleting}
+								className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleDeleteConfirm}
+								disabled={isDeleting}
+								className="px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+							>
+								{isDeleting ? (
+									<>
+										<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+										Deleting...
+									</>
+								) : (
+									<>
+										<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+										</svg>
+										Delete
+									</>
+								)}
+							</button>
+						</div>
+					</div>
 				</div>
 			)}
 
