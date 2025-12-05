@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
 	const [email, setEmail] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
+	const [magicLink, setMagicLink] = useState('');
+	const [pasteError, setPasteError] = useState('');
 	const { signInWithOtp } = useAuth();
+	const router = useRouter();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -22,6 +26,46 @@ export default function LoginPage() {
 			setLoading(false);
 		} else {
 			setSuccess(true);
+		}
+	};
+
+	const handleMagicLinkPaste = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const link = e.target.value;
+		setMagicLink(link);
+		setPasteError('');
+
+		// Parse the magic link automatically when pasted
+		if (link.trim()) {
+			parseMagicLink(link);
+		}
+	};
+
+	const parseMagicLink = (link: string) => {
+		try {
+			// Expected format: azreader://auth/confirm?token_hash=...&type=magiclink
+			// We need to extract the query parameters
+			const urlPattern = /azreader:\/\/auth\/confirm\?(.+)/;
+			const match = link.match(urlPattern);
+
+			if (!match) {
+				setPasteError('Invalid magic link format. Please paste the complete link from your email.');
+				return;
+			}
+
+			const queryString = match[1];
+			const params = new URLSearchParams(queryString);
+			const tokenHash = params.get('token_hash');
+			const type = params.get('type');
+
+			if (!tokenHash || !type) {
+				setPasteError('Magic link is missing required parameters.');
+				return;
+			}
+
+			// Redirect to the auth/confirm page with the extracted parameters
+			router.push(`/auth/confirm?token_hash=${tokenHash}&type=${type}`);
+		} catch (err) {
+			setPasteError('Failed to process magic link. Please try again.');
 		}
 	};
 
@@ -52,9 +96,44 @@ export default function LoginPage() {
 						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
 							{email}
 						</p>
-						<p className="text-gray-500 text-sm mb-8">
+						<p className="text-gray-500 text-sm mb-6">
 							Click the link in your email to sign in securely. The link will expire in 10 minutes.
 						</p>
+
+						{/* Magic Link Paste Section */}
+						<div className="mb-6">
+							<div className="relative flex items-center mb-4">
+								<div className="flex-grow border-t border-gray-300"></div>
+								<span className="flex-shrink mx-4 text-gray-500 text-sm">or paste your magic link</span>
+								<div className="flex-grow border-t border-gray-300"></div>
+							</div>
+
+							<div className="space-y-2">
+								<div className="relative">
+									<div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+										<svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+										</svg>
+									</div>
+									<input
+										type="text"
+										value={magicLink}
+										onChange={handleMagicLinkPaste}
+										placeholder="azreader://auth/confirm?token_hash=..."
+										className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 placeholder:text-gray-400 text-sm"
+									/>
+								</div>
+								{pasteError && (
+									<div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+										<svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+											<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+										</svg>
+										<p className="text-red-700 text-xs font-medium">{pasteError}</p>
+									</div>
+								)}
+							</div>
+						</div>
+
 						<button
 							onClick={() => setSuccess(false)}
 							className="text-indigo-600 hover:text-indigo-700 font-semibold transition-all hover:underline underline-offset-4"
