@@ -54,6 +54,17 @@ export async function getArticles(userId: string): Promise<Article[]> {
 	return data || [];
 }
 
+export async function getArticleById(id: string): Promise<Article | null> {
+	const { data, error } = await supabase
+		.from('articles')
+		.select('*')
+		.eq('id', id)
+		.single();
+
+	if (error) return null;
+	return data;
+}
+
 export async function deleteArticle(articleId: string): Promise<void> {
 	const { error } = await supabase
 		.from('articles')
