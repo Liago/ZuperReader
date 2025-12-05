@@ -5,17 +5,119 @@ import { useParams, useRouter } from 'next/navigation';
 import { getArticleById } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
+import ReadingPreferencesModal from '../../../components/ReadingPreferencesModal';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
 	const params = useParams();
 	const router = useRouter();
 	const { user, loading: authLoading } = useAuth();
+	const { preferences } = useReadingPreferences();
 	const [article, setArticle] = useState<Article | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [showPreferencesModal, setShowPreferencesModal] = useState(false);
 
 	const id = params?.id as string;
+
+	// Helper functions to map preferences to CSS classes
+	const getFontFamilyClass = () => {
+		switch (preferences.fontFamily) {
+			case 'sans': return 'font-sans';
+			case 'serif': return 'font-serif';
+			case 'mono': return 'font-mono';
+			default: return 'font-serif';
+		}
+	};
+
+	const getFontSizeClass = () => {
+		switch (preferences.fontSize) {
+			case 'small': return 'prose-sm';
+			case 'normal': return 'prose-base';
+			case 'large': return 'prose-lg';
+			case 'xlarge': return 'prose-xl';
+			default: return 'prose-lg';
+		}
+	};
+
+	const getColorThemeClasses = () => {
+		switch (preferences.colorTheme) {
+			case 'sepia':
+				return {
+					bg: 'bg-amber-50',
+					text: 'text-amber-950',
+					border: 'border-amber-200',
+					proseHeadings: 'prose-headings:text-amber-900',
+					proseParagraphs: 'prose-p:text-amber-900',
+					proseLinks: 'prose-a:text-amber-700',
+					proseStrong: 'prose-strong:text-amber-950',
+					proseLi: 'prose-li:text-amber-900',
+					proseBlockquote: 'prose-blockquote:border-amber-600 prose-blockquote:bg-amber-100',
+					proseCode: 'prose-code:text-amber-800 prose-code:bg-amber-100',
+				};
+			case 'dark':
+				return {
+					bg: 'bg-slate-800',
+					text: 'text-slate-100',
+					border: 'border-slate-700',
+					proseHeadings: 'prose-headings:text-slate-100',
+					proseParagraphs: 'prose-p:text-slate-300',
+					proseLinks: 'prose-a:text-blue-400',
+					proseStrong: 'prose-strong:text-slate-100',
+					proseLi: 'prose-li:text-slate-300',
+					proseBlockquote: 'prose-blockquote:border-blue-500 prose-blockquote:bg-slate-700',
+					proseCode: 'prose-code:text-blue-300 prose-code:bg-slate-700',
+				};
+			case 'night':
+				return {
+					bg: 'bg-gray-900',
+					text: 'text-gray-100',
+					border: 'border-gray-800',
+					proseHeadings: 'prose-headings:text-gray-100',
+					proseParagraphs: 'prose-p:text-gray-300',
+					proseLinks: 'prose-a:text-purple-400',
+					proseStrong: 'prose-strong:text-gray-100',
+					proseLi: 'prose-li:text-gray-300',
+					proseBlockquote: 'prose-blockquote:border-purple-500 prose-blockquote:bg-gray-800',
+					proseCode: 'prose-code:text-purple-300 prose-code:bg-gray-800',
+				};
+			default:
+				return {
+					bg: 'bg-white',
+					text: 'text-gray-900',
+					border: 'border-gray-200',
+					proseHeadings: 'prose-headings:text-gray-900',
+					proseParagraphs: 'prose-p:text-gray-700',
+					proseLinks: 'prose-a:text-purple-600',
+					proseStrong: 'prose-strong:text-gray-900',
+					proseLi: 'prose-li:text-gray-700',
+					proseBlockquote: 'prose-blockquote:border-purple-500 prose-blockquote:bg-purple-50',
+					proseCode: 'prose-code:text-pink-600 prose-code:bg-pink-50',
+				};
+		}
+	};
+
+	const getLineHeightClass = () => {
+		switch (preferences.lineHeight) {
+			case 'compact': return 'leading-snug';
+			case 'normal': return 'leading-normal';
+			case 'relaxed': return 'leading-relaxed';
+			case 'loose': return 'leading-loose';
+			default: return 'leading-relaxed';
+		}
+	};
+
+	const getContentWidthClass = () => {
+		switch (preferences.contentWidth) {
+			case 'narrow': return 'max-w-2xl';
+			case 'normal': return 'max-w-4xl';
+			case 'wide': return 'max-w-6xl';
+			default: return 'max-w-4xl';
+		}
+	};
+
+	const colorTheme = getColorThemeClasses();
 
 	useEffect(() => {
 		if (!authLoading && !user) {
@@ -91,7 +193,7 @@ export default function ArticleReaderPage() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
-			<div className="max-w-4xl mx-auto">
+			<div className={`${getContentWidthClass()} mx-auto`}>
 				{/* Back Button - Mobile First */}
 				<div className="mb-4 sm:mb-6">
 					<Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200">
@@ -103,7 +205,7 @@ export default function ArticleReaderPage() {
 				</div>
 
 				{/* Article Container */}
-				<article className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+				<article className={`${colorTheme.bg}/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border ${colorTheme.border}`}>
 					{/* Header Image con gradient overlay */}
 					{article.image_url && (
 						<div className="relative w-full h-56 sm:h-72 md:h-96 overflow-hidden">
@@ -181,20 +283,20 @@ export default function ArticleReaderPage() {
 
 						{/* Article Content - Ottimizzato per lettura */}
 						<div
-							className="prose prose-lg prose-slate max-w-none
-								prose-headings:font-bold prose-headings:text-gray-900
+							className={`prose ${getFontSizeClass()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+								prose-headings:font-bold ${colorTheme.proseHeadings}
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
 								prose-h3:text-xl prose-h3:mb-3 prose-h3:mt-4
-								prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-								prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline
-								prose-strong:text-gray-900 prose-strong:font-bold
+								${colorTheme.proseParagraphs} prose-p:mb-4
+								${colorTheme.proseLinks} prose-a:no-underline hover:prose-a:underline
+								${colorTheme.proseStrong} prose-strong:font-bold
 								prose-ul:my-4 prose-ol:my-4
-								prose-li:text-gray-700 prose-li:my-2
+								${colorTheme.proseLi} prose-li:my-2
 								prose-img:rounded-xl prose-img:shadow-lg prose-img:my-6
-								prose-blockquote:border-l-4 prose-blockquote:border-purple-500 prose-blockquote:bg-purple-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-								prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg"
+								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
 							dangerouslySetInnerHTML={{ __html: article.content || '' }}
 						/>
 					</div>
@@ -210,6 +312,24 @@ export default function ArticleReaderPage() {
 					</Link>
 				</div>
 			</div>
+
+			{/* Floating Action Button for Reading Preferences */}
+			<button
+				onClick={() => setShowPreferencesModal(true)}
+				className="fixed bottom-8 right-8 p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-200 z-30"
+				aria-label="Reading Preferences"
+				title="Customize Reading Experience"
+			>
+				<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+				</svg>
+			</button>
+
+			{/* Reading Preferences Modal */}
+			<ReadingPreferencesModal
+				isOpen={showPreferencesModal}
+				onClose={() => setShowPreferencesModal(false)}
+			/>
 		</div>
 	);
 }
