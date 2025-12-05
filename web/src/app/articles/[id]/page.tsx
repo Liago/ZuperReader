@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getArticleById } from '../../../lib/api';
+import { getArticleById, deleteArticle } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -20,6 +20,8 @@ export default function ArticleReaderPage() {
 	const [error, setError] = useState('');
 	const [showPreferencesModal, setShowPreferencesModal] = useState(false);
 	const [linkPreviewUrl, setLinkPreviewUrl] = useState<string | null>(null);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 	const articleContentRef = useRef<HTMLDivElement>(null);
 
 	const id = params?.id as string;
@@ -123,6 +125,22 @@ export default function ArticleReaderPage() {
 	};
 
 	const colorTheme = getColorThemeClasses();
+
+	// Funzione per eliminare l'articolo
+	const handleDeleteArticle = async () => {
+		if (!article) return;
+
+		setIsDeleting(true);
+		try {
+			await deleteArticle(article.id);
+			router.push('/');
+		} catch (error) {
+			console.error('Failed to delete article:', error);
+			setError('Failed to delete article');
+			setIsDeleting(false);
+			setShowDeleteConfirm(false);
+		}
+	};
 
 	// Helper function to get badge classes based on color theme
 	const getBadgeClasses = (color: 'purple' | 'pink' | 'blue' | 'green') => {
@@ -269,14 +287,23 @@ export default function ArticleReaderPage() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
 			<div className={`${getContentWidthClass()} mx-auto`}>
-				{/* Back Button - Mobile First */}
-				<div className="mb-4 sm:mb-6">
+				{/* Back Button and Delete Button - Mobile First */}
+				<div className="mb-4 sm:mb-6 flex flex-wrap gap-3 justify-between items-center">
 					<Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200">
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 						</svg>
 						<span className="text-sm sm:text-base">Back to Dashboard</span>
 					</Link>
+					<button
+						onClick={() => setShowDeleteConfirm(true)}
+						className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/80 backdrop-blur-sm text-white font-medium rounded-xl hover:bg-red-600 hover:shadow-md transition-all duration-200 border border-red-400"
+					>
+						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						</svg>
+						<span className="text-sm sm:text-base">Delete Article</span>
+					</button>
 				</div>
 
 				{/* Article Container */}
@@ -424,6 +451,56 @@ export default function ArticleReaderPage() {
 						console.log('Article saved from link preview');
 					}}
 				/>
+			)}
+
+			{/* Delete Confirmation Modal */}
+			{showDeleteConfirm && (
+				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+					<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+						<div className="flex items-center gap-4 mb-4">
+							<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+								<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+								</svg>
+							</div>
+							<div>
+								<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
+								<p className="text-sm text-gray-600">This action cannot be undone</p>
+							</div>
+						</div>
+						<p className="text-gray-700 mb-6">
+							Are you sure you want to delete "{article?.title}"? This will permanently remove the article from your library.
+						</p>
+						<div className="flex gap-3 justify-end">
+							<button
+								onClick={() => setShowDeleteConfirm(false)}
+								disabled={isDeleting}
+								className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleDeleteArticle}
+								disabled={isDeleting}
+								className="px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+							>
+								{isDeleting ? (
+									<>
+										<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+										Deleting...
+									</>
+								) : (
+									<>
+										<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+										</svg>
+										Delete
+									</>
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);
