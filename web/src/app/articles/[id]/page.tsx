@@ -119,6 +119,41 @@ export default function ArticleReaderPage() {
 
 	const colorTheme = getColorThemeClasses();
 
+	// Helper function to get badge classes based on color theme
+	const getBadgeClasses = (color: 'purple' | 'pink' | 'blue' | 'green') => {
+		const isDark = preferences.colorTheme === 'dark' || preferences.colorTheme === 'night';
+		const isSepia = preferences.colorTheme === 'sepia';
+
+		if (isDark) {
+			const colorMap = {
+				purple: 'bg-purple-900/30 text-purple-200 border-purple-700/50',
+				pink: 'bg-pink-900/30 text-pink-200 border-pink-700/50',
+				blue: 'bg-blue-900/30 text-blue-200 border-blue-700/50',
+				green: 'bg-green-900/30 text-green-200 border-green-700/50',
+			};
+			return colorMap[color];
+		}
+
+		if (isSepia) {
+			const colorMap = {
+				purple: 'bg-amber-100 text-amber-900 border-amber-300',
+				pink: 'bg-amber-100 text-amber-900 border-amber-300',
+				blue: 'bg-amber-100 text-amber-900 border-amber-300',
+				green: 'bg-amber-100 text-amber-900 border-amber-300',
+			};
+			return colorMap[color];
+		}
+
+		// Default theme
+		const colorMap = {
+			purple: 'bg-purple-50 text-purple-900 border-purple-100',
+			pink: 'bg-pink-50 text-pink-900 border-pink-100',
+			blue: 'bg-blue-50 text-blue-900 border-blue-100',
+			green: 'bg-green-50 text-green-900 border-green-100',
+		};
+		return colorMap[color];
+	};
+
 	useEffect(() => {
 		if (!authLoading && !user) {
 			router.push('/login');
@@ -229,35 +264,35 @@ export default function ArticleReaderPage() {
 							{/* Meta informazioni */}
 							<div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
 								{article.author && (
-									<div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg border border-purple-100">
-										<svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('purple')}`}>
+										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 										</svg>
-										<span className="text-sm font-medium text-purple-900">{article.author}</span>
+										<span className="text-sm font-medium">{article.author}</span>
 									</div>
 								)}
 								{article.domain && (
-									<div className="flex items-center gap-2 px-3 py-1.5 bg-pink-50 rounded-lg border border-pink-100">
-										<svg className="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('pink')}`}>
+										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
 										</svg>
-										<span className="text-sm font-medium text-pink-900">{article.domain}</span>
+										<span className="text-sm font-medium">{article.domain}</span>
 									</div>
 								)}
 								{article.published_date && (
-									<div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
-										<svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('blue')}`}>
+										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 										</svg>
-										<span className="text-sm font-medium text-blue-900">{new Date(article.published_date).toLocaleDateString()}</span>
+										<span className="text-sm font-medium">{new Date(article.published_date).toLocaleDateString()}</span>
 									</div>
 								)}
 								{article.estimated_read_time && (
-									<div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-100">
-										<svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('green')}`}>
+										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
 										</svg>
-										<span className="text-sm font-medium text-green-900">{article.estimated_read_time} min read</span>
+										<span className="text-sm font-medium">{article.estimated_read_time} min read</span>
 									</div>
 								)}
 							</div>
@@ -279,7 +314,13 @@ export default function ArticleReaderPage() {
 						</header>
 
 						{/* Divider */}
-						<div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-8"></div>
+						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mb-8 ${
+							preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+								? 'via-gray-600'
+								: preferences.colorTheme === 'sepia'
+									? 'via-amber-300'
+									: 'via-gray-300'
+						}`}></div>
 
 						{/* Article Content - Ottimizzato per lettura */}
 						<div
