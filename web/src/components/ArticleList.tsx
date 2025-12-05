@@ -9,6 +9,34 @@ interface ArticleListProps {
 	refreshTrigger: number;
 }
 
+// Skeleton Loader per Grid View
+function GridSkeleton() {
+	return (
+		<div className="bg-white/60 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+			<div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse bg-[length:200%_100%]"></div>
+			<div className="p-5 space-y-3">
+				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
+			</div>
+		</div>
+	);
+}
+
+// Skeleton Loader per List View
+function ListSkeleton() {
+	return (
+		<div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 flex gap-4 shadow-sm border border-gray-100">
+			<div className="w-24 h-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-xl animate-pulse bg-[length:200%_100%] flex-shrink-0"></div>
+			<div className="flex-1 space-y-3">
+				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
+			</div>
+		</div>
+	);
+}
+
 export default function ArticleList({ userId, refreshTrigger }: ArticleListProps) {
 	const [articles, setArticles] = useState<Article[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -17,6 +45,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 
 	useEffect(() => {
 		const fetchArticles = async () => {
+			setLoading(true);
 			try {
 				const data = await getArticles(userId);
 				setArticles(data);
@@ -30,17 +59,69 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		fetchArticles();
 	}, [userId, refreshTrigger]);
 
-	if (loading) return <div className="text-center py-8 text-gray-600">Loading articles...</div>;
-	if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
-	if (articles.length === 0) return <div className="text-center py-8 text-gray-600">No articles found. Add one above!</div>;
+	if (loading) {
+		return (
+			<div className="mt-8">
+				{viewMode === 'grid' ? (
+					<div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+						{[...Array(6)].map((_, i) => (
+							<GridSkeleton key={i} />
+						))}
+					</div>
+				) : (
+					<div className="space-y-4">
+						{[...Array(4)].map((_, i) => (
+							<ListSkeleton key={i} />
+						))}
+					</div>
+				)}
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="text-center py-12 px-4">
+				<div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+					<svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+				</div>
+				<p className="text-red-600 font-medium">{error}</p>
+			</div>
+		);
+	}
+
+	if (articles.length === 0) {
+		return (
+			<div className="text-center py-16 px-4">
+				<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 mb-4">
+					<svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+					</svg>
+				</div>
+				<p className="text-gray-600 text-lg font-medium">No articles found</p>
+				<p className="text-gray-500 text-sm mt-2">Add your first article above!</p>
+			</div>
+		);
+	}
 
 	return (
-		<div>
-			<div className="flex justify-end mb-4">
-				<div className="bg-white rounded-lg shadow p-1 flex">
+		<div className="mt-8">
+			{/* Toggle View Mode - Mobile First */}
+			<div className="flex justify-between items-center mb-6">
+				<h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+					My Articles
+					<span className="ml-2 text-sm font-normal text-gray-500">({articles.length})</span>
+				</h2>
+				<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-1 flex border border-gray-200">
 					<button
 						onClick={() => setViewMode('grid')}
-						className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+						className={`p-2 rounded-lg transition-all duration-200 ${
+							viewMode === 'grid'
+								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+								: 'text-gray-400 hover:text-gray-600'
+						}`}
 						title="Grid View"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +130,11 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 					</button>
 					<button
 						onClick={() => setViewMode('list')}
-						className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+						className={`p-2 rounded-lg transition-all duration-200 ${
+							viewMode === 'list'
+								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+								: 'text-gray-400 hover:text-gray-600'
+						}`}
 						title="List View"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,65 +144,152 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 				</div>
 			</div>
 
+			{/* Grid View - Card moderne con effetti */}
 			{viewMode === 'grid' ? (
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{articles.map((article) => (
-						<div key={article.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+				<div className="grid gap-5 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+					{articles.map((article, index) => (
+						<article
+							key={article.id}
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1"
+							style={{
+								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+							}}
+						>
+							{/* Immagine con overlay gradient */}
 							{article.image_url && (
-								<a href={`/articles/${article.id}`} className="block">
-									<img src={article.image_url} alt={article.title} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
+								<a href={`/articles/${article.id}`} className="block relative overflow-hidden">
+									<div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+									<img
+										src={article.image_url}
+										alt={article.title}
+										className="w-full h-48 sm:h-52 object-cover transform group-hover:scale-105 transition-transform duration-500"
+										loading="lazy"
+									/>
 								</a>
 							)}
-							<div className="p-4">
-								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900">
-									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
+
+							{/* Content */}
+							<div className="p-5">
+								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
+									<a href={`/articles/${article.id}`} className="hover:underline">
 										{article.title}
 									</a>
 								</h3>
-								<p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.excerpt}</p>
-								<div className="flex justify-between items-center text-xs text-gray-500">
-									<span>{article.domain}</span>
-									<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
+								<p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+
+								{/* Meta info */}
+								<div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+									<span className="flex items-center gap-1">
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+										</svg>
+										{article.domain}
+									</span>
+									{article.estimated_read_time && (
+										<span className="flex items-center gap-1">
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											{article.estimated_read_time} min
+										</span>
+									)}
 								</div>
-								<div className="mt-2 text-right">
-									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
-										Original Link ↗
-									</a>
-								</div>
+
+								{/* Link esterno */}
+								<a
+									href={article.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-pink-600 font-medium transition-colors"
+								>
+									View Original
+									<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+									</svg>
+								</a>
 							</div>
-						</div>
+						</article>
 					))}
 				</div>
 			) : (
+				/* List View - Design moderno */
 				<div className="space-y-4">
-					{articles.map((article) => (
-						<div key={article.id} className="bg-white rounded-lg shadow-md p-4 flex gap-4 hover:shadow-lg transition-shadow">
+					{articles.map((article, index) => (
+						<article
+							key={article.id}
+							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200"
+							style={{
+								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+							}}
+						>
+							{/* Immagine */}
 							{article.image_url && (
 								<a href={`/articles/${article.id}`} className="flex-shrink-0">
-									<img src={article.image_url} alt={article.title} className="w-24 h-24 object-cover rounded" />
+									<img
+										src={article.image_url}
+										alt={article.title}
+										className="w-20 h-20 sm:w-28 sm:h-28 object-cover rounded-xl transform group-hover:scale-105 transition-transform duration-300"
+										loading="lazy"
+									/>
 								</a>
 							)}
-							<div className="flex-1 min-w-0">
-								<h3 className="text-lg font-bold mb-1 text-gray-900 truncate">
-									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
+
+							{/* Content */}
+							<div className="flex-1 min-w-0 flex flex-col">
+								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
+									<a href={`/articles/${article.id}`}>
 										{article.title}
 									</a>
 								</h3>
-								<p className="text-gray-600 text-sm mb-2 line-clamp-2">{article.excerpt}</p>
-								<div className="flex justify-between items-center text-xs text-gray-500">
-									<div className="flex gap-3">
-										<span>{article.domain}</span>
-										<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
-									</div>
-									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-										Original Link ↗
+								<p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{article.excerpt}</p>
+
+								{/* Meta info */}
+								<div className="flex flex-wrap gap-3 items-center text-xs text-gray-500">
+									<span className="flex items-center gap-1">
+										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+										</svg>
+										{article.domain}
+									</span>
+									{article.estimated_read_time && (
+										<span className="flex items-center gap-1">
+											<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											{article.estimated_read_time} min
+										</span>
+									)}
+									<a
+										href={article.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="ml-auto text-purple-600 hover:text-pink-600 font-medium inline-flex items-center gap-1"
+									>
+										View Original
+										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+										</svg>
 									</a>
 								</div>
 							</div>
-						</div>
+						</article>
 					))}
 				</div>
 			)}
+
+			{/* CSS Animations */}
+			<style jsx>{`
+				@keyframes fadeInUp {
+					from {
+						opacity: 0;
+						transform: translateY(20px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+			`}</style>
 		</div>
 	);
 }
