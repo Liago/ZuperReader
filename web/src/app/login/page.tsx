@@ -27,56 +27,200 @@ export default function LoginPage() {
 
 	if (success) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-				<div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-					<h1 className="text-2xl font-bold text-gray-900 mb-4">Check your email</h1>
-					<p className="text-gray-600 mb-6">
-						We've sent a magic link to <span className="font-semibold">{email}</span>. Click the link to sign in.
-					</p>
-					<button
-						onClick={() => setSuccess(false)}
-						className="text-blue-600 hover:underline"
-					>
-						Try different email
-					</button>
+			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 py-12 px-4 relative overflow-hidden">
+				{/* Animated background elements */}
+				<div className="absolute inset-0 overflow-hidden">
+					<div className="absolute -top-1/2 -left-1/2 w-full h-full bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+					<div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-white/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+				</div>
+
+				<div className="max-w-md w-full relative">
+					<div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-10 text-center border border-white/20 animate-fade-in-up">
+						{/* Success Icon */}
+						<div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-scale-in">
+							<svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+							</svg>
+						</div>
+
+						<h1 className="text-3xl font-bold text-gray-900 mb-4">
+							Check your inbox
+						</h1>
+						<p className="text-gray-600 mb-2 text-lg">
+							We've sent a magic link to
+						</p>
+						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
+							{email}
+						</p>
+						<p className="text-gray-500 text-sm mb-8">
+							Click the link in your email to sign in securely. The link will expire in 10 minutes.
+						</p>
+						<button
+							onClick={() => setSuccess(false)}
+							className="text-indigo-600 hover:text-indigo-700 font-semibold transition-all hover:underline underline-offset-4"
+						>
+							← Try a different email
+						</button>
+					</div>
 				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-			<div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-				<h1 className="text-2xl font-bold text-center text-gray-900 mb-2">Welcome</h1>
-				<p className="text-center text-gray-600 mb-8">Sign in with Magic Link</p>
+		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 py-12 px-4 relative overflow-hidden">
+			{/* Animated background elements */}
+			<div className="absolute inset-0 overflow-hidden">
+				<div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-float"></div>
+				<div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-float-delay"></div>
+			</div>
 
-				<form onSubmit={handleSubmit} className="space-y-6">
-					<div>
-						<label htmlFor="email" className="block text-sm font-medium text-gray-700">
-							Email
-						</label>
-						<input
-							id="email"
-							type="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							required
-							placeholder="you@example.com"
-							className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-						/>
+			<div className="max-w-md w-full relative">
+				<div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-10 border border-white/20 animate-fade-in-up">
+					{/* Logo/Brand */}
+					<div className="text-center mb-8">
+						<div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+							<svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+							</svg>
+						</div>
+						<h1 className="text-3xl font-bold text-gray-900 mb-2">
+							Welcome to ZuperReader
+						</h1>
+						<p className="text-gray-600">
+							Sign in with a magic link – no password needed
+						</p>
 					</div>
 
-					{error && <p className="text-red-500 text-sm">{error}</p>}
+					<form onSubmit={handleSubmit} className="space-y-6">
+						<div className="space-y-2">
+							<label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+								Email Address
+							</label>
+							<div className="relative">
+								<div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+									<svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+									</svg>
+								</div>
+								<input
+									id="email"
+									type="email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+									required
+									placeholder="you@example.com"
+									className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 placeholder:text-gray-400"
+								/>
+							</div>
+						</div>
 
-					<button
-						type="submit"
-						disabled={loading}
-						className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
-					>
-						{loading ? 'Sending Magic Link...' : 'Send Magic Link'}
-					</button>
-				</form>
+						{error && (
+							<div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl animate-shake">
+								<svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+									<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+								</svg>
+								<p className="text-red-700 text-sm font-medium">{error}</p>
+							</div>
+						)}
+
+						<button
+							type="submit"
+							disabled={loading}
+							className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center space-x-2"
+						>
+							{loading ? (
+								<>
+									<svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+									<span>Sending magic link...</span>
+								</>
+							) : (
+								<>
+									<span>Send Magic Link</span>
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+									</svg>
+								</>
+							)}
+						</button>
+					</form>
+
+					<div className="mt-6 text-center">
+						<p className="text-xs text-gray-500">
+							By signing in, you agree to our Terms of Service and Privacy Policy
+						</p>
+					</div>
+				</div>
 			</div>
+
+			<style jsx>{`
+				@keyframes fade-in-up {
+					from {
+						opacity: 0;
+						transform: translateY(20px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+
+				@keyframes float {
+					0%, 100% {
+						transform: translateY(0) translateX(0);
+					}
+					50% {
+						transform: translateY(-20px) translateX(10px);
+					}
+				}
+
+				@keyframes float-delay {
+					0%, 100% {
+						transform: translateY(0) translateX(0);
+					}
+					50% {
+						transform: translateY(20px) translateX(-10px);
+					}
+				}
+
+				@keyframes scale-in {
+					from {
+						transform: scale(0);
+					}
+					to {
+						transform: scale(1);
+					}
+				}
+
+				@keyframes shake {
+					0%, 100% { transform: translateX(0); }
+					25% { transform: translateX(-5px); }
+					75% { transform: translateX(5px); }
+				}
+
+				.animate-fade-in-up {
+					animation: fade-in-up 0.6s ease-out;
+				}
+
+				.animate-float {
+					animation: float 8s ease-in-out infinite;
+				}
+
+				.animate-float-delay {
+					animation: float-delay 8s ease-in-out infinite;
+				}
+
+				.animate-scale-in {
+					animation: scale-in 0.5s ease-out;
+				}
+
+				.animate-shake {
+					animation: shake 0.3s ease-in-out;
+				}
+			`}</style>
 		</div>
 	);
 }
