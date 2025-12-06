@@ -28,3 +28,26 @@ export type Article = {
 	created_at: string;
 	updated_at: string;
 };
+
+export type Like = {
+	id: string;
+	article_id: string;
+	user_id: string;
+	created_at: string;
+};
+
+export type Comment = {
+	id: string;
+	article_id: string;
+	user_id: string;
+	content: string;
+	created_at: string;
+	updated_at: string;
+};
+
+export type Share = {
+	id: string;
+	article_id: string;
+	user_id: string;
+	created_at: string;
+};

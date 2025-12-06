@@ -8,6 +8,9 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
 import ReadingPreferencesModal from '../../../components/ReadingPreferencesModal';
 import LinkPreviewModal from '../../../components/LinkPreviewModal';
+import LikeButton from '../../../components/LikeButton';
+import CommentsSection from '../../../components/CommentsSection';
+import ShareButton from '../../../components/ShareButton';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -408,6 +411,39 @@ export default function ArticleReaderPage() {
 								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
 							style={{ fontSize: `${preferences.fontSize}px` }}
 							dangerouslySetInnerHTML={{ __html: article.content || '' }}
+						/>
+
+						{/* Divider before social section */}
+						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${
+							preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+								? 'via-gray-600'
+								: preferences.colorTheme === 'sepia'
+									? 'via-amber-300'
+									: 'via-gray-300'
+						}`}></div>
+
+						{/* Social Actions */}
+						<div className="mt-8 mb-8">
+							<div className="flex flex-wrap gap-4 items-center">
+								<LikeButton
+									articleId={article.id}
+									userId={user!.id}
+									initialLikeCount={article.like_count}
+								/>
+								<ShareButton
+									articleId={article.id}
+									userId={user!.id}
+									articleUrl={article.url}
+									articleTitle={article.title}
+								/>
+							</div>
+						</div>
+
+						{/* Comments Section */}
+						<CommentsSection
+							articleId={article.id}
+							userId={user!.id}
+							initialCommentCount={article.comment_count}
 						/>
 					</div>
 				</article>
