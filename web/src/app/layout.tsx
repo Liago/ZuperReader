@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu } from "next/font/go
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ReadingPreferencesProvider } from "../contexts/ReadingPreferencesContext";
+import { FriendsProvider } from "../contexts/FriendsContext";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -53,9 +54,11 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} antialiased`}
 			>
 				<AuthProvider>
-					<ReadingPreferencesProvider>
-						{children}
-					</ReadingPreferencesProvider>
+					<FriendsProvider>
+						<ReadingPreferencesProvider>
+							{children}
+						</ReadingPreferencesProvider>
+					</FriendsProvider>
 				</AuthProvider>
 			</body>
 		</html>
