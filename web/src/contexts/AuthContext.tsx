@@ -20,8 +20,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		// Get initial session
-		supabase.auth.getSession().then(({ data: { session } }) => {
+		// Get initial session and validate it
+		supabase.auth.getSession().then(async ({ data: { session } }) => {
+			// Check if session exists and is not expired
+			if (session) {
+				const now = Math.floor(Date.now() / 1000); // Current time in seconds
+				const expiresAt = session.expires_at ?? 0;
+
+				// If token is expired, sign out automatically
+				if (expiresAt < now) {
+					console.log('Token expired, signing out...');
+					await supabase.auth.signOut();
+					setSession(null);
+					setUser(null);
+					setLoading(false);
+					return;
+				}
+			}
+
 			setSession(session);
 			setUser(session?.user ?? null);
 			setLoading(false);
