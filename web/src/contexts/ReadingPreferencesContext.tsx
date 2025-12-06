@@ -7,6 +7,7 @@ export type FontSize = number; // Font size in pixels (12-50)
 export type ColorTheme = 'default' | 'sepia' | 'dark' | 'night';
 export type LineHeight = 'compact' | 'normal' | 'relaxed' | 'loose';
 export type ContentWidth = 'narrow' | 'normal' | 'wide';
+export type ViewMode = 'grid' | 'list';
 
 export interface ReadingPreferences {
 	fontFamily: FontFamily;
@@ -14,6 +15,7 @@ export interface ReadingPreferences {
 	colorTheme: ColorTheme;
 	lineHeight: LineHeight;
 	contentWidth: ContentWidth;
+	viewMode: ViewMode;
 }
 
 interface ReadingPreferencesContextType {
@@ -28,6 +30,7 @@ const defaultPreferences: ReadingPreferences = {
 	colorTheme: 'default',
 	lineHeight: 'relaxed',
 	contentWidth: 'normal',
+	viewMode: 'grid',
 };
 
 const ReadingPreferencesContext = createContext<ReadingPreferencesContextType | undefined>(undefined);

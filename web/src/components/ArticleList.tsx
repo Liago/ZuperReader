@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getArticles, deleteArticle } from '../lib/api';
 import { Article } from '../lib/supabase';
+import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 
 interface ArticleListProps {
 	userId: string;
@@ -45,13 +46,14 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	const [loading, setLoading] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [error, setError] = useState('');
-	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [hasMore, setHasMore] = useState(true);
 	const [offset, setOffset] = useState(0);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
+	const { preferences, updatePreferences } = useReadingPreferences();
+	const viewMode = preferences.viewMode;
 
 	const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -213,7 +215,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 				</h2>
 				<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-1 flex border border-gray-200">
 					<button
-						onClick={() => setViewMode('grid')}
+						onClick={() => updatePreferences({ viewMode: 'grid' })}
 						className={`p-2 rounded-lg transition-all duration-200 ${
 							viewMode === 'grid'
 								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
@@ -226,7 +228,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 						</svg>
 					</button>
 					<button
-						onClick={() => setViewMode('list')}
+						onClick={() => updatePreferences({ viewMode: 'list' })}
 						className={`p-2 rounded-lg transition-all duration-200 ${
 							viewMode === 'list'
 								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
