@@ -1,4 +1,4 @@
-import { supabase, Article } from './supabase';
+import { supabase, Article, Like, Comment, Share } from './supabase';
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
@@ -100,4 +100,178 @@ export async function updateReadingStatus(articleId: string, status: 'unread' | 
 		.eq('id', articleId);
 
 	if (error) throw new Error(error.message);
+}
+
+// ==================== LIKE FUNCTIONS ====================
+
+export async function toggleLike(articleId: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
+	// Check if user already liked this article
+	const { data: existingLike } = await supabase
+		.from('likes')
+		.select('*')
+		.eq('article_id', articleId)
+		.eq('user_id', userId)
+		.single();
+
+	if (existingLike) {
+		// Unlike: remove the like
+		const { error: deleteLikeError } = await supabase
+			.from('likes')
+			.delete()
+			.eq('article_id', articleId)
+			.eq('user_id', userId);
+
+		if (deleteLikeError) throw new Error(deleteLikeError.message);
+
+		// Decrement like_count
+		const { error: updateArticleError } = await supabase.rpc('decrement_like_count', { article_id: articleId });
+		if (updateArticleError) {
+			// Fallback if RPC doesn't exist
+			const { data: article } = await supabase.from('articles').select('like_count').eq('id', articleId).single();
+			const newCount = Math.max(0, (article?.like_count || 0) - 1);
+			await supabase.from('articles').update({ like_count: newCount }).eq('id', articleId);
+		}
+
+		// Get updated count
+		const { data: updatedArticle } = await supabase
+			.from('articles')
+			.select('like_count')
+			.eq('id', articleId)
+			.single();
+
+		return { liked: false, likeCount: updatedArticle?.like_count || 0 };
+	} else {
+		// Like: add the like
+		const { error: insertLikeError } = await supabase
+			.from('likes')
+			.insert([{ article_id: articleId, user_id: userId }]);
+
+		if (insertLikeError) throw new Error(insertLikeError.message);
+
+		// Increment like_count
+		const { error: updateArticleError } = await supabase.rpc('increment_like_count', { article_id: articleId });
+		if (updateArticleError) {
+			// Fallback if RPC doesn't exist
+			const { data: article } = await supabase.from('articles').select('like_count').eq('id', articleId).single();
+			const newCount = (article?.like_count || 0) + 1;
+			await supabase.from('articles').update({ like_count: newCount }).eq('id', articleId);
+		}
+
+		// Get updated count
+		const { data: updatedArticle } = await supabase
+			.from('articles')
+			.select('like_count')
+			.eq('id', articleId)
+			.single();
+
+		return { liked: true, likeCount: updatedArticle?.like_count || 0 };
+	}
+}
+
+export async function checkIfUserLiked(articleId: string, userId: string): Promise<boolean> {
+	const { data } = await supabase
+		.from('likes')
+		.select('*')
+		.eq('article_id', articleId)
+		.eq('user_id', userId)
+		.single();
+
+	return !!data;
+}
+
+export async function getLikesCount(articleId: string): Promise<number> {
+	const { data } = await supabase
+		.from('articles')
+		.select('like_count')
+		.eq('id', articleId)
+		.single();
+
+	return data?.like_count || 0;
+}
+
+// ==================== COMMENT FUNCTIONS ====================
+
+export async function addComment(articleId: string, userId: string, content: string): Promise<Comment> {
+	const { data, error } = await supabase
+		.from('comments')
+		.insert([{ article_id: articleId, user_id: userId, content }])
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+
+	// Increment comment_count
+	const { error: updateArticleError } = await supabase.rpc('increment_comment_count', { article_id: articleId });
+	if (updateArticleError) {
+		// Fallback if RPC doesn't exist
+		const { data: article } = await supabase.from('articles').select('comment_count').eq('id', articleId).single();
+		const newCount = (article?.comment_count || 0) + 1;
+		await supabase.from('articles').update({ comment_count: newCount }).eq('id', articleId);
+	}
+
+	return data;
+}
+
+export async function getComments(articleId: string): Promise<Comment[]> {
+	const { data, error } = await supabase
+		.from('comments')
+		.select('*')
+		.eq('article_id', articleId)
+		.order('created_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+export async function deleteComment(commentId: string, articleId: string): Promise<void> {
+	const { error } = await supabase
+		.from('comments')
+		.delete()
+		.eq('id', commentId);
+
+	if (error) throw new Error(error.message);
+
+	// Decrement comment_count
+	const { error: updateArticleError } = await supabase.rpc('decrement_comment_count', { article_id: articleId });
+	if (updateArticleError) {
+		// Fallback if RPC doesn't exist
+		const { data: article } = await supabase.from('articles').select('comment_count').eq('id', articleId).single();
+		const newCount = Math.max(0, (article?.comment_count || 0) - 1);
+		await supabase.from('articles').update({ comment_count: newCount }).eq('id', articleId);
+	}
+}
+
+export async function updateComment(commentId: string, content: string): Promise<Comment> {
+	const { data, error } = await supabase
+		.from('comments')
+		.update({ content })
+		.eq('id', commentId)
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+// ==================== SHARE FUNCTIONS ====================
+
+export async function shareArticle(articleId: string, userId: string): Promise<Share> {
+	const { data, error } = await supabase
+		.from('shares')
+		.insert([{ article_id: articleId, user_id: userId }])
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function getSharesCount(articleId: string): Promise<number> {
+	const { count, error } = await supabase
+		.from('shares')
+		.select('*', { count: 'exact', head: true })
+		.eq('article_id', articleId);
+
+	if (error) throw new Error(error.message);
+	return count || 0;
 }
