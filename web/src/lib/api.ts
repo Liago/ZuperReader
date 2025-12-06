@@ -1,4 +1,4 @@
-import { supabase, Article, Like, Comment, Share } from './supabase';
+import { supabase, Article, Like, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend } from './supabase';
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
@@ -274,4 +274,345 @@ export async function getSharesCount(articleId: string): Promise<number> {
 
 	if (error) throw new Error(error.message);
 	return count || 0;
+}
+
+// ==================== USER PROFILE FUNCTIONS ====================
+
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+	const { data, error } = await supabase
+		.from('user_profiles')
+		.select('*')
+		.eq('id', userId)
+		.single();
+
+	if (error) return null;
+	return data;
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
+	const { data, error } = await supabase
+		.from('user_profiles')
+		.update(updates)
+		.eq('id', userId)
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function createUserProfile(userId: string, displayName: string): Promise<UserProfile> {
+	const { data, error } = await supabase
+		.from('user_profiles')
+		.insert([{ id: userId, display_name: displayName }])
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function searchUsers(query: string, currentUserId: string): Promise<UserProfile[]> {
+	// Search by display_name using ilike for case-insensitive partial match
+	const { data: profileData, error: profileError } = await supabase
+		.from('user_profiles')
+		.select('*')
+		.neq('id', currentUserId)
+		.ilike('display_name', `%${query}%`)
+		.limit(20);
+
+	if (profileError) throw new Error(profileError.message);
+
+	// We need to also get user emails for searching
+	// This requires getting the user info from auth.users
+	// Since we can't directly query auth.users, we'll use the view or RPC
+	// For now, return profile data only
+	return profileData || [];
+}
+
+// ==================== FRIENDSHIP FUNCTIONS ====================
+
+export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friendship> {
+	// Check if a friendship already exists
+	const { data: existing } = await supabase
+		.from('friendships')
+		.select('*')
+		.or(`and(requester_id.eq.${requesterId},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${requesterId})`)
+		.single();
+
+	if (existing) {
+		throw new Error('A friendship request already exists between these users');
+	}
+
+	const { data, error } = await supabase
+		.from('friendships')
+		.insert([{ requester_id: requesterId, addressee_id: addresseeId, status: 'pending' }])
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function respondToFriendRequest(friendshipId: string, status: 'accepted' | 'rejected'): Promise<Friendship> {
+	const { data, error } = await supabase
+		.from('friendships')
+		.update({ status })
+		.eq('id', friendshipId)
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function removeFriend(friendshipId: string): Promise<void> {
+	const { error } = await supabase
+		.from('friendships')
+		.delete()
+		.eq('id', friendshipId);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function getFriends(userId: string): Promise<Friend[]> {
+	// Get all accepted friendships where user is either requester or addressee
+	const { data, error } = await supabase
+		.from('friendships')
+		.select(`
+			id,
+			requester_id,
+			addressee_id,
+			status,
+			created_at,
+			requester:user_profiles!friendships_requester_id_fkey(*),
+			addressee:user_profiles!friendships_addressee_id_fkey(*)
+		`)
+		.eq('status', 'accepted')
+		.or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+	if (error) throw new Error(error.message);
+
+	// Transform data to Friend array
+	return (data || []).map(friendship => {
+		const isRequester = friendship.requester_id === userId;
+		// Supabase returns arrays for joins, so we need to get the first element
+		const friendProfile = isRequester
+			? (Array.isArray(friendship.addressee) ? friendship.addressee[0] : friendship.addressee)
+			: (Array.isArray(friendship.requester) ? friendship.requester[0] : friendship.requester);
+
+		return {
+			friendship_id: friendship.id,
+			user: friendProfile as unknown as UserProfile,
+			status: friendship.status as FriendshipStatus,
+			created_at: friendship.created_at,
+			is_requester: isRequester
+		};
+	});
+}
+
+export async function getPendingFriendRequests(userId: string): Promise<Friend[]> {
+	// Get pending requests where user is the addressee (received requests)
+	const { data, error } = await supabase
+		.from('friendships')
+		.select(`
+			id,
+			requester_id,
+			addressee_id,
+			status,
+			created_at,
+			requester:user_profiles!friendships_requester_id_fkey(*)
+		`)
+		.eq('status', 'pending')
+		.eq('addressee_id', userId);
+
+	if (error) throw new Error(error.message);
+
+	return (data || []).map(friendship => {
+		const requesterProfile = Array.isArray(friendship.requester) ? friendship.requester[0] : friendship.requester;
+		return {
+			friendship_id: friendship.id,
+			user: requesterProfile as unknown as UserProfile,
+			status: friendship.status as FriendshipStatus,
+			created_at: friendship.created_at,
+			is_requester: false
+		};
+	});
+}
+
+export async function getSentFriendRequests(userId: string): Promise<Friend[]> {
+	// Get pending requests where user is the requester (sent requests)
+	const { data, error } = await supabase
+		.from('friendships')
+		.select(`
+			id,
+			requester_id,
+			addressee_id,
+			status,
+			created_at,
+			addressee:user_profiles!friendships_addressee_id_fkey(*)
+		`)
+		.eq('status', 'pending')
+		.eq('requester_id', userId);
+
+	if (error) throw new Error(error.message);
+
+	return (data || []).map(friendship => {
+		const addresseeProfile = Array.isArray(friendship.addressee) ? friendship.addressee[0] : friendship.addressee;
+		return {
+			friendship_id: friendship.id,
+			user: addresseeProfile as unknown as UserProfile,
+			status: friendship.status as FriendshipStatus,
+			created_at: friendship.created_at,
+			is_requester: true
+		};
+	});
+}
+
+export async function getFriendshipStatus(userId: string, otherUserId: string): Promise<Friendship | null> {
+	const { data, error } = await supabase
+		.from('friendships')
+		.select('*')
+		.or(`and(requester_id.eq.${userId},addressee_id.eq.${otherUserId}),and(requester_id.eq.${otherUserId},addressee_id.eq.${userId})`)
+		.single();
+
+	if (error) return null;
+	return data;
+}
+
+// ==================== INTERNAL ARTICLE SHARING FUNCTIONS ====================
+
+export async function shareArticleWithFriend(
+	articleId: string,
+	sharedBy: string,
+	sharedWith: string,
+	message?: string
+): Promise<ArticleShare> {
+	const { data, error } = await supabase
+		.from('article_shares')
+		.insert([{
+			article_id: articleId,
+			shared_by: sharedBy,
+			shared_with: sharedWith,
+			message: message || null
+		}])
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function getSharedWithMe(userId: string): Promise<ArticleShare[]> {
+	const { data, error } = await supabase
+		.from('article_shares')
+		.select(`
+			*,
+			article:articles(*),
+			sharer:user_profiles!article_shares_shared_by_fkey(*)
+		`)
+		.eq('shared_with', userId)
+		.order('created_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+export async function getSharedByMe(userId: string): Promise<ArticleShare[]> {
+	const { data, error } = await supabase
+		.from('article_shares')
+		.select(`
+			*,
+			article:articles(*),
+			recipient:user_profiles!article_shares_shared_with_fkey(*)
+		`)
+		.eq('shared_by', userId)
+		.order('created_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+export async function markShareAsRead(shareId: string): Promise<void> {
+	const { error } = await supabase
+		.from('article_shares')
+		.update({ is_read: true })
+		.eq('id', shareId);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function getUnreadSharesCount(userId: string): Promise<number> {
+	const { count, error } = await supabase
+		.from('article_shares')
+		.select('*', { count: 'exact', head: true })
+		.eq('shared_with', userId)
+		.eq('is_read', false);
+
+	if (error) throw new Error(error.message);
+	return count || 0;
+}
+
+export async function deleteArticleShare(shareId: string): Promise<void> {
+	const { error } = await supabase
+		.from('article_shares')
+		.delete()
+		.eq('id', shareId);
+
+	if (error) throw new Error(error.message);
+}
+
+// ==================== STATISTICS FUNCTIONS ====================
+
+export async function getUserStatistics(userId: string): Promise<{
+	totalArticles: number;
+	readArticles: number;
+	favoriteArticles: number;
+	totalLikesReceived: number;
+	totalCommentsReceived: number;
+	friendsCount: number;
+	sharedArticlesCount: number;
+	receivedArticlesCount: number;
+}> {
+	// Get article stats
+	const { data: articles } = await supabase
+		.from('articles')
+		.select('id, reading_status, is_favorite, like_count, comment_count')
+		.eq('user_id', userId);
+
+	const totalArticles = articles?.length || 0;
+	const readArticles = articles?.filter(a => a.reading_status === 'completed').length || 0;
+	const favoriteArticles = articles?.filter(a => a.is_favorite).length || 0;
+	const totalLikesReceived = articles?.reduce((sum, a) => sum + (a.like_count || 0), 0) || 0;
+	const totalCommentsReceived = articles?.reduce((sum, a) => sum + (a.comment_count || 0), 0) || 0;
+
+	// Get friends count
+	const { count: friendsCount } = await supabase
+		.from('friendships')
+		.select('*', { count: 'exact', head: true })
+		.eq('status', 'accepted')
+		.or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+	// Get shared articles count
+	const { count: sharedArticlesCount } = await supabase
+		.from('article_shares')
+		.select('*', { count: 'exact', head: true })
+		.eq('shared_by', userId);
+
+	// Get received articles count
+	const { count: receivedArticlesCount } = await supabase
+		.from('article_shares')
+		.select('*', { count: 'exact', head: true })
+		.eq('shared_with', userId);
+
+	return {
+		totalArticles,
+		readArticles,
+		favoriteArticles,
+		totalLikesReceived,
+		totalCommentsReceived,
+		friendsCount: friendsCount || 0,
+		sharedArticlesCount: sharedArticlesCount || 0,
+		receivedArticlesCount: receivedArticlesCount || 0
+	};
 }

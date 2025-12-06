@@ -11,6 +11,7 @@ import LinkPreviewModal from '../../../components/LinkPreviewModal';
 import LikeButton from '../../../components/LikeButton';
 import CommentsSection from '../../../components/CommentsSection';
 import ShareButton from '../../../components/ShareButton';
+import InternalShareButton from '../../../components/InternalShareButton';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -429,6 +430,10 @@ export default function ArticleReaderPage() {
 									articleId={article.id}
 									userId={user!.id}
 									initialLikeCount={article.like_count}
+								/>
+								<InternalShareButton
+									articleId={article.id}
+									articleTitle={article.title}
 								/>
 								<ShareButton
 									articleId={article.id}

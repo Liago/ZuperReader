@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import { useFriends } from '../contexts/FriendsContext';
 import ArticleForm from '../components/ArticleForm';
 import ArticleList from '../components/ArticleList';
 
 export default function Home() {
 	const [refreshTrigger, setRefreshTrigger] = useState(0);
 	const { user, loading, signOut } = useAuth();
+	const { pendingRequests, unreadSharesCount } = useFriends();
 	const router = useRouter();
 
 	useEffect(() => {
@@ -48,13 +51,59 @@ export default function Home() {
 							</h1>
 							<p className="text-sm sm:text-lg text-gray-600">Save and read your favorite articles</p>
 						</div>
-						<div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-							<span className="text-xs sm:text-sm text-gray-600 truncate max-w-[180px] sm:max-w-none">{user.email}</span>
+						<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+							{/* Navigation Icons */}
+							<div className="flex items-center gap-1 sm:gap-2">
+								{/* Shared Articles */}
+								<Link
+									href="/shared"
+									className="relative p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200"
+									title="Articoli condivisi"
+								>
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+									</svg>
+									{unreadSharesCount > 0 && (
+										<span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+											{unreadSharesCount > 9 ? '9+' : unreadSharesCount}
+										</span>
+									)}
+								</Link>
+
+								{/* Friends */}
+								<Link
+									href="/friends"
+									className="relative p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200"
+									title="Amici"
+								>
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+									</svg>
+									{pendingRequests.length > 0 && (
+										<span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+											{pendingRequests.length > 9 ? '9+' : pendingRequests.length}
+										</span>
+									)}
+								</Link>
+
+								{/* Profile */}
+								<Link
+									href="/profile"
+									className="p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200"
+									title="Profilo"
+								>
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+									</svg>
+								</Link>
+							</div>
+
+							<span className="text-xs sm:text-sm text-gray-600 truncate max-w-[120px] sm:max-w-none hidden sm:block">{user.email}</span>
 							<button
 								onClick={signOut}
-								className="px-4 py-2 text-xs sm:text-sm bg-white/80 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 font-medium border border-gray-200"
+								className="px-3 py-2 text-xs sm:text-sm bg-white/80 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 font-medium border border-gray-200"
 							>
-								Sign Out
+								Esci
 							</button>
 						</div>
 					</div>

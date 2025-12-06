@@ -51,3 +51,53 @@ export type Share = {
 	user_id: string;
 	created_at: string;
 };
+
+// User Profile type
+export type UserProfile = {
+	id: string;
+	display_name: string | null;
+	avatar_url: string | null;
+	bio: string | null;
+	email?: string; // From joined auth.users
+	created_at: string;
+	updated_at: string;
+};
+
+// Friendship status type
+export type FriendshipStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';
+
+// Friendship type
+export type Friendship = {
+	id: string;
+	requester_id: string;
+	addressee_id: string;
+	status: FriendshipStatus;
+	created_at: string;
+	updated_at: string;
+	// Populated fields from joins
+	requester?: UserProfile;
+	addressee?: UserProfile;
+};
+
+// Article Share type (internal sharing between users)
+export type ArticleShare = {
+	id: string;
+	article_id: string;
+	shared_by: string;
+	shared_with: string;
+	message: string | null;
+	is_read: boolean;
+	created_at: string;
+	// Populated fields from joins
+	article?: Article;
+	sharer?: UserProfile;
+};
+
+// Friend with profile info
+export type Friend = {
+	friendship_id: string;
+	user: UserProfile;
+	status: FriendshipStatus;
+	created_at: string;
+	is_requester: boolean; // true if current user sent the request
+};
