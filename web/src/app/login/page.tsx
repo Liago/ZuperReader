@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -9,9 +9,11 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
-	const [magicLink, setMagicLink] = useState('');
-	const [pasteError, setPasteError] = useState('');
-	const { signInWithOtp } = useAuth();
+	const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+	const [verifyingOtp, setVerifyingOtp] = useState(false);
+	const [otpError, setOtpError] = useState('');
+	const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+	const { signInWithOtp, verifyOtpCode } = useAuth();
 	const router = useRouter();
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -29,43 +31,100 @@ export default function LoginPage() {
 		}
 	};
 
-	const handleMagicLinkPaste = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const link = e.target.value;
-		setMagicLink(link);
-		setPasteError('');
+	// Handle OTP input change
+	const handleOtpChange = (index: number, value: string) => {
+		// Only allow digits
+		if (value && !/^\d*$/.test(value)) return;
 
-		// Parse the magic link automatically when pasted
-		if (link.trim()) {
-			parseMagicLink(link);
+		const newOtp = [...otpCode];
+		// Take only the last character if multiple were pasted
+		newOtp[index] = value.slice(-1);
+		setOtpCode(newOtp);
+		setOtpError('');
+
+		// Auto-focus next input
+		if (value && index < 5) {
+			otpInputRefs.current[index + 1]?.focus();
+		}
+
+		// Auto-submit when all 6 digits are entered
+		const fullCode = newOtp.join('');
+		if (fullCode.length === 6) {
+			handleOtpSubmit(fullCode);
 		}
 	};
 
-	const parseMagicLink = (link: string) => {
-		try {
-			// Expected format: azreader://auth/confirm?token_hash=...&type=magiclink
-			// We need to extract the query parameters
-			const urlPattern = /azreader:\/\/auth\/confirm\?(.+)/;
-			const match = link.match(urlPattern);
-
-			if (!match) {
-				setPasteError('Invalid magic link format. Please paste the complete link from your email.');
-				return;
+	// Handle paste in OTP inputs
+	const handleOtpPaste = (e: React.ClipboardEvent) => {
+		e.preventDefault();
+		const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+		if (pastedData.length > 0) {
+			const newOtp = [...otpCode];
+			for (let i = 0; i < pastedData.length && i < 6; i++) {
+				newOtp[i] = pastedData[i];
 			}
+			setOtpCode(newOtp);
+			setOtpError('');
 
-			const queryString = match[1];
-			const params = new URLSearchParams(queryString);
-			const tokenHash = params.get('token_hash');
-			const type = params.get('type');
-
-			if (!tokenHash || !type) {
-				setPasteError('Magic link is missing required parameters.');
-				return;
+			// Focus the next empty input or the last one
+			const nextEmptyIndex = newOtp.findIndex(digit => !digit);
+			if (nextEmptyIndex !== -1) {
+				otpInputRefs.current[nextEmptyIndex]?.focus();
+			} else {
+				otpInputRefs.current[5]?.focus();
+				// Auto-submit if all 6 digits are pasted
+				if (pastedData.length === 6) {
+					handleOtpSubmit(pastedData);
+				}
 			}
+		}
+	};
 
-			// Redirect to the auth/confirm page with the extracted parameters
-			router.push(`/auth/confirm?token_hash=${tokenHash}&type=${type}`);
-		} catch (err) {
-			setPasteError('Failed to process magic link. Please try again.');
+	// Handle backspace in OTP inputs
+	const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+		if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+			otpInputRefs.current[index - 1]?.focus();
+		}
+	};
+
+	// Submit OTP code
+	const handleOtpSubmit = async (code?: string) => {
+		const otpToVerify = code || otpCode.join('');
+		if (otpToVerify.length !== 6) {
+			setOtpError('Please enter the complete 6-digit code');
+			return;
+		}
+
+		setVerifyingOtp(true);
+		setOtpError('');
+
+		const { error } = await verifyOtpCode(email, otpToVerify);
+
+		if (error) {
+			setOtpError(error.message || 'Invalid code. Please try again.');
+			setVerifyingOtp(false);
+			// Clear the OTP inputs on error
+			setOtpCode(['', '', '', '', '', '']);
+			otpInputRefs.current[0]?.focus();
+		} else {
+			// Success - redirect to home
+			router.push('/');
+		}
+	};
+
+	// Resend OTP code
+	const handleResendCode = async () => {
+		setLoading(true);
+		setOtpError('');
+		setOtpCode(['', '', '', '', '', '']);
+
+		const { error } = await signInWithOtp(email);
+
+		setLoading(false);
+		if (error) {
+			setOtpError(error.message);
+		} else {
+			otpInputRefs.current[0]?.focus();
 		}
 	};
 
@@ -88,50 +147,65 @@ export default function LoginPage() {
 						</div>
 
 						<h1 className="text-3xl font-bold text-gray-900 mb-4">
-							Check your inbox
+							Enter verification code
 						</h1>
 						<p className="text-gray-600 mb-2 text-lg">
-							We've sent a magic link to
+							We've sent a 6-digit code to
 						</p>
 						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
 							{email}
 						</p>
 						<p className="text-gray-500 text-sm mb-6">
-							Click the link in your email to sign in securely. The link will expire in 10 minutes.
+							Enter the 6-digit code from your email to sign in. The code will expire in 10 minutes.
 						</p>
 
-						{/* Magic Link Paste Section */}
+						{/* OTP Input Section */}
 						<div className="mb-6">
-							<div className="relative flex items-center mb-4">
-								<div className="flex-grow border-t border-gray-300"></div>
-								<span className="flex-shrink mx-4 text-gray-500 text-sm">or paste your magic link</span>
-								<div className="flex-grow border-t border-gray-300"></div>
+							<div className="flex justify-center gap-2 mb-4">
+								{otpCode.map((digit, index) => (
+									<input
+										key={index}
+										ref={(el) => { otpInputRefs.current[index] = el; }}
+										type="text"
+										inputMode="numeric"
+										maxLength={1}
+										value={digit}
+										onChange={(e) => handleOtpChange(index, e.target.value)}
+										onKeyDown={(e) => handleOtpKeyDown(index, e)}
+										onPaste={handleOtpPaste}
+										disabled={verifyingOtp}
+										className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+										autoFocus={index === 0}
+									/>
+								))}
 							</div>
 
-							<div className="space-y-2">
-								<div className="relative">
-									<div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-										<svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-										</svg>
-									</div>
-									<input
-										type="text"
-										value={magicLink}
-										onChange={handleMagicLinkPaste}
-										placeholder="azreader://auth/confirm?token_hash=..."
-										className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 placeholder:text-gray-400 text-sm"
-									/>
+							{otpError && (
+								<div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl mb-4">
+									<svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+										<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+									</svg>
+									<p className="text-red-700 text-xs font-medium">{otpError}</p>
 								</div>
-								{pasteError && (
-									<div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
-										<svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-											<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-										</svg>
-										<p className="text-red-700 text-xs font-medium">{pasteError}</p>
-									</div>
-								)}
-							</div>
+							)}
+
+							{verifyingOtp && (
+								<div className="flex items-center justify-center space-x-2 text-indigo-600 mb-4">
+									<svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+									<span className="font-medium">Verifying...</span>
+								</div>
+							)}
+
+							<button
+								onClick={handleResendCode}
+								disabled={loading || verifyingOtp}
+								className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-all hover:underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{loading ? 'Sending...' : "Didn't receive the code? Resend"}
+							</button>
 						</div>
 
 						<button
@@ -167,7 +241,7 @@ export default function LoginPage() {
 							Welcome to ZuperReader
 						</h1>
 						<p className="text-gray-600">
-							Sign in with a magic link – no password needed
+							Sign in with a verification code – no password needed
 						</p>
 					</div>
 
@@ -214,11 +288,11 @@ export default function LoginPage() {
 										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 									</svg>
-									<span>Sending magic link...</span>
+									<span>Sending code...</span>
 								</>
 							) : (
 								<>
-									<span>Send Magic Link</span>
+									<span>Send Verification Code</span>
 									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
 									</svg>
