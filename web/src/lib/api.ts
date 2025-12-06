@@ -102,6 +102,18 @@ export async function updateReadingStatus(articleId: string, status: 'unread' | 
 	if (error) throw new Error(error.message);
 }
 
+export async function updateArticleTags(articleId: string, tags: string[]): Promise<Article> {
+	const { data, error } = await supabase
+		.from('articles')
+		.update({ tags })
+		.eq('id', articleId)
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
 // ==================== LIKE FUNCTIONS ====================
 
 export async function toggleLike(articleId: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
