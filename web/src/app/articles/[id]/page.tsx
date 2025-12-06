@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getArticleById, deleteArticle } from '../../../lib/api';
+import { getArticleById, deleteArticle, updateArticleTags } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -12,6 +12,8 @@ import LikeButton from '../../../components/LikeButton';
 import CommentsSection from '../../../components/CommentsSection';
 import ShareButton from '../../../components/ShareButton';
 import InternalShareButton from '../../../components/InternalShareButton';
+import { TagList } from '../../../components/TagBadge';
+import TagManagementModal from '../../../components/TagManagementModal';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -26,6 +28,7 @@ export default function ArticleReaderPage() {
 	const [linkPreviewUrl, setLinkPreviewUrl] = useState<string | null>(null);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [showTagModal, setShowTagModal] = useState(false);
 	const articleContentRef = useRef<HTMLDivElement>(null);
 
 	const id = params?.id as string;
@@ -143,6 +146,19 @@ export default function ArticleReaderPage() {
 			setError('Failed to delete article');
 			setIsDeleting(false);
 			setShowDeleteConfirm(false);
+		}
+	};
+
+	// Funzione per salvare i tag
+	const handleSaveTags = async (tags: string[]) => {
+		if (!article) return;
+
+		try {
+			const updatedArticle = await updateArticleTags(article.id, tags);
+			setArticle({ ...article, tags: updatedArticle.tags });
+		} catch (error) {
+			console.error('Failed to update tags:', error);
+			throw error;
 		}
 	};
 
@@ -368,6 +384,34 @@ export default function ArticleReaderPage() {
 								)}
 							</div>
 
+							{/* Tags Section */}
+							<div className="mb-4 flex flex-wrap items-center gap-2">
+								{article.tags && article.tags.length > 0 && (
+									<TagList
+										tags={article.tags}
+										maxVisible={6}
+										size="md"
+									/>
+								)}
+								<button
+									onClick={() => setShowTagModal(true)}
+									className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all hover:scale-105 ${
+										preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+											? 'bg-purple-900/30 text-purple-200 border-purple-700/50 hover:bg-purple-900/50'
+											: preferences.colorTheme === 'sepia'
+												? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+												: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+									}`}
+								>
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+									</svg>
+									<span className="text-sm font-medium">
+										{article.tags && article.tags.length > 0 ? 'Manage Tags' : 'Add Tags'}
+									</span>
+								</button>
+							</div>
+
 							{/* Link originale */}
 							{article.url && (
 								<a
@@ -542,6 +586,16 @@ export default function ArticleReaderPage() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Tag Management Modal */}
+			{showTagModal && article && (
+				<TagManagementModal
+					isOpen={showTagModal}
+					onClose={() => setShowTagModal(false)}
+					article={article}
+					onSave={handleSaveTags}
+				/>
 			)}
 		</div>
 	);

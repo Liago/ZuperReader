@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getArticles, deleteArticle } from '../lib/api';
+import { getArticles, deleteArticle, updateArticleTags } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
+import { TagList } from './TagBadge';
+import TagManagementModal from './TagManagementModal';
 
 interface ArticleListProps {
 	userId: string;
@@ -51,6 +53,8 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [showTagModal, setShowTagModal] = useState(false);
+	const [articleForTags, setArticleForTags] = useState<Article | null>(null);
 	const router = useRouter();
 	const { preferences, updatePreferences } = useReadingPreferences();
 	const viewMode = preferences.viewMode;
@@ -156,6 +160,28 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	const handleDeleteCancel = () => {
 		setShowDeleteConfirm(false);
 		setArticleToDelete(null);
+	};
+
+	// Tag management handlers
+	const handleTagClick = (e: React.MouseEvent, article: Article) => {
+		e.stopPropagation();
+		setArticleForTags(article);
+		setShowTagModal(true);
+	};
+
+	const handleSaveTags = async (tags: string[]) => {
+		if (!articleForTags) return;
+
+		try {
+			const updatedArticle = await updateArticleTags(articleForTags.id, tags);
+			// Update the article in the local state
+			setArticles(prev => prev.map(a =>
+				a.id === articleForTags.id ? { ...a, tags: updatedArticle.tags } : a
+			));
+		} catch (error) {
+			console.error('Failed to update tags:', error);
+			throw error;
+		}
 	};
 
 	if (loading) {
@@ -320,6 +346,29 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 									</span>
 								</div>
 
+								{/* Tags */}
+								<div className="mb-3 flex items-center gap-2">
+									{article.tags && article.tags.length > 0 ? (
+										<div onClick={(e) => e.stopPropagation()}>
+											<TagList
+												tags={article.tags}
+												maxVisible={3}
+												size="sm"
+											/>
+										</div>
+									) : null}
+									<button
+										onClick={(e) => handleTagClick(e, article)}
+										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 hover:text-pink-600 hover:bg-purple-50 rounded-full transition-colors border border-transparent hover:border-purple-200"
+										title="Manage tags"
+									>
+										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+										</svg>
+										{article.tags && article.tags.length > 0 ? 'Edit' : 'Add tags'}
+									</button>
+								</div>
+
 								{/* Link esterno */}
 								<a
 									href={article.url}
@@ -366,7 +415,28 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
 									{article.title}
 								</h3>
-								<p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{article.excerpt}</p>
+								<p className="text-gray-600 text-sm mb-2 line-clamp-2 flex-1">{article.excerpt}</p>
+
+								{/* Tags in List View */}
+								<div className="mb-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+									{article.tags && article.tags.length > 0 && (
+										<TagList
+											tags={article.tags}
+											maxVisible={4}
+											size="sm"
+										/>
+									)}
+									<button
+										onClick={(e) => handleTagClick(e, article)}
+										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 hover:text-pink-600 hover:bg-purple-50 rounded-full transition-colors"
+										title="Manage tags"
+									>
+										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+										</svg>
+										{article.tags && article.tags.length > 0 ? '' : 'Add tags'}
+									</button>
+								</div>
 
 								{/* Meta info */}
 								<div className="flex flex-wrap gap-3 items-center text-xs text-gray-500">
@@ -495,6 +565,19 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Tag Management Modal */}
+			{showTagModal && articleForTags && (
+				<TagManagementModal
+					isOpen={showTagModal}
+					onClose={() => {
+						setShowTagModal(false);
+						setArticleForTags(null);
+					}}
+					article={articleForTags}
+					onSave={handleSaveTags}
+				/>
 			)}
 
 			{/* CSS Animations */}
