@@ -501,7 +501,7 @@ export async function getSharedWithMe(userId: string): Promise<ArticleShare[]> {
 		.select(`
 			*,
 			article:articles(*),
-			sharer:user_profiles!article_shares_shared_by_fkey(*)
+			sharer:user_profiles!article_shares_shared_by_profile_fkey(*)
 		`)
 		.eq('shared_with', userId)
 		.order('created_at', { ascending: false });
@@ -516,7 +516,7 @@ export async function getSharedByMe(userId: string): Promise<ArticleShare[]> {
 		.select(`
 			*,
 			article:articles(*),
-			recipient:user_profiles!article_shares_shared_with_fkey(*)
+			recipient:user_profiles!article_shares_shared_with_profile_fkey(*)
 		`)
 		.eq('shared_by', userId)
 		.order('created_at', { ascending: false });
