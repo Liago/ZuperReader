@@ -64,6 +64,10 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 
 	const observerTarget = useRef<HTMLDivElement>(null);
 
+	// Refs per tracciare i valori serializzati di filtri e sort
+	const prevFiltersRef = useRef<string>('');
+	const prevSortRef = useRef<string>('');
+
 	// Estrai tag e domini unici dagli articoli per i filtri
 	const availableTags = useMemo(() => {
 		const tagSet = new Set<string>();
@@ -81,7 +85,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		return Array.from(domainSet).sort();
 	}, [articles]);
 
-	// Funzione per caricare gli articoli
+	// Funzione per caricare gli articoli - rimuoviamo offset dalle dipendenze
 	const loadArticles = useCallback(async (reset: boolean = false) => {
 		const currentOffset = reset ? 0 : offset;
 
@@ -117,21 +121,35 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 			setLoading(false);
 			setLoadingMore(false);
 		}
-	}, [userId, offset, currentFilters, currentSort]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [userId, currentFilters, currentSort]);
 
 	// Handler per quando cambiano i filtri
 	const handleFiltersChange = useCallback((filters: ArticleFilters, sort: ArticleSortOptions) => {
 		setCurrentFilters(filters);
 		setCurrentSort(sort);
 		setOffset(0);
-		// Il reset avviene nell'effect sottostante
 	}, []);
 
-	// Carica articoli iniziali o quando refreshTrigger, filtri o sort cambiano
+	// Carica articoli iniziali o quando refreshTrigger, filtri o sort cambiano (con deep comparison)
+	useEffect(() => {
+		const filtersStr = JSON.stringify(currentFilters);
+		const sortStr = JSON.stringify(currentSort);
+
+		// Solo se i valori sono effettivamente cambiati
+		if (filtersStr !== prevFiltersRef.current || sortStr !== prevSortRef.current) {
+			prevFiltersRef.current = filtersStr;
+			prevSortRef.current = sortStr;
+			setOffset(0);
+			loadArticles(true);
+		}
+	}, [currentFilters, currentSort, loadArticles]);
+
+	// Carica articoli quando userId o refreshTrigger cambiano
 	useEffect(() => {
 		setOffset(0);
 		loadArticles(true);
-	}, [userId, refreshTrigger, currentFilters, currentSort]);
+	}, [userId, refreshTrigger, loadArticles]);
 
 	// Intersection Observer per infinite scrolling
 	useEffect(() => {
