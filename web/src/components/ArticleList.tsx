@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { getArticles, deleteArticle, updateArticleTags } from '../lib/api';
+import { getArticles, deleteArticle, updateArticleTags, ArticleFilters, ArticleSortOptions } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { TagList } from './TagBadge';
 import TagManagementModal from './TagManagementModal';
+import SearchAndFilters from './SearchAndFilters';
 
 interface ArticleListProps {
 	userId: string;
@@ -55,11 +56,30 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [articleForTags, setArticleForTags] = useState<Article | null>(null);
+	const [currentFilters, setCurrentFilters] = useState<ArticleFilters>({});
+	const [currentSort, setCurrentSort] = useState<ArticleSortOptions>({ field: 'created_at', order: 'desc' });
 	const router = useRouter();
 	const { preferences, updatePreferences } = useReadingPreferences();
 	const viewMode = preferences.viewMode;
 
 	const observerTarget = useRef<HTMLDivElement>(null);
+
+	// Estrai tag e domini unici dagli articoli per i filtri
+	const availableTags = useMemo(() => {
+		const tagSet = new Set<string>();
+		articles.forEach(article => {
+			article.tags?.forEach(tag => tagSet.add(tag));
+		});
+		return Array.from(tagSet).sort();
+	}, [articles]);
+
+	const availableDomains = useMemo(() => {
+		const domainSet = new Set<string>();
+		articles.forEach(article => {
+			if (article.domain) domainSet.add(article.domain);
+		});
+		return Array.from(domainSet).sort();
+	}, [articles]);
 
 	// Funzione per caricare gli articoli
 	const loadArticles = useCallback(async (reset: boolean = false) => {
@@ -72,7 +92,13 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		}
 
 		try {
-			const { articles: newArticles, hasMore: more } = await getArticles(userId, ITEMS_PER_PAGE, currentOffset);
+			const { articles: newArticles, hasMore: more } = await getArticles(
+				userId,
+				ITEMS_PER_PAGE,
+				currentOffset,
+				currentFilters,
+				currentSort
+			);
 
 			if (reset) {
 				setArticles(newArticles);
@@ -91,13 +117,21 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 			setLoading(false);
 			setLoadingMore(false);
 		}
-	}, [userId, offset]);
+	}, [userId, offset, currentFilters, currentSort]);
 
-	// Carica articoli iniziali o quando refreshTrigger cambia
+	// Handler per quando cambiano i filtri
+	const handleFiltersChange = useCallback((filters: ArticleFilters, sort: ArticleSortOptions) => {
+		setCurrentFilters(filters);
+		setCurrentSort(sort);
+		setOffset(0);
+		// Il reset avviene nell'effect sottostante
+	}, []);
+
+	// Carica articoli iniziali o quando refreshTrigger, filtri o sort cambiano
 	useEffect(() => {
 		setOffset(0);
 		loadArticles(true);
-	}, [userId, refreshTrigger]);
+	}, [userId, refreshTrigger, currentFilters, currentSort]);
 
 	// Intersection Observer per infinite scrolling
 	useEffect(() => {
@@ -233,6 +267,13 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 
 	return (
 		<div className="mt-8">
+			{/* Search and Filters */}
+			<SearchAndFilters
+				onFiltersChange={handleFiltersChange}
+				availableTags={availableTags}
+				availableDomains={availableDomains}
+			/>
+
 			{/* Toggle View Mode - Mobile First */}
 			<div className="flex justify-between items-center mb-6">
 				<h2 className="text-xl sm:text-2xl font-bold text-gray-800">
