@@ -2,6 +2,26 @@ import { supabase, Article, Like, Comment, Share, UserProfile, Friendship, Frien
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
+// ==================== SEARCH & FILTER TYPES ====================
+
+export interface ArticleFilters {
+	searchQuery?: string;
+	tags?: string[];
+	readingStatus?: 'unread' | 'reading' | 'completed' | 'all';
+	isFavorite?: boolean;
+	domain?: string;
+	dateFrom?: string;
+	dateTo?: string;
+}
+
+export type ArticleSortField = 'created_at' | 'published_date' | 'like_count' | 'title';
+export type ArticleSortOrder = 'asc' | 'desc';
+
+export interface ArticleSortOptions {
+	field: ArticleSortField;
+	order: ArticleSortOrder;
+}
+
 export async function parseArticle(url: string, userId: string): Promise<{ content: string; title: string; excerpt: string; lead_image_url: string; author: string; date_published: string; domain: string; word_count: number }> {
 	const response = await fetch(PARSE_FUNCTION_URL, {
 		method: 'POST',
@@ -43,14 +63,65 @@ export async function saveArticle(parsedData: any, userId: string): Promise<Arti
 	return data;
 }
 
-export async function getArticles(userId: string, limit: number = 10, offset: number = 0): Promise<{ articles: Article[], hasMore: boolean }> {
-	// Fetch limit + 1 to check if there are more articles
-	const { data, error } = await supabase
+export async function getArticles(
+	userId: string,
+	limit: number = 10,
+	offset: number = 0,
+	filters?: ArticleFilters,
+	sort?: ArticleSortOptions
+): Promise<{ articles: Article[], hasMore: boolean }> {
+	// Start building the query
+	let query = supabase
 		.from('articles')
 		.select('*')
-		.eq('user_id', userId)
-		.order('created_at', { ascending: false })
-		.range(offset, offset + limit);
+		.eq('user_id', userId);
+
+	// Apply full-text search if provided
+	if (filters?.searchQuery && filters.searchQuery.trim()) {
+		// Convert search query to tsquery format
+		const tsQuery = filters.searchQuery.trim().split(/\s+/).join(' & ');
+		query = query.textSearch('search_vector', tsQuery);
+	}
+
+	// Apply tag filter if provided
+	if (filters?.tags && filters.tags.length > 0) {
+		query = query.contains('tags', filters.tags);
+	}
+
+	// Apply reading status filter if provided
+	if (filters?.readingStatus && filters.readingStatus !== 'all') {
+		query = query.eq('reading_status', filters.readingStatus);
+	}
+
+	// Apply favorite filter if provided
+	if (filters?.isFavorite !== undefined) {
+		query = query.eq('is_favorite', filters.isFavorite);
+	}
+
+	// Apply domain filter if provided
+	if (filters?.domain) {
+		query = query.eq('domain', filters.domain);
+	}
+
+	// Apply date range filters if provided
+	if (filters?.dateFrom) {
+		query = query.gte('created_at', filters.dateFrom);
+	}
+	if (filters?.dateTo) {
+		query = query.lte('created_at', filters.dateTo);
+	}
+
+	// Apply sorting (default to created_at desc)
+	const sortField = sort?.field || 'created_at';
+	const sortOrder = sort?.order || 'desc';
+	const ascending = sortOrder === 'asc';
+
+	query = query.order(sortField, { ascending });
+
+	// Fetch limit + 1 to check if there are more articles
+	query = query.range(offset, offset + limit);
+
+	const { data, error } = await query;
 
 	if (error) throw new Error(error.message);
 
