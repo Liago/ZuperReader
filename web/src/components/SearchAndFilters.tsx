@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
 
 interface SearchAndFiltersProps {
@@ -23,16 +23,8 @@ export default function SearchAndFilters({
 	const [sortOrder, setSortOrder] = useState<ArticleSortOrder>('desc');
 	const [showFilters, setShowFilters] = useState(false);
 
-	// Debounce search query
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			applyFilters();
-		}, 300);
-
-		return () => clearTimeout(timer);
-	}, [searchQuery, selectedTags, readingStatus, isFavorite, selectedDomain, sortField, sortOrder]);
-
-	const applyFilters = () => {
+	// Applica i filtri
+	const applyFilters = useCallback(() => {
 		const filters: ArticleFilters = {
 			searchQuery: searchQuery || undefined,
 			tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -47,7 +39,16 @@ export default function SearchAndFilters({
 		};
 
 		onFiltersChange(filters, sort);
-	};
+	}, [searchQuery, selectedTags, readingStatus, isFavorite, selectedDomain, sortField, sortOrder, onFiltersChange]);
+
+	// Debounce search query e filtri
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			applyFilters();
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [applyFilters]);
 
 	const toggleTag = (tag: string) => {
 		if (selectedTags.includes(tag)) {
