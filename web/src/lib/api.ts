@@ -135,14 +135,9 @@ export async function toggleLike(articleId: string, userId: string): Promise<{ l
 
 		if (deleteLikeError) throw new Error(deleteLikeError.message);
 
-		// Decrement like_count
-		const { error: updateArticleError } = await supabase.rpc('decrement_like_count', { article_id: articleId });
-		if (updateArticleError) {
-			// Fallback if RPC doesn't exist
-			const { data: article } = await supabase.from('articles').select('like_count').eq('id', articleId).single();
-			const newCount = Math.max(0, (article?.like_count || 0) - 1);
-			await supabase.from('articles').update({ like_count: newCount }).eq('id', articleId);
-		}
+		// Decrement like_count atomically
+		const { error: updateError } = await supabase.rpc('decrement_like_count', { article_id: articleId });
+		if (updateError) throw new Error(updateError.message);
 
 		// Get updated count
 		const { data: updatedArticle } = await supabase
@@ -160,14 +155,9 @@ export async function toggleLike(articleId: string, userId: string): Promise<{ l
 
 		if (insertLikeError) throw new Error(insertLikeError.message);
 
-		// Increment like_count
-		const { error: updateArticleError } = await supabase.rpc('increment_like_count', { article_id: articleId });
-		if (updateArticleError) {
-			// Fallback if RPC doesn't exist
-			const { data: article } = await supabase.from('articles').select('like_count').eq('id', articleId).single();
-			const newCount = (article?.like_count || 0) + 1;
-			await supabase.from('articles').update({ like_count: newCount }).eq('id', articleId);
-		}
+		// Increment like_count atomically
+		const { error: updateError } = await supabase.rpc('increment_like_count', { article_id: articleId });
+		if (updateError) throw new Error(updateError.message);
 
 		// Get updated count
 		const { data: updatedArticle } = await supabase
@@ -212,14 +202,9 @@ export async function addComment(articleId: string, userId: string, content: str
 
 	if (error) throw new Error(error.message);
 
-	// Increment comment_count
-	const { error: updateArticleError } = await supabase.rpc('increment_comment_count', { article_id: articleId });
-	if (updateArticleError) {
-		// Fallback if RPC doesn't exist
-		const { data: article } = await supabase.from('articles').select('comment_count').eq('id', articleId).single();
-		const newCount = (article?.comment_count || 0) + 1;
-		await supabase.from('articles').update({ comment_count: newCount }).eq('id', articleId);
-	}
+	// Increment comment_count atomically
+	const { error: updateError } = await supabase.rpc('increment_comment_count', { article_id: articleId });
+	if (updateError) throw new Error(updateError.message);
 
 	return data;
 }
@@ -243,14 +228,9 @@ export async function deleteComment(commentId: string, articleId: string): Promi
 
 	if (error) throw new Error(error.message);
 
-	// Decrement comment_count
-	const { error: updateArticleError } = await supabase.rpc('decrement_comment_count', { article_id: articleId });
-	if (updateArticleError) {
-		// Fallback if RPC doesn't exist
-		const { data: article } = await supabase.from('articles').select('comment_count').eq('id', articleId).single();
-		const newCount = Math.max(0, (article?.comment_count || 0) - 1);
-		await supabase.from('articles').update({ comment_count: newCount }).eq('id', articleId);
-	}
+	// Decrement comment_count atomically
+	const { error: updateError } = await supabase.rpc('decrement_comment_count', { article_id: articleId });
+	if (updateError) throw new Error(updateError.message);
 }
 
 export async function updateComment(commentId: string, content: string): Promise<Comment> {
