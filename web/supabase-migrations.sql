@@ -20,8 +20,8 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_display_name ON user_profiles(displ
 -- Status: 'pending', 'accepted', 'rejected', 'blocked'
 CREATE TABLE IF NOT EXISTS friendships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    requester_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    addressee_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    requester_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    addressee_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'blocked')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
