@@ -67,6 +67,11 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 	// Refs per tracciare i valori serializzati di filtri e sort
 	const prevFiltersRef = useRef<string>('');
 	const prevSortRef = useRef<string>('');
+	// Ref per tracciare se il caricamento iniziale è stato completato
+	const initialLoadDoneRef = useRef(false);
+	// Refs per tracciare userId e refreshTrigger per evitare loop
+	const prevUserIdRef = useRef<string>('');
+	const prevRefreshTriggerRef = useRef<number>(-1);
 
 	// Estrai tag e domini unici dagli articoli per i filtri
 	const availableTags = useMemo(() => {
@@ -131,8 +136,17 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		setOffset(0);
 	}, []);
 
-	// Carica articoli iniziali o quando refreshTrigger, filtri o sort cambiano (con deep comparison)
+	// Carica articoli quando filtri o sort cambiano (con deep comparison)
+	// Nota: questo useEffect NON gestisce il caricamento iniziale, solo i cambiamenti successivi
 	useEffect(() => {
+		// Skip se il caricamento iniziale non è ancora stato fatto
+		if (!initialLoadDoneRef.current) {
+			// Inizializza i refs con i valori iniziali senza caricare
+			prevFiltersRef.current = JSON.stringify(currentFilters);
+			prevSortRef.current = JSON.stringify(currentSort);
+			return;
+		}
+
 		const filtersStr = JSON.stringify(currentFilters);
 		const sortStr = JSON.stringify(currentSort);
 
@@ -143,13 +157,33 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 			setOffset(0);
 			loadArticles(true);
 		}
-	}, [currentFilters, currentSort, loadArticles]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentFilters, currentSort]);
 
 	// Carica articoli quando userId o refreshTrigger cambiano
 	useEffect(() => {
-		setOffset(0);
-		loadArticles(true);
-	}, [userId, refreshTrigger, loadArticles]);
+		// Controlla se userId o refreshTrigger sono effettivamente cambiati
+		const userIdChanged = userId !== prevUserIdRef.current;
+		const refreshTriggerChanged = refreshTrigger !== prevRefreshTriggerRef.current;
+
+		// Aggiorna sempre i refs
+		prevUserIdRef.current = userId;
+		prevRefreshTriggerRef.current = refreshTrigger;
+
+		// Carica solo se:
+		// 1. È il primo caricamento (initialLoadDoneRef.current === false)
+		// 2. O userId è cambiato
+		// 3. O refreshTrigger è cambiato (ma solo dopo il caricamento iniziale)
+		if (!initialLoadDoneRef.current) {
+			initialLoadDoneRef.current = true;
+			setOffset(0);
+			loadArticles(true);
+		} else if (userIdChanged || (refreshTriggerChanged && prevRefreshTriggerRef.current !== -1)) {
+			setOffset(0);
+			loadArticles(true);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [userId, refreshTrigger]);
 
 	// Intersection Observer per infinite scrolling
 	useEffect(() => {
