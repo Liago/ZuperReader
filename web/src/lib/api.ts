@@ -1,4 +1,4 @@
-import { supabase, Article, Like, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend } from './supabase';
+import { supabase, Article, Like, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
@@ -678,4 +678,77 @@ export async function getUserStatistics(userId: string): Promise<{
 		sharedArticlesCount: sharedArticlesCount || 0,
 		receivedArticlesCount: receivedArticlesCount || 0
 	};
+}
+
+// ==================== USER PREFERENCES ====================
+
+/**
+ * Get user reading preferences from database
+ */
+export async function getUserPreferences(userId: string): Promise<UserPreferences | null> {
+	const { data, error } = await supabase
+		.from('user_preferences')
+		.select('*')
+		.eq('id', userId)
+		.single();
+
+	if (error) {
+		// If no preferences exist, return null (not an error)
+		if (error.code === 'PGRST116') {
+			return null;
+		}
+		throw new Error(error.message);
+	}
+
+	return data;
+}
+
+/**
+ * Save or update user reading preferences
+ */
+export async function saveUserPreferences(
+	userId: string,
+	preferences: Omit<UserPreferences, 'id' | 'created_at' | 'updated_at'>
+): Promise<UserPreferences> {
+	// Try to update first
+	const { data: existingData } = await supabase
+		.from('user_preferences')
+		.select('id')
+		.eq('id', userId)
+		.single();
+
+	if (existingData) {
+		// Update existing preferences
+		const { data, error } = await supabase
+			.from('user_preferences')
+			.update(preferences)
+			.eq('id', userId)
+			.select()
+			.single();
+
+		if (error) throw new Error(error.message);
+		return data;
+	} else {
+		// Insert new preferences
+		const { data, error } = await supabase
+			.from('user_preferences')
+			.insert([{ ...preferences, id: userId }])
+			.select()
+			.single();
+
+		if (error) throw new Error(error.message);
+		return data;
+	}
+}
+
+/**
+ * Delete user reading preferences
+ */
+export async function deleteUserPreferences(userId: string): Promise<void> {
+	const { error } = await supabase
+		.from('user_preferences')
+		.delete()
+		.eq('id', userId);
+
+	if (error) throw new Error(error.message);
 }

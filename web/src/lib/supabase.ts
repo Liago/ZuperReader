@@ -101,3 +101,16 @@ export type Friend = {
 	created_at: string;
 	is_requester: boolean; // true if current user sent the request
 };
+
+// User Preferences type (for reading preferences synchronization)
+export type UserPreferences = {
+	id: string; // User ID
+	font_family: 'sans' | 'serif' | 'mono' | 'roboto' | 'lato' | 'openSans' | 'ubuntu';
+	font_size: number; // 12-50
+	color_theme: 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
+	line_height: 'compact' | 'normal' | 'relaxed' | 'loose';
+	content_width: 'narrow' | 'normal' | 'wide';
+	view_mode: 'grid' | 'list';
+	created_at: string;
+	updated_at: string;
+};
