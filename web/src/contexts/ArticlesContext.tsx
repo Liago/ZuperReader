@@ -52,8 +52,9 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 		filters?: ArticleFilters,
 		sort?: ArticleSortOptions
 	) => {
-		// Prevent concurrent loads
-		if (loadingRef.current) return;
+		// If reset is requested and a load is in progress, allow reset to proceed
+		// Otherwise prevent concurrent loads
+		if (loadingRef.current && !reset) return;
 		loadingRef.current = true;
 
 		// Track current user
@@ -87,6 +88,12 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 				currentFiltersRef.current,
 				currentSortRef.current
 			);
+
+			// Double-check we should still apply these results
+			// If userId changed during the request, ignore the results
+			if (currentUserIdRef.current !== userId) {
+				return;
+			}
 
 			setState(prev => ({
 				...prev,

@@ -146,11 +146,18 @@ export default function ArticleList({ userId }: ArticleListProps) {
 		}
 	}, [userId, isInitialized, loadArticles, buildFiltersAndSort]);
 
+	// Track loading state in a ref to avoid recreating observer on every loading change
+	const loadingStateRef = useRef({ loading, loadingMore });
+	useEffect(() => {
+		loadingStateRef.current = { loading, loadingMore };
+	}, [loading, loadingMore]);
+
 	// Intersection Observer per infinite scrolling
 	useEffect(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+				const { loading: isLoading, loadingMore: isLoadingMore } = loadingStateRef.current;
+				if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
 					loadArticles(userId, false);
 				}
 			},
@@ -167,7 +174,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 				observer.unobserve(currentTarget);
 			}
 		};
-	}, [hasMore, loading, loadingMore, loadArticles, userId]);
+	}, [hasMore, loadArticles, userId]);
 
 	// Clear all filters
 	const clearFilters = () => {
