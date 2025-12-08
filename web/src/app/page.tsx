@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useFriends } from '../contexts/FriendsContext';
-import ArticleForm from '../components/ArticleForm';
+import { useArticles } from '../contexts/ArticlesContext';
 import ArticleList from '../components/ArticleList';
+import AddArticleModal from '../components/AddArticleModal';
 
 export default function Home() {
-	const [refreshTrigger, setRefreshTrigger] = useState(0);
+	const [showAddModal, setShowAddModal] = useState(false);
 	const { user, loading, signOut } = useAuth();
 	const { pendingRequests, unreadSharesCount } = useFriends();
+	const { refreshArticles } = useArticles();
 	const router = useRouter();
 
 	useEffect(() => {
@@ -21,7 +23,10 @@ export default function Home() {
 	}, [user, loading, router]);
 
 	const handleArticleAdded = () => {
-		setRefreshTrigger((prev) => prev + 1);
+		if (user) {
+			// Refresh with default filters/sort - the ArticleList will rebuild filters
+			refreshArticles(user.id);
+		}
 	};
 
 	if (loading) {
@@ -52,6 +57,18 @@ export default function Home() {
 							<p className="text-sm sm:text-lg text-gray-600">Save and read your favorite articles</p>
 						</div>
 						<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+							{/* Add Article Button */}
+							<button
+								onClick={() => setShowAddModal(true)}
+								className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
+								title="Add new article"
+							>
+								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+								</svg>
+								<span className="hidden sm:inline">Add Article</span>
+							</button>
+
 							{/* Navigation Icons */}
 							<div className="flex items-center gap-1 sm:gap-2">
 								{/* Shared Articles */}
@@ -109,9 +126,16 @@ export default function Home() {
 					</div>
 				</header>
 
-				<ArticleForm userId={user.id} onArticleAdded={handleArticleAdded} />
-				<ArticleList userId={user.id} refreshTrigger={refreshTrigger} />
+				<ArticleList userId={user.id} />
 			</div>
+
+			{/* Add Article Modal */}
+			<AddArticleModal
+				isOpen={showAddModal}
+				onClose={() => setShowAddModal(false)}
+				userId={user.id}
+				onArticleAdded={handleArticleAdded}
+			/>
 		</main>
 	);
 }
