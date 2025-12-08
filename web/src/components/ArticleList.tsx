@@ -161,7 +161,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					loadArticles(userId, false);
 				}
 			},
-			{ threshold: 0.1 }
+			{
+				threshold: 0,
+				rootMargin: '400px' // Trigger loading when element is 400px away from viewport
+			}
 		);
 
 		const currentTarget = observerTarget.current;
