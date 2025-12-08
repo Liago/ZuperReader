@@ -2,19 +2,16 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { getArticles, deleteArticle, updateArticleTags, ArticleFilters, ArticleSortOptions } from '../lib/api';
+import { deleteArticle, updateArticleTags, ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
+import { useArticles } from '../contexts/ArticlesContext';
 import { TagList } from './TagBadge';
 import TagManagementModal from './TagManagementModal';
-import SearchAndFilters from './SearchAndFilters';
 
 interface ArticleListProps {
 	userId: string;
-	refreshTrigger: number;
 }
-
-const ITEMS_PER_PAGE = 10;
 
 // Skeleton Loader per Grid View
 function GridSkeleton() {
@@ -44,34 +41,33 @@ function ListSkeleton() {
 	);
 }
 
-export default function ArticleList({ userId, refreshTrigger }: ArticleListProps) {
-	const [articles, setArticles] = useState<Article[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [loadingMore, setLoadingMore] = useState(false);
-	const [error, setError] = useState('');
-	const [hasMore, setHasMore] = useState(true);
-	const [offset, setOffset] = useState(0);
+export default function ArticleList({ userId }: ArticleListProps) {
+	const { state, loadArticles, updateArticle, removeArticle } = useArticles();
+	const { articles, loading, loadingMore, error, hasMore, isInitialized } = state;
+
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [articleForTags, setArticleForTags] = useState<Article | null>(null);
-	const [currentFilters, setCurrentFilters] = useState<ArticleFilters>({});
-	const [currentSort, setCurrentSort] = useState<ArticleSortOptions>({ field: 'created_at', order: 'desc' });
+
+	// Local filter states for UI
+	const [searchQuery, setSearchQuery] = useState('');
+	const [readingStatus, setReadingStatus] = useState<'all' | 'unread' | 'reading' | 'completed'>('all');
+	const [isFavorite, setIsFavorite] = useState<boolean | undefined>(undefined);
+	const [sortField, setSortField] = useState<ArticleSortField>('created_at');
+	const [sortOrder, setSortOrder] = useState<ArticleSortOrder>('desc');
+	const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [selectedDomain, setSelectedDomain] = useState('');
+
 	const router = useRouter();
 	const { preferences, updatePreferences } = useReadingPreferences();
 	const viewMode = preferences.viewMode;
 
 	const observerTarget = useRef<HTMLDivElement>(null);
-
-	// Refs per tracciare i valori serializzati di filtri e sort
-	const prevFiltersRef = useRef<string>('');
-	const prevSortRef = useRef<string>('');
-	// Ref per tracciare se il caricamento iniziale è stato completato
-	const initialLoadDoneRef = useRef(false);
-	// Refs per tracciare userId e refreshTrigger per evitare loop
 	const prevUserIdRef = useRef<string>('');
-	const prevRefreshTriggerRef = useRef<number>(-1);
+	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Estrai tag e domini unici dagli articoli per i filtri
 	const availableTags = useMemo(() => {
@@ -90,107 +86,72 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		return Array.from(domainSet).sort();
 	}, [articles]);
 
-	// Funzione per caricare gli articoli - rimuoviamo offset dalle dipendenze
-	const loadArticles = useCallback(async (reset: boolean = false) => {
-		const currentOffset = reset ? 0 : offset;
+	// Check if any filter is active
+	const hasActiveFilters = searchQuery || readingStatus !== 'all' || isFavorite !== undefined ||
+		selectedTags.length > 0 || selectedDomain || sortField !== 'created_at' || sortOrder !== 'desc';
 
-		if (reset) {
-			setLoading(true);
-		} else {
-			setLoadingMore(true);
-		}
+	// Build current filters and sort
+	const buildFiltersAndSort = useCallback(() => {
+		const newFilters: ArticleFilters = {
+			searchQuery: searchQuery || undefined,
+			tags: selectedTags.length > 0 ? selectedTags : undefined,
+			readingStatus,
+			isFavorite,
+			domain: selectedDomain || undefined,
+		};
 
-		try {
-			const { articles: newArticles, hasMore: more } = await getArticles(
-				userId,
-				ITEMS_PER_PAGE,
-				currentOffset,
-				currentFilters,
-				currentSort
-			);
+		const newSort: ArticleSortOptions = {
+			field: sortField,
+			order: sortOrder,
+		};
 
-			if (reset) {
-				setArticles(newArticles);
-				setOffset(ITEMS_PER_PAGE);
-			} else {
-				setArticles((prev) => [...prev, ...newArticles]);
-				setOffset((prev) => prev + ITEMS_PER_PAGE);
-			}
+		return { filters: newFilters, sort: newSort };
+	}, [searchQuery, selectedTags, readingStatus, isFavorite, selectedDomain, sortField, sortOrder]);
 
-			setHasMore(more);
-			setError('');
-		} catch (err) {
-			setError('Failed to load articles');
-			console.error(err);
-		} finally {
-			setLoading(false);
-			setLoadingMore(false);
-		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [userId, currentFilters, currentSort]);
+	// Track if it's the first load
+	const isFirstLoadRef = useRef(true);
+	const filtersChangedRef = useRef(false);
 
-	// Handler per quando cambiano i filtri
-	const handleFiltersChange = useCallback((filters: ArticleFilters, sort: ArticleSortOptions) => {
-		setCurrentFilters(filters);
-		setCurrentSort(sort);
-		setOffset(0);
-	}, []);
-
-	// Carica articoli quando filtri o sort cambiano (con deep comparison)
-	// Nota: questo useEffect NON gestisce il caricamento iniziale, solo i cambiamenti successivi
+	// Debounced filter application
 	useEffect(() => {
-		// Skip se il caricamento iniziale non è ancora stato fatto
-		if (!initialLoadDoneRef.current) {
-			// Inizializza i refs con i valori iniziali senza caricare
-			prevFiltersRef.current = JSON.stringify(currentFilters);
-			prevSortRef.current = JSON.stringify(currentSort);
+		// Skip first render - will be handled by initial load effect
+		if (isFirstLoadRef.current) {
 			return;
 		}
 
-		const filtersStr = JSON.stringify(currentFilters);
-		const sortStr = JSON.stringify(currentSort);
+		filtersChangedRef.current = true;
 
-		// Solo se i valori sono effettivamente cambiati
-		if (filtersStr !== prevFiltersRef.current || sortStr !== prevSortRef.current) {
-			prevFiltersRef.current = filtersStr;
-			prevSortRef.current = sortStr;
-			setOffset(0);
-			loadArticles(true);
+		if (searchTimeoutRef.current) {
+			clearTimeout(searchTimeoutRef.current);
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentFilters, currentSort]);
+		searchTimeoutRef.current = setTimeout(() => {
+			const { filters, sort } = buildFiltersAndSort();
+			loadArticles(userId, true, filters, sort);
+		}, 300);
 
-	// Carica articoli quando userId o refreshTrigger cambiano
+		return () => {
+			if (searchTimeoutRef.current) {
+				clearTimeout(searchTimeoutRef.current);
+			}
+		};
+	}, [searchQuery, selectedTags, readingStatus, isFavorite, selectedDomain, sortField, sortOrder, buildFiltersAndSort, loadArticles, userId]);
+
+	// Initial load - only runs once per userId
 	useEffect(() => {
-		// Controlla se userId o refreshTrigger sono effettivamente cambiati
-		const userIdChanged = userId !== prevUserIdRef.current;
-		const refreshTriggerChanged = refreshTrigger !== prevRefreshTriggerRef.current;
-
-		// Aggiorna sempre i refs
-		prevUserIdRef.current = userId;
-		prevRefreshTriggerRef.current = refreshTrigger;
-
-		// Carica solo se:
-		// 1. È il primo caricamento (initialLoadDoneRef.current === false)
-		// 2. O userId è cambiato
-		// 3. O refreshTrigger è cambiato (ma solo dopo il caricamento iniziale)
-		if (!initialLoadDoneRef.current) {
-			initialLoadDoneRef.current = true;
-			setOffset(0);
-			loadArticles(true);
-		} else if (userIdChanged || (refreshTriggerChanged && prevRefreshTriggerRef.current !== -1)) {
-			setOffset(0);
-			loadArticles(true);
+		if (!isInitialized || userId !== prevUserIdRef.current) {
+			prevUserIdRef.current = userId;
+			isFirstLoadRef.current = false;
+			const { filters, sort } = buildFiltersAndSort();
+			loadArticles(userId, true, filters, sort);
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [userId, refreshTrigger]);
+	}, [userId, isInitialized, loadArticles, buildFiltersAndSort]);
 
 	// Intersection Observer per infinite scrolling
 	useEffect(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-					loadArticles(false);
+					loadArticles(userId, false);
 				}
 			},
 			{ threshold: 0.1 }
@@ -206,7 +167,27 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 				observer.unobserve(currentTarget);
 			}
 		};
-	}, [hasMore, loading, loadingMore, loadArticles]);
+	}, [hasMore, loading, loadingMore, loadArticles, userId]);
+
+	// Clear all filters
+	const clearFilters = () => {
+		setSearchQuery('');
+		setSelectedTags([]);
+		setReadingStatus('all');
+		setIsFavorite(undefined);
+		setSelectedDomain('');
+		setSortField('created_at');
+		setSortOrder('desc');
+	};
+
+	// Toggle tag selection
+	const toggleTag = (tag: string) => {
+		if (selectedTags.includes(tag)) {
+			setSelectedTags(selectedTags.filter(t => t !== tag));
+		} else {
+			setSelectedTags([...selectedTags, tag]);
+		}
+	};
 
 	// Funzione per navigare all'articolo
 	const handleArticleClick = (articleId: string) => {
@@ -231,11 +212,9 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		setIsDeleting(true);
 		try {
 			await deleteArticle(articleToDelete.id);
+			removeArticle(articleToDelete.id);
 			setShowDeleteConfirm(false);
 			setArticleToDelete(null);
-			// Ricarica la lista articoli
-			setOffset(0);
-			loadArticles(true);
 		} catch (error) {
 			console.error('Failed to delete article:', error);
 		} finally {
@@ -260,10 +239,7 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 
 		try {
 			const updatedArticle = await updateArticleTags(articleForTags.id, tags);
-			// Update the article in the local state
-			setArticles(prev => prev.map(a =>
-				a.id === articleForTags.id ? { ...a, tags: updatedArticle.tags } : a
-			));
+			updateArticle(articleForTags.id, { tags: updatedArticle.tags });
 		} catch (error) {
 			console.error('Failed to update tags:', error);
 			throw error;
@@ -303,67 +279,237 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 		);
 	}
 
-	if (articles.length === 0) {
-		return (
-			<div className="text-center py-16 px-4">
-				<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 mb-4">
-					<svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-					</svg>
-				</div>
-				<p className="text-gray-600 text-lg font-medium">No articles found</p>
-				<p className="text-gray-500 text-sm mt-2">Add your first article above!</p>
-			</div>
-		);
-	}
-
 	return (
-		<div className="mt-8">
-			{/* Search and Filters */}
-			<SearchAndFilters
-				onFiltersChange={handleFiltersChange}
-				availableTags={availableTags}
-				availableDomains={availableDomains}
-			/>
+		<div className="mt-4">
+			{/* Combined Toolbar: Title, Search, Filters, View Mode */}
+			<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+				{/* Top row: Title, Search, View Mode */}
+				<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+					{/* Title */}
+					<h2 className="text-xl sm:text-2xl font-bold text-gray-800 whitespace-nowrap">
+						My Articles
+						<span className="ml-2 text-sm font-normal text-gray-500">({articles.length}{!hasMore ? '' : '+'})</span>
+					</h2>
 
-			{/* Toggle View Mode - Mobile First */}
-			<div className="flex justify-between items-center mb-6">
-				<h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-					My Articles
-					<span className="ml-2 text-sm font-normal text-gray-500">({articles.length}{!hasMore ? '' : '+'})</span>
-				</h2>
-				<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-1 flex border border-gray-200">
-					<button
-						onClick={() => updatePreferences({ viewMode: 'grid' })}
-						className={`p-2 rounded-lg transition-all duration-200 ${
-							viewMode === 'grid'
-								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-								: 'text-gray-400 hover:text-gray-600'
-						}`}
-						title="Grid View"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-						</svg>
-					</button>
-					<button
-						onClick={() => updatePreferences({ viewMode: 'list' })}
-						className={`p-2 rounded-lg transition-all duration-200 ${
-							viewMode === 'list'
-								? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-								: 'text-gray-400 hover:text-gray-600'
-						}`}
-						title="List View"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-						</svg>
-					</button>
+					{/* Search Bar */}
+					<div className="flex-1 w-full sm:w-auto">
+						<div className="relative">
+							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+								<svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+								</svg>
+							</div>
+							<input
+								type="text"
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								placeholder="Search articles..."
+								className="block w-full pl-9 pr-9 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900 placeholder-gray-400"
+							/>
+							{searchQuery && (
+								<button
+									onClick={() => setSearchQuery('')}
+									className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+								>
+									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+									</svg>
+								</button>
+							)}
+						</div>
+					</div>
+
+					{/* View Mode Toggle */}
+					<div className="flex items-center gap-2">
+						<div className="bg-gray-100 rounded-xl p-1 flex">
+							<button
+								onClick={() => updatePreferences({ viewMode: 'grid' })}
+								className={`p-2 rounded-lg transition-all duration-200 ${
+									viewMode === 'grid'
+										? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+										: 'text-gray-400 hover:text-gray-600'
+								}`}
+								title="Grid View"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+								</svg>
+							</button>
+							<button
+								onClick={() => updatePreferences({ viewMode: 'list' })}
+								className={`p-2 rounded-lg transition-all duration-200 ${
+									viewMode === 'list'
+										? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+										: 'text-gray-400 hover:text-gray-600'
+								}`}
+								title="List View"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+								</svg>
+							</button>
+						</div>
+					</div>
 				</div>
+
+				{/* Second row: Quick Filters */}
+				<div className="mt-4 flex flex-wrap items-center gap-2">
+					{/* Reading Status Pills */}
+					<div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+						{(['all', 'unread', 'reading', 'completed'] as const).map((status) => (
+							<button
+								key={status}
+								onClick={() => setReadingStatus(status)}
+								className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+									readingStatus === status
+										? 'bg-white text-purple-600 shadow-sm'
+										: 'text-gray-500 hover:text-gray-700'
+								}`}
+							>
+								{status === 'all' && 'All'}
+								{status === 'unread' && 'Unread'}
+								{status === 'reading' && 'Reading'}
+								{status === 'completed' && 'Completed'}
+							</button>
+						))}
+					</div>
+
+					{/* Favorite Toggle */}
+					<button
+						onClick={() => setIsFavorite(isFavorite === true ? undefined : true)}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+							isFavorite === true
+								? 'bg-pink-100 text-pink-600 border border-pink-200'
+								: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+						}`}
+					>
+						<svg className={`w-4 h-4 ${isFavorite === true ? 'fill-current' : ''}`} fill={isFavorite === true ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+						</svg>
+						Favorites
+					</button>
+
+					{/* Sort Dropdown */}
+					<div className="flex items-center gap-1">
+						<select
+							value={sortField}
+							onChange={(e) => setSortField(e.target.value as ArticleSortField)}
+							className="px-3 py-1.5 bg-gray-100 border-0 rounded-xl text-xs font-medium text-gray-600 focus:ring-2 focus:ring-purple-500 cursor-pointer"
+						>
+							<option value="created_at">Date Added</option>
+							<option value="published_date">Published</option>
+							<option value="like_count">Likes</option>
+							<option value="title">Title</option>
+						</select>
+						<button
+							onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+							className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+							title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
+						>
+							<svg className={`w-4 h-4 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+							</svg>
+						</button>
+					</div>
+
+					{/* More Filters Button */}
+					<button
+						onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+							showAdvancedFilters || selectedTags.length > 0 || selectedDomain
+								? 'bg-purple-100 text-purple-600 border border-purple-200'
+								: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+						}`}
+					>
+						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+						</svg>
+						More
+						{(selectedTags.length > 0 || selectedDomain) && (
+							<span className="w-4 h-4 bg-purple-500 text-white text-[10px] rounded-full flex items-center justify-center">
+								{selectedTags.length + (selectedDomain ? 1 : 0)}
+							</span>
+						)}
+					</button>
+
+					{/* Clear Filters */}
+					{hasActiveFilters && (
+						<button
+							onClick={clearFilters}
+							className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-600 transition-colors"
+						>
+							<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+							</svg>
+							Clear
+						</button>
+					)}
+				</div>
+
+				{/* Advanced Filters Panel */}
+				{showAdvancedFilters && (
+					<div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+						{/* Tags Filter */}
+						{availableTags.length > 0 && (
+							<div>
+								<label className="block text-xs font-medium text-gray-600 mb-2">Tags</label>
+								<div className="flex flex-wrap gap-2">
+									{availableTags.map((tag) => (
+										<button
+											key={tag}
+											onClick={() => toggleTag(tag)}
+											className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+												selectedTags.includes(tag)
+													? 'bg-purple-600 text-white'
+													: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+											}`}
+										>
+											{tag}
+										</button>
+									))}
+								</div>
+							</div>
+						)}
+
+						{/* Domain Filter */}
+						{availableDomains.length > 0 && (
+							<div>
+								<label className="block text-xs font-medium text-gray-600 mb-2">Domain</label>
+								<select
+									value={selectedDomain}
+									onChange={(e) => setSelectedDomain(e.target.value)}
+									className="block w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+								>
+									<option value="">All domains</option>
+									{availableDomains.map((domain) => (
+										<option key={domain} value={domain}>
+											{domain}
+										</option>
+									))}
+								</select>
+							</div>
+						)}
+					</div>
+				)}
 			</div>
+
+			{/* Empty State */}
+			{articles.length === 0 && (
+				<div className="text-center py-16 px-4">
+					<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 mb-4">
+						<svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+						</svg>
+					</div>
+					<p className="text-gray-600 text-lg font-medium">No articles found</p>
+					<p className="text-gray-500 text-sm mt-2">
+						{hasActiveFilters ? 'Try adjusting your filters' : 'Add your first article to get started!'}
+					</p>
+				</div>
+			)}
 
 			{/* Grid View - Card moderne con effetti */}
-			{viewMode === 'grid' ? (
+			{articles.length > 0 && viewMode === 'grid' && (
 				<div className="grid gap-5 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 					{articles.map((article, index) => (
 						<article
@@ -479,8 +625,10 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 						</article>
 					))}
 				</div>
-			) : (
-				/* List View - Design moderno */
+			)}
+
+			{/* List View - Design moderno */}
+			{articles.length > 0 && viewMode === 'list' && (
 				<div className="space-y-4">
 					{articles.map((article, index) => (
 						<article
