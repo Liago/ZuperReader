@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getUserPreferences, saveUserPreferences } from '../lib/api';
+import { useAuth } from './AuthContext';
 
 export type FontFamily = 'sans' | 'serif' | 'mono' | 'roboto' | 'lato' | 'openSans' | 'ubuntu';
 export type FontSize = number; // Font size in pixels (12-50)
@@ -36,34 +38,89 @@ const defaultPreferences: ReadingPreferences = {
 const ReadingPreferencesContext = createContext<ReadingPreferencesContextType | undefined>(undefined);
 
 export function ReadingPreferencesProvider({ children }: { children: ReactNode }) {
+	const { user } = useAuth();
 	const [preferences, setPreferences] = useState<ReadingPreferences>(defaultPreferences);
 	const [isLoaded, setIsLoaded] = useState(false);
 
-	// Load preferences from localStorage on mount
+	// Load preferences on mount (database first, then localStorage as fallback)
 	useEffect(() => {
-		try {
-			const stored = localStorage.getItem('readingPreferences');
-			if (stored) {
-				const parsed = JSON.parse(stored);
-				setPreferences({ ...defaultPreferences, ...parsed });
-			}
-		} catch (error) {
-			console.error('Failed to load reading preferences:', error);
-		} finally {
-			setIsLoaded(true);
-		}
-	}, []);
+		const loadPreferences = async () => {
+			try {
+				// If user is logged in, try to load from database
+				if (user?.id) {
+					try {
+						const dbPreferences = await getUserPreferences(user.id);
 
-	// Save preferences to localStorage whenever they change
+						if (dbPreferences) {
+							// Convert database format to app format (snake_case to camelCase)
+							const appPreferences: ReadingPreferences = {
+								fontFamily: dbPreferences.font_family,
+								fontSize: dbPreferences.font_size,
+								colorTheme: dbPreferences.color_theme,
+								lineHeight: dbPreferences.line_height,
+								contentWidth: dbPreferences.content_width,
+								viewMode: dbPreferences.view_mode,
+							};
+							setPreferences(appPreferences);
+							// Also save to localStorage for offline access
+							localStorage.setItem('readingPreferences', JSON.stringify(appPreferences));
+							setIsLoaded(true);
+							return;
+						}
+					} catch (error) {
+						console.warn('Failed to load preferences from database, falling back to localStorage:', error);
+					}
+				}
+
+				// Fallback to localStorage
+				const stored = localStorage.getItem('readingPreferences');
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					setPreferences({ ...defaultPreferences, ...parsed });
+				}
+			} catch (error) {
+				console.error('Failed to load reading preferences:', error);
+			} finally {
+				setIsLoaded(true);
+			}
+		};
+
+		loadPreferences();
+	}, [user]);
+
+	// Save preferences to both database and localStorage whenever they change
 	useEffect(() => {
-		if (isLoaded) {
+		if (isLoaded && user?.id) {
+			const savePreferences = async () => {
+				try {
+					// Save to localStorage immediately (for performance)
+					localStorage.setItem('readingPreferences', JSON.stringify(preferences));
+
+					// Save to database (for cross-device sync)
+					await saveUserPreferences(user.id, {
+						font_family: preferences.fontFamily,
+						font_size: preferences.fontSize,
+						color_theme: preferences.colorTheme,
+						line_height: preferences.lineHeight,
+						content_width: preferences.contentWidth,
+						view_mode: preferences.viewMode,
+					});
+				} catch (error) {
+					console.error('Failed to save reading preferences to database:', error);
+					// Even if database save fails, localStorage is already updated
+				}
+			};
+
+			savePreferences();
+		} else if (isLoaded && !user) {
+			// If user is not logged in, just save to localStorage
 			try {
 				localStorage.setItem('readingPreferences', JSON.stringify(preferences));
 			} catch (error) {
-				console.error('Failed to save reading preferences:', error);
+				console.error('Failed to save reading preferences to localStorage:', error);
 			}
 		}
-	}, [preferences, isLoaded]);
+	}, [preferences, isLoaded, user]);
 
 	const updatePreferences = (newPreferences: Partial<ReadingPreferences>) => {
 		setPreferences((prev) => ({ ...prev, ...newPreferences }));
