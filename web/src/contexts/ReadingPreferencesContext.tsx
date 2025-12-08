@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export type FontFamily = 'sans' | 'serif' | 'mono' | 'roboto' | 'lato' | 'openSans' | 'ubuntu';
 export type FontSize = number; // Font size in pixels (12-50)
-export type ColorTheme = 'default' | 'sepia' | 'dark' | 'night';
+export type ColorTheme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
 export type LineHeight = 'compact' | 'normal' | 'relaxed' | 'loose';
 export type ContentWidth = 'narrow' | 'normal' | 'wide';
 export type ViewMode = 'grid' | 'list';
@@ -27,7 +27,7 @@ interface ReadingPreferencesContextType {
 const defaultPreferences: ReadingPreferences = {
 	fontFamily: 'serif',
 	fontSize: 16,
-	colorTheme: 'default',
+	colorTheme: 'light',
 	lineHeight: 'relaxed',
 	contentWidth: 'normal',
 	viewMode: 'grid',

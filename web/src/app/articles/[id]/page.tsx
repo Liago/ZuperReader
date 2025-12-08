@@ -57,18 +57,18 @@ export default function ArticleReaderPage() {
 
 	const getColorThemeClasses = () => {
 		switch (preferences.colorTheme) {
-			case 'sepia':
+			case 'light':
 				return {
-					bg: 'bg-amber-50',
-					text: 'text-amber-950',
-					border: 'border-amber-200',
-					proseHeadings: 'prose-headings:text-amber-900',
-					proseParagraphs: 'prose-p:text-amber-900',
-					proseLinks: 'prose-a:text-amber-700',
-					proseStrong: 'prose-strong:text-amber-950',
-					proseLi: 'prose-li:text-amber-900',
-					proseBlockquote: 'prose-blockquote:border-amber-600 prose-blockquote:bg-amber-100',
-					proseCode: 'prose-code:text-amber-800 prose-code:bg-amber-100',
+					bg: 'bg-white',
+					text: 'text-gray-900',
+					border: 'border-gray-200',
+					proseHeadings: 'prose-headings:text-gray-900',
+					proseParagraphs: 'prose-p:text-gray-700',
+					proseLinks: 'prose-a:text-purple-600',
+					proseStrong: 'prose-strong:text-gray-900',
+					proseLi: 'prose-li:text-gray-700',
+					proseBlockquote: 'prose-blockquote:border-purple-500 prose-blockquote:bg-purple-50',
+					proseCode: 'prose-code:text-pink-600 prose-code:bg-pink-50',
 				};
 			case 'dark':
 				return {
@@ -83,18 +83,44 @@ export default function ArticleReaderPage() {
 					proseBlockquote: 'prose-blockquote:border-blue-500 prose-blockquote:bg-slate-700',
 					proseCode: 'prose-code:text-blue-300 prose-code:bg-slate-700',
 				};
-			case 'night':
+			case 'ocean':
 				return {
-					bg: 'bg-gray-900',
-					text: 'text-gray-100',
-					border: 'border-gray-800',
-					proseHeadings: 'prose-headings:text-gray-100',
-					proseParagraphs: 'prose-p:text-gray-300',
-					proseLinks: 'prose-a:text-purple-400',
-					proseStrong: 'prose-strong:text-gray-100',
-					proseLi: 'prose-li:text-gray-300',
-					proseBlockquote: 'prose-blockquote:border-purple-500 prose-blockquote:bg-gray-800',
-					proseCode: 'prose-code:text-purple-300 prose-code:bg-gray-800',
+					bg: 'bg-sky-50',
+					text: 'text-cyan-950',
+					border: 'border-sky-200',
+					proseHeadings: 'prose-headings:text-cyan-900',
+					proseParagraphs: 'prose-p:text-cyan-900',
+					proseLinks: 'prose-a:text-teal-600',
+					proseStrong: 'prose-strong:text-cyan-950',
+					proseLi: 'prose-li:text-cyan-900',
+					proseBlockquote: 'prose-blockquote:border-teal-500 prose-blockquote:bg-sky-100',
+					proseCode: 'prose-code:text-cyan-800 prose-code:bg-sky-100',
+				};
+			case 'forest':
+				return {
+					bg: 'bg-emerald-50',
+					text: 'text-emerald-950',
+					border: 'border-emerald-200',
+					proseHeadings: 'prose-headings:text-emerald-900',
+					proseParagraphs: 'prose-p:text-emerald-900',
+					proseLinks: 'prose-a:text-green-700',
+					proseStrong: 'prose-strong:text-emerald-950',
+					proseLi: 'prose-li:text-emerald-900',
+					proseBlockquote: 'prose-blockquote:border-green-600 prose-blockquote:bg-emerald-100',
+					proseCode: 'prose-code:text-emerald-800 prose-code:bg-emerald-100',
+				};
+			case 'sunset':
+				return {
+					bg: 'bg-violet-50',
+					text: 'text-violet-950',
+					border: 'border-violet-200',
+					proseHeadings: 'prose-headings:text-violet-900',
+					proseParagraphs: 'prose-p:text-violet-900',
+					proseLinks: 'prose-a:text-fuchsia-600',
+					proseStrong: 'prose-strong:text-violet-950',
+					proseLi: 'prose-li:text-violet-900',
+					proseBlockquote: 'prose-blockquote:border-fuchsia-500 prose-blockquote:bg-violet-100',
+					proseCode: 'prose-code:text-violet-800 prose-code:bg-violet-100',
 				};
 			default:
 				return {
@@ -164,8 +190,10 @@ export default function ArticleReaderPage() {
 
 	// Helper function to get badge classes based on color theme
 	const getBadgeClasses = (color: 'purple' | 'pink' | 'blue' | 'green') => {
-		const isDark = preferences.colorTheme === 'dark' || preferences.colorTheme === 'night';
-		const isSepia = preferences.colorTheme === 'sepia';
+		const isDark = preferences.colorTheme === 'dark';
+		const isOcean = preferences.colorTheme === 'ocean';
+		const isForest = preferences.colorTheme === 'forest';
+		const isSunset = preferences.colorTheme === 'sunset';
 
 		if (isDark) {
 			const colorMap = {
@@ -177,17 +205,37 @@ export default function ArticleReaderPage() {
 			return colorMap[color];
 		}
 
-		if (isSepia) {
+		if (isOcean) {
 			const colorMap = {
-				purple: 'bg-amber-100 text-amber-900 border-amber-300',
-				pink: 'bg-amber-100 text-amber-900 border-amber-300',
-				blue: 'bg-amber-100 text-amber-900 border-amber-300',
-				green: 'bg-amber-100 text-amber-900 border-amber-300',
+				purple: 'bg-sky-100 text-cyan-900 border-sky-300',
+				pink: 'bg-sky-100 text-cyan-900 border-sky-300',
+				blue: 'bg-sky-100 text-cyan-900 border-sky-300',
+				green: 'bg-teal-100 text-teal-900 border-teal-300',
 			};
 			return colorMap[color];
 		}
 
-		// Default theme
+		if (isForest) {
+			const colorMap = {
+				purple: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+				pink: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+				blue: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+				green: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+			};
+			return colorMap[color];
+		}
+
+		if (isSunset) {
+			const colorMap = {
+				purple: 'bg-violet-100 text-violet-900 border-violet-300',
+				pink: 'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300',
+				blue: 'bg-violet-100 text-violet-900 border-violet-300',
+				green: 'bg-violet-100 text-violet-900 border-violet-300',
+			};
+			return colorMap[color];
+		}
+
+		// Light theme (default)
 		const colorMap = {
 			purple: 'bg-purple-50 text-purple-900 border-purple-100',
 			pink: 'bg-pink-50 text-pink-900 border-pink-100',
@@ -396,11 +444,15 @@ export default function ArticleReaderPage() {
 								<button
 									onClick={() => setShowTagModal(true)}
 									className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all hover:scale-105 ${
-										preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+										preferences.colorTheme === 'dark'
 											? 'bg-purple-900/30 text-purple-200 border-purple-700/50 hover:bg-purple-900/50'
-											: preferences.colorTheme === 'sepia'
-												? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-												: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+											: preferences.colorTheme === 'ocean'
+												? 'bg-sky-100 text-cyan-900 border-sky-300 hover:bg-sky-200'
+												: preferences.colorTheme === 'forest'
+													? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+													: preferences.colorTheme === 'sunset'
+														? 'bg-violet-100 text-violet-900 border-violet-300 hover:bg-violet-200'
+														: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
 									}`}
 								>
 									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -430,11 +482,15 @@ export default function ArticleReaderPage() {
 
 						{/* Divider */}
 						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mb-8 ${
-							preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+							preferences.colorTheme === 'dark'
 								? 'via-gray-600'
-								: preferences.colorTheme === 'sepia'
-									? 'via-amber-300'
-									: 'via-gray-300'
+								: preferences.colorTheme === 'ocean'
+									? 'via-sky-300'
+									: preferences.colorTheme === 'forest'
+										? 'via-emerald-300'
+										: preferences.colorTheme === 'sunset'
+											? 'via-violet-300'
+											: 'via-gray-300'
 						}`}></div>
 
 						{/* Article Content - Ottimizzato per lettura */}
@@ -460,11 +516,15 @@ export default function ArticleReaderPage() {
 
 						{/* Divider before social section */}
 						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${
-							preferences.colorTheme === 'dark' || preferences.colorTheme === 'night'
+							preferences.colorTheme === 'dark'
 								? 'via-gray-600'
-								: preferences.colorTheme === 'sepia'
-									? 'via-amber-300'
-									: 'via-gray-300'
+								: preferences.colorTheme === 'ocean'
+									? 'via-sky-300'
+									: preferences.colorTheme === 'forest'
+										? 'via-emerald-300'
+										: preferences.colorTheme === 'sunset'
+											? 'via-violet-300'
+											: 'via-gray-300'
 						}`}></div>
 
 						{/* Social Actions */}

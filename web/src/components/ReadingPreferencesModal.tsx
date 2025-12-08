@@ -24,10 +24,11 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 
 
 	const colorThemeOptions: { value: ColorTheme; label: string; bg: string; text: string; border: string }[] = [
-		{ value: 'default', label: 'Default', bg: 'bg-white', text: 'text-gray-900', border: 'border-gray-200' },
-		{ value: 'sepia', label: 'Sepia', bg: 'bg-amber-50', text: 'text-amber-950', border: 'border-amber-200' },
+		{ value: 'light', label: 'Light', bg: 'bg-white', text: 'text-gray-900', border: 'border-gray-200' },
 		{ value: 'dark', label: 'Dark', bg: 'bg-slate-800', text: 'text-slate-100', border: 'border-slate-700' },
-		{ value: 'night', label: 'Night', bg: 'bg-gray-900', text: 'text-gray-100', border: 'border-gray-800' },
+		{ value: 'ocean', label: 'Ocean', bg: 'bg-sky-50', text: 'text-cyan-950', border: 'border-sky-200' },
+		{ value: 'forest', label: 'Forest', bg: 'bg-emerald-50', text: 'text-emerald-950', border: 'border-emerald-200' },
+		{ value: 'sunset', label: 'Sunset', bg: 'bg-violet-50', text: 'text-violet-950', border: 'border-violet-200' },
 	];
 
 	const lineHeightOptions: { value: LineHeight; label: string; height: string }[] = [
@@ -136,7 +137,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 							<label className="block text-sm font-semibold text-gray-700 mb-3">
 								Color Theme
 							</label>
-							<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
 								{colorThemeOptions.map((option) => (
 									<button
 										key={option.value}
