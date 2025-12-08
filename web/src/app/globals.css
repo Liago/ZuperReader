@@ -1,9 +1,83 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ============================================
+   THEME VARIABLES
+   ============================================ */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+/* Light Theme (Default) */
+[data-theme="light"] {
+  --app-bg-primary: #ffffff;
+  --app-bg-secondary: #f9fafb;
+  --app-bg-gradient-from: #ede9fe;
+  --app-bg-gradient-via: #fae8ff;
+  --app-bg-gradient-to: #fce7f3;
+  --app-text-primary: #111827;
+  --app-text-secondary: #6b7280;
+  --app-border: #e5e7eb;
+  --app-card-bg: rgba(255, 255, 255, 0.8);
+  --app-accent: #9333ea;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --app-bg-primary: #0f172a;
+  --app-bg-secondary: #1e293b;
+  --app-bg-gradient-from: #0f172a;
+  --app-bg-gradient-via: #1e293b;
+  --app-bg-gradient-to: #334155;
+  --app-text-primary: #f1f5f9;
+  --app-text-secondary: #cbd5e1;
+  --app-border: #334155;
+  --app-card-bg: rgba(30, 41, 59, 0.8);
+  --app-accent: #818cf8;
+}
+
+/* Ocean Theme */
+[data-theme="ocean"] {
+  --app-bg-primary: #f0f9ff;
+  --app-bg-secondary: #e0f2fe;
+  --app-bg-gradient-from: #ecfeff;
+  --app-bg-gradient-via: #cffafe;
+  --app-bg-gradient-to: #a5f3fc;
+  --app-text-primary: #164e63;
+  --app-text-secondary: #0e7490;
+  --app-border: #a5f3fc;
+  --app-card-bg: rgba(240, 249, 255, 0.8);
+  --app-accent: #0891b2;
+}
+
+/* Forest Theme */
+[data-theme="forest"] {
+  --app-bg-primary: #f0fdf4;
+  --app-bg-secondary: #dcfce7;
+  --app-bg-gradient-from: #f0fdf4;
+  --app-bg-gradient-via: #dcfce7;
+  --app-bg-gradient-to: #bbf7d0;
+  --app-text-primary: #14532d;
+  --app-text-secondary: #166534;
+  --app-border: #bbf7d0;
+  --app-card-bg: rgba(240, 253, 244, 0.8);
+  --app-accent: #16a34a;
+}
+
+/* Sunset Theme */
+[data-theme="sunset"] {
+  --app-bg-primary: #faf5ff;
+  --app-bg-secondary: #f3e8ff;
+  --app-bg-gradient-from: #faf5ff;
+  --app-bg-gradient-via: #f3e8ff;
+  --app-bg-gradient-to: #e9d5ff;
+  --app-text-primary: #581c87;
+  --app-text-secondary: #7c3aed;
+  --app-border: #e9d5ff;
+  --app-card-bg: rgba(250, 245, 255, 0.8);
+  --app-accent: #a855f7;
 }
 
 @theme inline {
@@ -28,6 +102,38 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ============================================
+   THEME UTILITY CLASSES
+   ============================================ */
+
+.app-bg-gradient {
+  background: linear-gradient(to bottom right, var(--app-bg-gradient-from), var(--app-bg-gradient-via), var(--app-bg-gradient-to));
+}
+
+.app-bg-primary {
+  background-color: var(--app-bg-primary);
+}
+
+.app-bg-secondary {
+  background-color: var(--app-bg-secondary);
+}
+
+.app-text-primary {
+  color: var(--app-text-primary);
+}
+
+.app-text-secondary {
+  color: var(--app-text-secondary);
+}
+
+.app-border {
+  border-color: var(--app-border);
+}
+
+.app-card-bg {
+  background-color: var(--app-card-bg);
 }
 
 /* Custom slider styles */

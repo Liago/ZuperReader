@@ -8,6 +8,7 @@ import { useFriends } from '../contexts/FriendsContext';
 import { useArticles } from '../contexts/ArticlesContext';
 import ArticleList from '../components/ArticleList';
 import AddArticleModal from '../components/AddArticleModal';
+import ThemeSelector from '../components/ThemeSelector';
 
 export default function Home() {
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -31,7 +32,7 @@ export default function Home() {
 
 	if (loading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+			<div className="min-h-screen flex items-center justify-center app-bg-gradient">
 				<div className="flex flex-col items-center gap-4">
 					<div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
 					<p className="text-purple-600 font-medium">Loading...</p>
@@ -45,7 +46,7 @@ export default function Home() {
 	}
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+		<main className="min-h-screen app-bg-gradient py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
 			<div className="max-w-7xl mx-auto">
 				{/* Header con design moderno */}
 				<header className="mb-8 sm:mb-12">
@@ -54,9 +55,12 @@ export default function Home() {
 							<h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-2">
 								SuperReader
 							</h1>
-							<p className="text-sm sm:text-lg text-gray-600">Save and read your favorite articles</p>
+							<p className="text-sm sm:text-lg app-text-secondary">Save and read your favorite articles</p>
 						</div>
 						<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+							{/* Theme Selector */}
+							<ThemeSelector />
+
 							{/* Add Article Button */}
 							<button
 								onClick={() => setShowAddModal(true)}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
 import { ReadingPreferencesProvider } from "../contexts/ReadingPreferencesContext";
 import { FriendsProvider } from "../contexts/FriendsContext";
 import { ArticlesProvider } from "../contexts/ArticlesContext";
@@ -55,13 +56,15 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} antialiased`}
 			>
 				<AuthProvider>
-					<FriendsProvider>
-						<ReadingPreferencesProvider>
-							<ArticlesProvider>
-								{children}
-							</ArticlesProvider>
-						</ReadingPreferencesProvider>
-					</FriendsProvider>
+					<ThemeProvider>
+						<FriendsProvider>
+							<ReadingPreferencesProvider>
+								<ArticlesProvider>
+									{children}
+								</ArticlesProvider>
+							</ReadingPreferencesProvider>
+						</FriendsProvider>
+					</ThemeProvider>
 				</AuthProvider>
 			</body>
 		</html>
