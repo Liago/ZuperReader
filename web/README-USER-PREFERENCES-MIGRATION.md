@@ -11,20 +11,44 @@ This migration adds database synchronization for user reading preferences (theme
 
 ## Database Migration
 
+### IMPORTANT: Use the Clean Migration Script
+
+If you encounter any errors, use the **clean migration script** which handles existing tables:
+
+**File to use:** `web/supabase-migration-user-preferences-clean.sql`
+
+This script will:
+- Drop any existing incomplete table
+- Create the table with correct structure
+- Set up all policies and triggers
+- Verify the installation
+
 ### Step 1: Run the SQL Migration
-Execute the SQL file in your Supabase dashboard:
+
+**Recommended:** Use the clean migration script
 
 ```bash
 # File location:
-web/supabase-migration-user-preferences.sql
+web/supabase-migration-user-preferences-clean.sql
 ```
 
 **How to execute:**
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
 3. Click **"New Query"**
-4. Copy and paste the contents of `supabase-migration-user-preferences.sql`
+4. Copy and paste the contents of `supabase-migration-user-preferences-clean.sql`
 5. Click **"Run"** to execute the migration
+
+### Troubleshooting
+
+If you encounter errors like:
+```
+Error: column "font_family" of relation "user_preferences" does not exist
+```
+
+**Solution:** See the detailed troubleshooting guide:
+- File: `web/TROUBLESHOOTING-USER-PREFERENCES.md`
+- Contains step-by-step solutions for all common issues
 
 ### Step 2: Verify the Migration
 After running the migration, verify that the table was created:
