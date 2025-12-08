@@ -42,6 +42,7 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 	const [state, setState] = useState<ArticlesState>(defaultState);
 	const loadingRef = useRef(false);
 	const currentUserIdRef = useRef<string | null>(null);
+	const requestIdRef = useRef(0); // Track request order
 	// Keep track of current filters/sort for pagination
 	const currentFiltersRef = useRef<ArticleFilters>({});
 	const currentSortRef = useRef<ArticleSortOptions>({ field: 'created_at', order: 'desc' });
@@ -52,9 +53,18 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 		filters?: ArticleFilters,
 		sort?: ArticleSortOptions
 	) => {
-		// If reset is requested and a load is in progress, allow reset to proceed
-		// Otherwise prevent concurrent loads
-		if (loadingRef.current && !reset) return;
+		// Prevent concurrent non-reset loads
+		if (loadingRef.current && !reset) {
+			console.log('[ArticlesContext] Blocked concurrent load, reset:', reset);
+			return;
+		}
+
+		// Generate unique request ID
+		requestIdRef.current += 1;
+		const thisRequestId = requestIdRef.current;
+
+		console.log('[ArticlesContext] Starting load, requestId:', thisRequestId, 'reset:', reset);
+
 		loadingRef.current = true;
 
 		// Track current user
@@ -72,6 +82,7 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 		let currentOffset = 0;
 		setState(prev => {
 			currentOffset = reset ? 0 : prev.offset;
+			console.log('[ArticlesContext] Using offset:', currentOffset, 'reset:', reset, 'prev.offset:', prev.offset);
 			return {
 				...prev,
 				loading: reset,
@@ -89,29 +100,53 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 				currentSortRef.current
 			);
 
-			// Double-check we should still apply these results
-			// If userId changed during the request, ignore the results
-			if (currentUserIdRef.current !== userId) {
+			console.log('[ArticlesContext] Received', newArticles.length, 'articles, hasMore:', more, 'requestId:', thisRequestId);
+
+			// Ignore stale responses - only apply if this is still the latest request
+			if (thisRequestId !== requestIdRef.current || currentUserIdRef.current !== userId) {
+				console.log('[ArticlesContext] Ignoring stale response, thisRequestId:', thisRequestId, 'current:', requestIdRef.current);
 				return;
 			}
 
-			setState(prev => ({
-				...prev,
-				articles: reset ? newArticles : [...prev.articles, ...newArticles],
-				offset: reset ? ITEMS_PER_PAGE : prev.offset + ITEMS_PER_PAGE,
-				hasMore: more,
-				loading: false,
-				loadingMore: false,
-				isInitialized: true,
-				error: '',
-			}));
+			setState(prev => {
+				let updatedArticles;
+				if (reset) {
+					updatedArticles = newArticles;
+				} else {
+					// Filter out any duplicates when appending
+					const existingIds = new Set(prev.articles.map(a => a.id));
+					const uniqueNewArticles = newArticles.filter(a => !existingIds.has(a.id));
+					const duplicateCount = newArticles.length - uniqueNewArticles.length;
+					if (duplicateCount > 0) {
+						console.log('[ArticlesContext] Filtered out', duplicateCount, 'duplicate articles');
+					}
+					updatedArticles = [...prev.articles, ...uniqueNewArticles];
+				}
+
+				const newOffset = reset ? ITEMS_PER_PAGE : prev.offset + ITEMS_PER_PAGE;
+				console.log('[ArticlesContext] Updating state: total articles:', updatedArticles.length, 'new offset:', newOffset, 'hasMore:', more);
+
+				return {
+					...prev,
+					articles: updatedArticles,
+					offset: newOffset,
+					hasMore: more,
+					loading: false,
+					loadingMore: false,
+					isInitialized: true,
+					error: '',
+				};
+			});
 		} catch (err) {
-			setState(prev => ({
-				...prev,
-				error: 'Failed to load articles',
-				loading: false,
-				loadingMore: false,
-			}));
+			// Only update error state if this is still the latest request
+			if (thisRequestId === requestIdRef.current) {
+				setState(prev => ({
+					...prev,
+					error: 'Failed to load articles',
+					loading: false,
+					loadingMore: false,
+				}));
+			}
 			console.error(err);
 		} finally {
 			loadingRef.current = false;
