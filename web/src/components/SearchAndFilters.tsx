@@ -9,6 +9,19 @@ interface SearchAndFiltersProps {
 	availableDomains: string[];
 }
 
+const FILTERS_STORAGE_KEY = 'zuperreader_article_filters';
+
+interface StoredFilters {
+	searchQuery: string;
+	selectedTags: string[];
+	readingStatus: 'all' | 'unread' | 'reading' | 'completed';
+	isFavorite: boolean | undefined;
+	selectedDomain: string;
+	sortField: ArticleSortField;
+	sortOrder: ArticleSortOrder;
+	showFilters: boolean;
+}
+
 export default function SearchAndFilters({
 	onFiltersChange,
 	availableTags,
@@ -22,6 +35,52 @@ export default function SearchAndFilters({
 	const [sortField, setSortField] = useState<ArticleSortField>('created_at');
 	const [sortOrder, setSortOrder] = useState<ArticleSortOrder>('desc');
 	const [showFilters, setShowFilters] = useState(false);
+	const [isInitialized, setIsInitialized] = useState(false);
+
+	// Carica i filtri salvati da localStorage al mount del componente
+	useEffect(() => {
+		try {
+			const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
+			if (stored) {
+				const savedFilters: StoredFilters = JSON.parse(stored);
+				setSearchQuery(savedFilters.searchQuery || '');
+				setSelectedTags(savedFilters.selectedTags || []);
+				setReadingStatus(savedFilters.readingStatus || 'all');
+				setIsFavorite(savedFilters.isFavorite);
+				setSelectedDomain(savedFilters.selectedDomain || '');
+				setSortField(savedFilters.sortField || 'created_at');
+				setSortOrder(savedFilters.sortOrder || 'desc');
+				setShowFilters(savedFilters.showFilters || false);
+			}
+		} catch (error) {
+			console.error('Failed to load filters from localStorage:', error);
+		} finally {
+			setIsInitialized(true);
+		}
+	}, []);
+
+	// Salva i filtri in localStorage ogni volta che cambiano
+	useEffect(() => {
+		// Non salvare fino a quando i filtri non sono stati caricati
+		if (!isInitialized) return;
+
+		const filtersToSave: StoredFilters = {
+			searchQuery,
+			selectedTags,
+			readingStatus,
+			isFavorite,
+			selectedDomain,
+			sortField,
+			sortOrder,
+			showFilters,
+		};
+
+		try {
+			localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToSave));
+		} catch (error) {
+			console.error('Failed to save filters to localStorage:', error);
+		}
+	}, [searchQuery, selectedTags, readingStatus, isFavorite, selectedDomain, sortField, sortOrder, showFilters, isInitialized]);
 
 	// Applica i filtri
 	const applyFilters = useCallback(() => {
@@ -66,6 +125,13 @@ export default function SearchAndFilters({
 		setSelectedDomain('');
 		setSortField('created_at');
 		setSortOrder('desc');
+
+		// Cancella anche i filtri da localStorage
+		try {
+			localStorage.removeItem(FILTERS_STORAGE_KEY);
+		} catch (error) {
+			console.error('Failed to clear filters from localStorage:', error);
+		}
 	};
 
 	const hasActiveFilters = searchQuery || selectedTags.length > 0 || readingStatus !== 'all' ||
