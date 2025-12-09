@@ -80,20 +80,24 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 			currentSortRef.current = sort;
 		}
 
-		// Get current offset from state for pagination
-		let currentOffset = 0;
-		setState(prev => {
-			currentOffset = reset ? 0 : prev.offset;
-			console.log('[ArticlesContext] Using offset:', currentOffset, 'reset:', reset, 'prev.offset:', prev.offset);
-			return {
-				...prev,
-				loading: reset,
-				loadingMore: !reset,
-				error: '',
-			};
-		});
+		// Determine offset to use using Ref source of truth
+		if (reset) {
+			offsetRef.current = 0;
+		}
+		const currentOffset = offsetRef.current;
+
+		// Optimistically update state
+		setState(prev => ({
+			...prev,
+			loading: reset,
+			loadingMore: !reset,
+			error: '',
+			// For UI consistency, though logic uses ref
+			offset: currentOffset
+		}));
 
 		try {
+			console.log('[ArticlesContext] Fetching with offset:', currentOffset);
 			const { articles: newArticles, hasMore: more } = await getArticles(
 				userId,
 				ITEMS_PER_PAGE,
