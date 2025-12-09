@@ -14,6 +14,7 @@ import ShareButton from '../../../components/ShareButton';
 import InternalShareButton from '../../../components/InternalShareButton';
 import { TagList } from '../../../components/TagBadge';
 import TagManagementModal from '../../../components/TagManagementModal';
+import ReadingProgressIndicator from '../../../components/ReadingProgressIndicator';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -427,6 +428,9 @@ export default function ArticleReaderPage() {
 
 	return (
 		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+			{/* Reading Progress Indicator */}
+			<ReadingProgressIndicator contentRef={articleContentRef} />
+
 			<article className={`${getContentWidthClass()} mx-auto`}>
 				{/* Navigation Row */}
 				<header className="mb-8">
