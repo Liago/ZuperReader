@@ -142,7 +142,6 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 				};
 			});
 		} catch (err) {
-			// Only update error state if this is still the latest request
 			if (thisRequestId === requestIdRef.current) {
 				setState(prev => ({
 					...prev,
