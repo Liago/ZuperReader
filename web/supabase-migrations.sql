@@ -164,21 +164,6 @@ WHERE id NOT IN (SELECT id FROM user_profiles)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- VIEW: Get user info with email from auth.users
--- ============================================
-CREATE OR REPLACE VIEW user_profiles_with_email AS
-SELECT
-    up.id,
-    up.display_name,
-    up.avatar_url,
-    up.bio,
-    u.email,
-    up.created_at,
-    up.updated_at
-FROM user_profiles up
-JOIN auth.users u ON u.id = up.id;
-
--- ============================================
 -- ATOMIC COUNTER FUNCTIONS
 -- ============================================
 
