@@ -1,6 +1,6 @@
 'use client';
 
-import { useReadingPreferences, FontFamily, FontSize, ColorTheme, LineHeight, ContentWidth } from '../contexts/ReadingPreferencesContext';
+import { useReadingPreferences, FontFamily, ColorTheme, LineHeight, ContentWidth } from '../contexts/ReadingPreferencesContext';
 
 interface ReadingPreferencesModalProps {
 	isOpen: boolean;
@@ -89,11 +89,10 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 									<button
 										key={option.value}
 										onClick={() => updatePreferences({ fontFamily: option.value })}
-										className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-											preferences.fontFamily === option.value
+										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.fontFamily === option.value
 												? 'border-purple-500 bg-purple-50 shadow-md text-purple-900'
 												: 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 text-gray-900'
-										}`}
+											}`}
 									>
 										<span className={`block text-base font-medium ${option.preview}`}>
 											{option.label}
@@ -142,11 +141,10 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 									<button
 										key={option.value}
 										onClick={() => updatePreferences({ colorTheme: option.value })}
-										className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-											preferences.colorTheme === option.value
+										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.colorTheme === option.value
 												? 'border-blue-500 shadow-md scale-105'
 												: 'border-gray-300 hover:border-blue-300 hover:scale-102'
-										}`}
+											}`}
 									>
 										<div className={`${option.bg} ${option.text} ${option.border} border rounded-lg p-3 mb-2`}>
 											<span className="text-xs font-medium">Aa</span>
@@ -169,20 +167,17 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 									<button
 										key={option.value}
 										onClick={() => updatePreferences({ lineHeight: option.value })}
-										className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-											preferences.lineHeight === option.value
+										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.lineHeight === option.value
 												? 'border-green-500 bg-green-50 shadow-md'
 												: 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
-										}`}
+											}`}
 									>
-										<span className={`block text-sm font-medium ${
-											preferences.lineHeight === option.value ? 'text-green-900' : 'text-gray-900'
-										}`}>
+										<span className={`block text-sm font-medium ${preferences.lineHeight === option.value ? 'text-green-900' : 'text-gray-900'
+											}`}>
 											{option.label}
 										</span>
-										<span className={`block text-xs mt-1 ${
-											preferences.lineHeight === option.value ? 'text-green-700' : 'text-gray-600'
-										}`}>
+										<span className={`block text-xs mt-1 ${preferences.lineHeight === option.value ? 'text-green-700' : 'text-gray-600'
+											}`}>
 											{option.height}
 										</span>
 									</button>
@@ -200,11 +195,10 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 									<button
 										key={option.value}
 										onClick={() => updatePreferences({ contentWidth: option.value })}
-										className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-											preferences.contentWidth === option.value
+										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.contentWidth === option.value
 												? 'border-indigo-500 bg-indigo-50 shadow-md text-indigo-900'
 												: 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-gray-900'
-										}`}
+											}`}
 									>
 										<span className="block text-sm font-medium">
 											{option.label}

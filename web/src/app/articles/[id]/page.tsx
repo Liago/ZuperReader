@@ -2,11 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-<<<<<<< Updated upstream
-import { getArticleById, deleteArticle, updateArticleTags } from '../../../lib/api';
-=======
-import { getArticleById, toggleFavorite } from '../../../lib/api';
->>>>>>> Stashed changes
+import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -271,7 +267,7 @@ export default function ArticleReaderPage() {
 				} else {
 					setArticle(data);
 				}
-			} catch (err) {
+			} catch {
 				setError('Failed to load article');
 			} finally {
 				setLoading(false);
@@ -281,7 +277,6 @@ export default function ArticleReaderPage() {
 		fetchArticle();
 	}, [id, user, authLoading, router]);
 
-<<<<<<< Updated upstream
 	// Intercetta i click sui link all'interno del contenuto dell'articolo
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
@@ -316,7 +311,7 @@ export default function ArticleReaderPage() {
 			contentElement.removeEventListener('click', handleLinkClick);
 		};
 	}, [article]);
-=======
+
 	const handleToggleFavorite = async () => {
 		if (!article) return;
 
@@ -325,12 +320,11 @@ export default function ArticleReaderPage() {
 
 		try {
 			await toggleFavorite(article.id, newStatus);
-		} catch (err) {
+		} catch {
 			setArticle({ ...article, is_favorite: !newStatus });
 			console.error('Failed to toggle favorite');
 		}
 	};
->>>>>>> Stashed changes
 
 	if (authLoading || loading) {
 		return (
@@ -373,36 +367,17 @@ export default function ArticleReaderPage() {
 	}
 
 	return (
-<<<<<<< Updated upstream
-		<div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
-			<div className={`${getContentWidthClass()} mx-auto`}>
+		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+			<article className={`${getContentWidthClass()} mx-auto`}>
 				{/* Back Button and Delete Button - Mobile First */}
 				<div className="mb-4 sm:mb-6 flex flex-wrap gap-3 justify-between items-center">
 					<Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200">
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-=======
-		<div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
-			<div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-				{/* Header Image */}
-				{article.image_url && (
-					<div className="w-full h-64 sm:h-96 relative">
-						<img
-							src={article.image_url}
-							alt={article.title}
-							className="w-full h-full object-cover"
-						/>
-					</div>
-				)}
-
-				<div className="p-8 sm:p-12">
-					{/* Back Button */}
-					<Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-blue-600 mb-8 transition-colors">
-						<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
->>>>>>> Stashed changes
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 						</svg>
-						<span className="text-sm sm:text-base">Back to Dashboard</span>
+						Back
 					</Link>
+
 					<button
 						onClick={() => setShowDeleteConfirm(true)}
 						className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/80 backdrop-blur-sm text-white font-medium rounded-xl hover:bg-red-600 hover:shadow-md transition-all duration-200 border border-red-400"
@@ -410,152 +385,114 @@ export default function ArticleReaderPage() {
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 						</svg>
-						<span className="text-sm sm:text-base">Delete Article</span>
+						Delete
 					</button>
 				</div>
 
-<<<<<<< Updated upstream
-				{/* Article Container */}
-				<article className={`${colorTheme.bg}/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border ${colorTheme.border}`}>
-					{/* Header Image con gradient overlay */}
-					{article.image_url && (
-						<div className="relative w-full h-56 sm:h-72 md:h-96 overflow-hidden">
-							<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
-							<img
-								src={article.image_url}
-								alt={article.title}
-								className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
-							/>
-						</div>
-					)}
-=======
-					{/* Article Header */}
-					<header className="mb-8">
-						<div className="flex justify-between items-start">
-							<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight flex-1">
-								{article.title}
-							</h1>
-							<button
-								onClick={handleToggleFavorite}
-								className="ml-4 p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
-								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-300'}`} viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+				<header>
+					<h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-6 leading-tight bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+						{article.title}
+					</h1>
+
+					{/* Meta informazioni */}
+					<div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
+						{article.author && (
+							<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('purple')}`}>
+								<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 								</svg>
-							</button>
-						</div>
->>>>>>> Stashed changes
-
-					<div className="p-5 sm:p-8 md:p-12">
-						{/* Article Header */}
-						<header className="mb-8">
-							{/* Titolo con gradient */}
-							<h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-6 leading-tight bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-								{article.title}
-							</h1>
-
-							{/* Meta informazioni */}
-							<div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
-								{article.author && (
-									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('purple')}`}>
-										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-										</svg>
-										<span className="text-sm font-medium">{article.author}</span>
-									</div>
-								)}
-								{article.domain && (
-									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('pink')}`}>
-										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-										</svg>
-										<span className="text-sm font-medium">{article.domain}</span>
-									</div>
-								)}
-								{article.published_date && (
-									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('blue')}`}>
-										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-										</svg>
-										<span className="text-sm font-medium">{new Date(article.published_date).toLocaleDateString()}</span>
-									</div>
-								)}
-								{article.estimated_read_time && (
-									<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('green')}`}>
-										<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-										</svg>
-										<span className="text-sm font-medium">{article.estimated_read_time} min read</span>
-									</div>
-								)}
+								<span className="text-sm font-medium">{article.author}</span>
 							</div>
-
-							{/* Tags Section */}
-							<div className="mb-4 flex flex-wrap items-center gap-2">
-								{article.tags && article.tags.length > 0 && (
-									<TagList
-										tags={article.tags}
-										maxVisible={6}
-										size="md"
-									/>
-								)}
-								<button
-									onClick={() => setShowTagModal(true)}
-									className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all hover:scale-105 ${
-										preferences.colorTheme === 'dark'
-											? 'bg-purple-900/30 text-purple-200 border-purple-700/50 hover:bg-purple-900/50'
-											: preferences.colorTheme === 'ocean'
-												? 'bg-sky-100 text-cyan-900 border-sky-300 hover:bg-sky-200'
-												: preferences.colorTheme === 'forest'
-													? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
-													: preferences.colorTheme === 'sunset'
-														? 'bg-violet-100 text-violet-900 border-violet-300 hover:bg-violet-200'
-														: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-									}`}
-								>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-									</svg>
-									<span className="text-sm font-medium">
-										{article.tags && article.tags.length > 0 ? 'Manage Tags' : 'Add Tags'}
-									</span>
-								</button>
+						)}
+						{article.domain && (
+							<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('pink')}`}>
+								<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+								</svg>
+								<span className="text-sm font-medium">{article.domain}</span>
 							</div>
+						)}
+						{article.published_date && (
+							<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('blue')}`}>
+								<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+								</svg>
+								<span className="text-sm font-medium">{new Date(article.published_date).toLocaleDateString()}</span>
+							</div>
+						)}
+						{article.estimated_read_time && (
+							<div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getBadgeClasses('green')}`}>
+								<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+								</svg>
+								<span className="text-sm font-medium">{article.estimated_read_time} min read</span>
+							</div>
+						)}
+					</div>
 
-							{/* Link originale */}
-							{article.url && (
-								<a
-									href={article.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
-								>
-									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-									</svg>
-									Read Original Article
-								</a>
-							)}
-						</header>
-
-						{/* Divider */}
-						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mb-8 ${
-							preferences.colorTheme === 'dark'
-								? 'via-gray-600'
+					{/* Tags Section */}
+					<div className="mb-4 flex flex-wrap items-center gap-2">
+						{article.tags && article.tags.length > 0 && (
+							<TagList
+								tags={article.tags}
+								maxVisible={6}
+								size="md"
+							/>
+						)}
+						<button
+							onClick={() => setShowTagModal(true)}
+							className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all hover:scale-105 ${preferences.colorTheme === 'dark'
+								? 'bg-purple-900/30 text-purple-200 border-purple-700/50 hover:bg-purple-900/50'
 								: preferences.colorTheme === 'ocean'
-									? 'via-sky-300'
+									? 'bg-sky-100 text-cyan-900 border-sky-300 hover:bg-sky-200'
 									: preferences.colorTheme === 'forest'
-										? 'via-emerald-300'
+										? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
 										: preferences.colorTheme === 'sunset'
-											? 'via-violet-300'
-											: 'via-gray-300'
-						}`}></div>
+											? 'bg-violet-100 text-violet-900 border-violet-300 hover:bg-violet-200'
+											: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+								}`}
+						>
+							<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+							</svg>
+							<span className="text-sm font-medium">
+								{article.tags && article.tags.length > 0 ? 'Manage Tags' : 'Add Tags'}
+							</span>
+						</button>
+					</div>
 
-						{/* Article Content - Ottimizzato per lettura */}
-						<div
-							ref={articleContentRef}
-							className={`prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+					{/* Link originale */}
+					{article.url && (
+						<a
+							href={article.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
+						>
+							<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+							</svg>
+							Read Original Article
+						</a>
+					)}
+				</header>
+
+				{/* Divider */}
+				<div className={`h-px bg-gradient-to-r from-transparent to-transparent mb-8 ${preferences.colorTheme === 'dark'
+					? 'via-gray-600'
+					: preferences.colorTheme === 'ocean'
+						? 'via-sky-300'
+						: preferences.colorTheme === 'forest'
+							? 'via-emerald-300'
+							: preferences.colorTheme === 'sunset'
+								? 'via-violet-300'
+								: 'via-gray-300'
+					}`}></div>
+
+				{/* Article Content - Ottimizzato per lettura */}
+				<div
+					ref={articleContentRef}
+					className={`prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
 								prose-headings:font-bold ${colorTheme.proseHeadings}
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
@@ -569,62 +506,72 @@ export default function ArticleReaderPage() {
 								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
 								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
 								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
-							style={{ fontSize: `${preferences.fontSize}px` }}
-							dangerouslySetInnerHTML={{ __html: article.content || '' }}
-						/>
+					style={{ fontSize: `${preferences.fontSize}px` }}
+					dangerouslySetInnerHTML={{ __html: article.content || '' }}
+				/>
 
-						{/* Divider before social section */}
-						<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${
-							preferences.colorTheme === 'dark'
-								? 'via-gray-600'
-								: preferences.colorTheme === 'ocean'
-									? 'via-sky-300'
-									: preferences.colorTheme === 'forest'
-										? 'via-emerald-300'
-										: preferences.colorTheme === 'sunset'
-											? 'via-violet-300'
-											: 'via-gray-300'
-						}`}></div>
+				{/* Divider before social section */}
+				<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${preferences.colorTheme === 'dark'
+					? 'via-gray-600'
+					: preferences.colorTheme === 'ocean'
+						? 'via-sky-300'
+						: preferences.colorTheme === 'forest'
+							? 'via-emerald-300'
+							: preferences.colorTheme === 'sunset'
+								? 'via-violet-300'
+								: 'via-gray-300'
+					}`}></div>
 
-						{/* Social Actions */}
-						<div className="mt-8 mb-8">
-							<div className="flex flex-wrap gap-4 items-center">
-								<LikeButton
-									articleId={article.id}
-									userId={user!.id}
-									initialLikeCount={article.like_count}
-								/>
-								<InternalShareButton
-									articleId={article.id}
-									articleTitle={article.title}
-								/>
-								<ShareButton
-									articleId={article.id}
-									userId={user!.id}
-									articleUrl={article.url}
-									articleTitle={article.title}
-								/>
-							</div>
-						</div>
-
-						{/* Comments Section */}
-						<CommentsSection
+				{/* Social Actions */}
+				<div className="mt-8 mb-8">
+					<div className="flex flex-wrap gap-4 items-center">
+						<button
+							onClick={handleToggleFavorite}
+							className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${article.is_favorite
+								? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+								: 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+								}`}
+							title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+						>
+							<svg className={`w-5 h-5 ${article.is_favorite ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+							</svg>
+							<span className="font-medium">{article.is_favorite ? 'Saved' : 'Save'}</span>
+						</button>
+						<LikeButton
 							articleId={article.id}
 							userId={user!.id}
-							initialCommentCount={article.comment_count}
+							initialLikeCount={article.like_count}
+						/>
+						<InternalShareButton
+							articleId={article.id}
+							articleTitle={article.title}
+						/>
+						<ShareButton
+							articleId={article.id}
+							userId={user!.id}
+							articleUrl={article.url}
+							articleTitle={article.title}
 						/>
 					</div>
-				</article>
-
-				{/* Footer con azioni */}
-				<div className="mt-6 flex justify-center">
-					<Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-200">
-						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-						</svg>
-						Back to All Articles
-					</Link>
 				</div>
+
+				{/* Comments Section */}
+				<CommentsSection
+					articleId={article.id}
+					userId={user!.id}
+					initialCommentCount={article.comment_count}
+				/>
+			</article>
+
+			{/* Footer con azioni */}
+			<div className="mt-6 flex justify-center">
+				<Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-200">
+					<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+					</svg>
+					Back to All Articles
+				</Link>
 			</div>
 
 			{/* Floating Action Button for Reading Preferences */}
@@ -646,76 +593,82 @@ export default function ArticleReaderPage() {
 			/>
 
 			{/* Link Preview Modal */}
-			{linkPreviewUrl && (
-				<LinkPreviewModal
-					url={linkPreviewUrl}
-					onClose={() => setLinkPreviewUrl(null)}
-					onArticleSaved={() => {
-						// Opzionalmente puoi ricaricare la lista degli articoli o mostrare un messaggio
-						console.log('Article saved from link preview');
-					}}
-				/>
-			)}
+			{
+				linkPreviewUrl && (
+					<LinkPreviewModal
+						url={linkPreviewUrl}
+						onClose={() => setLinkPreviewUrl(null)}
+						onArticleSaved={() => {
+							// Opzionalmente puoi ricaricare la lista degli articoli o mostrare un messaggio
+							console.log('Article saved from link preview');
+						}}
+					/>
+				)
+			}
 
 			{/* Delete Confirmation Modal */}
-			{showDeleteConfirm && (
-				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-					<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
-						<div className="flex items-center gap-4 mb-4">
-							<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-								<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-								</svg>
+			{
+				showDeleteConfirm && (
+					<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+						<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+							<div className="flex items-center gap-4 mb-4">
+								<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+									<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+									</svg>
+								</div>
+								<div>
+									<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
+									<p className="text-sm text-gray-600">This action cannot be undone</p>
+								</div>
 							</div>
-							<div>
-								<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
-								<p className="text-sm text-gray-600">This action cannot be undone</p>
+							<p className="text-gray-700 mb-6">
+								Are you sure you want to delete &quot;{article?.title}&quot;? This will permanently remove the article from your library.
+							</p>
+							<div className="flex gap-3 justify-end">
+								<button
+									onClick={() => setShowDeleteConfirm(false)}
+									disabled={isDeleting}
+									className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={handleDeleteArticle}
+									disabled={isDeleting}
+									className="px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+								>
+									{isDeleting ? (
+										<>
+											<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+											Deleting...
+										</>
+									) : (
+										<>
+											<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+											</svg>
+											Delete
+										</>
+									)}
+								</button>
 							</div>
-						</div>
-						<p className="text-gray-700 mb-6">
-							Are you sure you want to delete "{article?.title}"? This will permanently remove the article from your library.
-						</p>
-						<div className="flex gap-3 justify-end">
-							<button
-								onClick={() => setShowDeleteConfirm(false)}
-								disabled={isDeleting}
-								className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleDeleteArticle}
-								disabled={isDeleting}
-								className="px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-							>
-								{isDeleting ? (
-									<>
-										<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-										Deleting...
-									</>
-								) : (
-									<>
-										<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-										</svg>
-										Delete
-									</>
-								)}
-							</button>
 						</div>
 					</div>
-				</div>
-			)}
+				)
+			}
 
 			{/* Tag Management Modal */}
-			{showTagModal && article && (
-				<TagManagementModal
-					isOpen={showTagModal}
-					onClose={() => setShowTagModal(false)}
-					article={article}
-					onSave={handleSaveTags}
-				/>
-			)}
-		</div>
+			{
+				showTagModal && article && (
+					<TagManagementModal
+						isOpen={showTagModal}
+						onClose={() => setShowTagModal(false)}
+						article={article}
+						onSave={handleSaveTags}
+					/>
+				)
+			}
+		</div >
 	);
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+// import { useAuth } from './AuthContext';
 
 export type AppTheme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
 
@@ -15,7 +15,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'app-theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-	const { user } = useAuth();
+	// user is not used
 	const [theme, setThemeState] = useState<AppTheme>('light');
 	const [isLoaded, setIsLoaded] = useState(false);
 

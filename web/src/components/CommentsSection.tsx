@@ -10,7 +10,7 @@ interface CommentsSectionProps {
 	initialCommentCount: number;
 }
 
-export default function CommentsSection({ articleId, userId, initialCommentCount }: CommentsSectionProps) {
+export default function CommentsSection({ articleId, userId }: CommentsSectionProps) {
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [newComment, setNewComment] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -18,17 +18,16 @@ export default function CommentsSection({ articleId, userId, initialCommentCount
 	const [editContent, setEditContent] = useState('');
 
 	useEffect(() => {
+		const loadComments = async () => {
+			try {
+				const data = await getComments(articleId);
+				setComments(data);
+			} catch (error) {
+				console.error('Error loading comments:', error);
+			}
+		};
 		loadComments();
 	}, [articleId]);
-
-	const loadComments = async () => {
-		try {
-			const data = await getComments(articleId);
-			setComments(data);
-		} catch (error) {
-			console.error('Error loading comments:', error);
-		}
-	};
 
 	const handleAddComment = async (e: React.FormEvent) => {
 		e.preventDefault();

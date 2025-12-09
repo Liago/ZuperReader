@@ -161,9 +161,8 @@ export default function SharedPage() {
 							{shares.map((share) => (
 								<li
 									key={share.id}
-									className={`p-6 transition-colors ${
-										!share.is_read ? 'bg-purple-50/50' : 'hover:bg-gray-50'
-									}`}
+									className={`p-6 transition-colors ${!share.is_read ? 'bg-purple-50/50' : 'hover:bg-gray-50'
+										}`}
 								>
 									<div className="flex flex-col sm:flex-row gap-4">
 										{/* Article Image */}
@@ -216,7 +215,7 @@ export default function SharedPage() {
 													{share.message && (
 														<div className="bg-gray-100 rounded-lg p-3 mt-2">
 															<p className="text-sm text-gray-700 italic">
-																"{share.message}"
+																&quot;{share.message}&quot;
 															</p>
 														</div>
 													)}

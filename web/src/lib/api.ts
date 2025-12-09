@@ -1,4 +1,4 @@
-import { supabase, Article, Like, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
+import { supabase, Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
@@ -22,7 +22,7 @@ export interface ArticleSortOptions {
 	order: ArticleSortOrder;
 }
 
-export async function parseArticle(url: string, userId: string): Promise<{ content: string; title: string; excerpt: string; lead_image_url: string; author: string; date_published: string; domain: string; word_count: number }> {
+export async function parseArticle(url: string): Promise<{ content: string; title: string; excerpt: string; lead_image_url: string; author: string; date_published: string; domain: string; word_count: number; url: string }> {
 	const response = await fetch(PARSE_FUNCTION_URL, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -34,10 +34,11 @@ export async function parseArticle(url: string, userId: string): Promise<{ conte
 		throw new Error(error.error || 'Failed to parse article');
 	}
 
-	return response.json();
+	const data = await response.json();
+	return { ...data, url };
 }
 
-export async function saveArticle(parsedData: any, userId: string): Promise<Article> {
+export async function saveArticle(parsedData: { url: string; title: string; content: string; excerpt: string | null; lead_image_url: string | null; author: string | null; date_published: string | null; word_count: number }, userId: string): Promise<Article> {
 	const urlObj = new URL(parsedData.url);
 	const domain = urlObj.hostname;
 	const estimatedReadTime = parsedData.word_count ? Math.ceil(parsedData.word_count / 200) : null;
@@ -63,7 +64,7 @@ export async function saveArticle(parsedData: any, userId: string): Promise<Arti
 	return data;
 }
 
-<<<<<<< Updated upstream
+
 export async function getArticles(
 	userId: string,
 	limit: number = 10,
@@ -123,18 +124,6 @@ export async function getArticles(
 	query = query.range(offset, offset + limit);
 
 	const { data, error } = await query;
-=======
-export async function getArticles(userId: string, page: number = 0, limit: number = 10): Promise<Article[]> {
-	const from = page * limit;
-	const to = from + limit - 1;
-
-	const { data, error } = await supabase
-		.from('articles')
-		.select('*')
-		.eq('user_id', userId)
-		.order('created_at', { ascending: false })
-		.range(from, to);
->>>>>>> Stashed changes
 
 	if (error) throw new Error(error.message);
 

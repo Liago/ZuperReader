@@ -16,7 +16,7 @@ interface UserWithStatus extends UserProfile {
 
 export default function UserSearch({ onClose }: UserSearchProps) {
 	const { user } = useAuth();
-	const { sendRequest, friends, pendingRequests, sentRequests } = useFriends();
+	const { sendRequest } = useFriends();
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState<UserWithStatus[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -70,8 +70,8 @@ export default function UserSearch({ onClose }: UserSearchProps) {
 			await sendRequest(addresseeId);
 			// Refresh search results
 			await search();
-		} catch (err: any) {
-			setError(err.message || 'Errore nell\'invio della richiesta');
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Errore nell\'invio della richiesta');
 		} finally {
 			setSendingRequest(null);
 		}

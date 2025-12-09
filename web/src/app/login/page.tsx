@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -150,7 +150,7 @@ export default function LoginPage() {
 							Enter verification code
 						</h1>
 						<p className="text-gray-600 mb-2 text-lg">
-							We've sent a 6-digit code to
+							We&apos;ve sent a 6-digit code to
 						</p>
 						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
 							{email}

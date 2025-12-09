@@ -22,7 +22,7 @@ export default function ArticleForm({ userId, onArticleAdded }: ArticleFormProps
 
 		try {
 			// Step 1: Parse the URL using Netlify Function
-			const parsedData = await parseArticle(url, userId);
+			const parsedData = await parseArticle(url);
 
 			// Step 2: Save to Supabase
 			setParsingStep('saving');
@@ -31,8 +31,8 @@ export default function ArticleForm({ userId, onArticleAdded }: ArticleFormProps
 			setUrl('');
 			onArticleAdded();
 			setParsingStep('idle');
-		} catch (err: any) {
-			setError(err.message || 'Failed to add article. Please try again.');
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Failed to add article. Please try again.');
 			setParsingStep('idle');
 		} finally {
 			setLoading(false);

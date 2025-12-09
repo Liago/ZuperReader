@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Friend } from '@/lib/supabase';
+// import { Friend } from '@/lib/supabase';
 import { shareArticleWithFriend } from '@/lib/api';
 import { useFriends } from '@/contexts/FriendsContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,8 +49,8 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 				setSelectedFriends([]);
 				setMessage('');
 			}, 1500);
-		} catch (err: any) {
-			setError(err.message || 'Errore durante la condivisione');
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Errore durante la condivisione');
 		} finally {
 			setSharing(false);
 		}
@@ -132,7 +132,7 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 									</svg>
 								</div>
 								<h4 className="text-lg font-semibold text-gray-800">Condivisione completata!</h4>
-								<p className="text-gray-500 mt-1">L'articolo è stato condiviso con i tuoi amici.</p>
+								<p className="text-gray-500 mt-1">L&apos;articolo è stato condiviso con i tuoi amici.</p>
 							</div>
 						) : (
 							<>
@@ -150,18 +150,16 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 													<li
 														key={friend.friendship_id}
 														onClick={() => toggleFriend(friend.user.id)}
-														className={`p-3 rounded-xl cursor-pointer transition-all ${
-															isSelected
-																? 'bg-purple-100 border-2 border-purple-400'
-																: 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-														}`}
+														className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected
+															? 'bg-purple-100 border-2 border-purple-400'
+															: 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+															}`}
 													>
 														<div className="flex items-center gap-3">
-															<div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-																isSelected
-																	? 'border-purple-600 bg-purple-600'
-																	: 'border-gray-300'
-															}`}>
+															<div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
+																? 'border-purple-600 bg-purple-600'
+																: 'border-gray-300'
+																}`}>
 																{isSelected && (
 																	<svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
 																		<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

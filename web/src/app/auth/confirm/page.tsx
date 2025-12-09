@@ -34,8 +34,8 @@ function ConfirmContent() {
 
 				// Verification successful, redirect to home
 				router.push('/');
-			} catch (err: any) {
-				setError(err.message || 'Verification failed');
+			} catch (err) {
+				setError(err instanceof Error ? err.message : 'Verification failed');
 				setVerifying(false);
 			}
 		};

@@ -1,13 +1,8 @@
 'use client';
 
-<<<<<<< Updated upstream
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteArticle, updateArticleTags, ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
-=======
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { getArticles, toggleFavorite } from '../lib/api';
->>>>>>> Stashed changes
+import { deleteArticle, updateArticleTags, toggleFavorite, ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
@@ -18,92 +13,8 @@ interface ArticleListProps {
 	userId: string;
 }
 
-<<<<<<< Updated upstream
 // Skeleton Loader per Grid View
 function GridSkeleton() {
-=======
-export default function ArticleList({ userId, refreshTrigger }: ArticleListProps) {
-	const [articles, setArticles] = useState<Article[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-	const [page, setPage] = useState(0);
-	const [hasMore, setHasMore] = useState(true);
-
-	const observer = useRef<IntersectionObserver | null>(null);
-	const lastArticleElementRef = useCallback((node: HTMLDivElement) => {
-		if (loading) return;
-		if (observer.current) observer.current.disconnect();
-		observer.current = new IntersectionObserver(entries => {
-			if (entries[0].isIntersecting && hasMore) {
-				setPage(prevPage => prevPage + 1);
-			}
-		});
-		if (node) observer.current.observe(node);
-	}, [loading, hasMore]);
-
-	// Initial load or refresh
-	useEffect(() => {
-		setArticles([]);
-		setPage(0);
-		setHasMore(true);
-		setLoading(true);
-
-		const fetchInitial = async () => {
-			try {
-				const data = await getArticles(userId, 0, 10);
-				setArticles(data);
-				if (data.length < 10) setHasMore(false);
-			} catch (err) {
-				setError('Failed to load articles');
-			} finally {
-				setLoading(false);
-			}
-		};
-		fetchInitial();
-	}, [userId, refreshTrigger]);
-
-	// Load more
-	useEffect(() => {
-		if (page === 0) return; // Already handled by initial load
-
-		const fetchMore = async () => {
-			setLoading(true);
-			try {
-				const data = await getArticles(userId, page, 10);
-				setArticles(prev => [...prev, ...data]);
-				if (data.length < 10) setHasMore(false);
-			} catch (err) {
-				setError('Failed to load more articles');
-			} finally {
-				setLoading(false);
-			}
-		};
-		fetchMore();
-	}, [page, userId]);
-
-	const handleToggleFavorite = async (e: React.MouseEvent, article: Article) => {
-		e.preventDefault();
-		e.stopPropagation();
-
-		// Optimistic update
-		const newStatus = !article.is_favorite;
-		setArticles(prev => prev.map(a => a.id === article.id ? { ...a, is_favorite: newStatus } : a));
-
-		try {
-			await toggleFavorite(article.id, newStatus);
-		} catch (err) {
-			// Revert on error
-			setArticles(prev => prev.map(a => a.id === article.id ? { ...a, is_favorite: !newStatus } : a));
-			console.error('Failed to toggle favorite');
-		}
-	};
-
-	if (loading && articles.length === 0) return <div className="text-center py-8 text-gray-600">Loading articles...</div>;
-	if (error && articles.length === 0) return <div className="text-center py-8 text-red-500">{error}</div>;
-	if (!loading && articles.length === 0) return <div className="text-center py-8 text-gray-600">No articles found. Add one above!</div>;
-
->>>>>>> Stashed changes
 	return (
 		<div className="bg-white/60 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-gray-100">
 			<div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse bg-[length:200%_100%]"></div>
@@ -112,7 +23,6 @@ export default function ArticleList({ userId, refreshTrigger }: ArticleListProps
 				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
 				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
 			</div>
-<<<<<<< Updated upstream
 		</div>
 	);
 }
@@ -346,6 +256,23 @@ export default function ArticleList({ userId }: ArticleListProps) {
 		}
 	};
 
+	const handleToggleFavorite = async (e: React.MouseEvent, article: Article) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		// Optimistic update
+		const newStatus = !article.is_favorite;
+		updateArticle(article.id, { is_favorite: newStatus });
+
+		try {
+			await toggleFavorite(article.id, newStatus);
+		} catch (err) {
+			// Revert on error
+			console.error('Failed to toggle favorite', err);
+			updateArticle(article.id, { is_favorite: !newStatus });
+		}
+	};
+
 	if (loading) {
 		return (
 			<div className="mt-8">
@@ -424,11 +351,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						<div className="bg-gray-100 rounded-xl p-1 flex">
 							<button
 								onClick={() => updatePreferences({ viewMode: 'grid' })}
-								className={`p-2 rounded-lg transition-all duration-200 ${
-									viewMode === 'grid'
-										? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-										: 'text-gray-400 hover:text-gray-600'
-								}`}
+								className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid'
+									? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+									: 'text-gray-400 hover:text-gray-600'
+									}`}
 								title="Grid View"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -437,11 +363,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							</button>
 							<button
 								onClick={() => updatePreferences({ viewMode: 'list' })}
-								className={`p-2 rounded-lg transition-all duration-200 ${
-									viewMode === 'list'
-										? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-										: 'text-gray-400 hover:text-gray-600'
-								}`}
+								className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
+									? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+									: 'text-gray-400 hover:text-gray-600'
+									}`}
 								title="List View"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -460,11 +385,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							<button
 								key={status}
 								onClick={() => setReadingStatus(status)}
-								className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-									readingStatus === status
-										? 'bg-white text-purple-600 shadow-sm'
-										: 'text-gray-500 hover:text-gray-700'
-								}`}
+								className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${readingStatus === status
+									? 'bg-white text-purple-600 shadow-sm'
+									: 'text-gray-500 hover:text-gray-700'
+									}`}
 							>
 								{status === 'all' && 'All'}
 								{status === 'unread' && 'Unread'}
@@ -477,11 +401,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					{/* Favorite Toggle */}
 					<button
 						onClick={() => setIsFavorite(isFavorite === true ? undefined : true)}
-						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-							isFavorite === true
-								? 'bg-pink-100 text-pink-600 border border-pink-200'
-								: 'bg-gray-100 text-gray-500 hover:text-gray-700'
-						}`}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isFavorite === true
+							? 'bg-pink-100 text-pink-600 border border-pink-200'
+							: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+							}`}
 					>
 						<svg className={`w-4 h-4 ${isFavorite === true ? 'fill-current' : ''}`} fill={isFavorite === true ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -515,11 +438,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					{/* More Filters Button */}
 					<button
 						onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-							showAdvancedFilters || selectedTags.length > 0 || selectedDomain
-								? 'bg-purple-100 text-purple-600 border border-purple-200'
-								: 'bg-gray-100 text-gray-500 hover:text-gray-700'
-						}`}
+						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${showAdvancedFilters || selectedTags.length > 0 || selectedDomain
+							? 'bg-purple-100 text-purple-600 border border-purple-200'
+							: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+							}`}
 					>
 						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -558,11 +480,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 										<button
 											key={tag}
 											onClick={() => toggleTag(tag)}
-											className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-												selectedTags.includes(tag)
-													? 'bg-purple-600 text-white'
-													: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-											}`}
+											className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${selectedTags.includes(tag)
+												? 'bg-purple-600 text-white'
+												: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+												}`}
 										>
 											{tag}
 										</button>
@@ -621,15 +542,26 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							}}
 						>
 							{/* Delete Button */}
-							<button
-								onClick={(e) => handleDeleteClick(e, article)}
-								className="absolute top-3 right-3 z-20 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-								title="Delete article"
-							>
-								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-							</button>
+							<div className="absolute top-3 right-3 z-20 flex gap-2">
+								<button
+									onClick={(e) => handleToggleFavorite(e, article)}
+									className="p-2 bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+								>
+									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+									</svg>
+								</button>
+								<button
+									onClick={(e) => handleDeleteClick(e, article)}
+									className="p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+									title="Delete article"
+								>
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
+							</div>
 
 							{/* Immagine con overlay gradient */}
 							{article.image_url && (
@@ -823,16 +755,27 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								</div>
 							</div>
 
-							{/* Delete Button */}
-							<button
-								onClick={(e) => handleDeleteClick(e, article)}
-								className="self-start p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-								title="Delete article"
-							>
-								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-							</button>
+							{/* Actions */}
+							<div className="flex flex-col gap-2 self-start opacity-0 group-hover:opacity-100 transition-opacity">
+								<button
+									onClick={(e) => handleToggleFavorite(e, article)}
+									className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+								>
+									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+									</svg>
+								</button>
+								<button
+									onClick={(e) => handleDeleteClick(e, article)}
+									className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors"
+									title="Delete article"
+								>
+									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
+							</div>
 						</article>
 					))}
 				</div>
@@ -854,7 +797,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 			{/* Messaggio fine lista */}
 			{!hasMore && articles.length > 0 && (
 				<div className="text-center py-8">
-					<p className="text-gray-500 text-sm">You've reached the end of your articles</p>
+					<p className="text-gray-500 text-sm">You&apos;ve reached the end of your articles</p>
 				</div>
 			)}
 
@@ -874,7 +817,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							</div>
 						</div>
 						<p className="text-gray-700 mb-6">
-							Are you sure you want to delete "{articleToDelete.title}"? This will permanently remove the article from your library.
+							Are you sure you want to delete &quot;{articleToDelete.title}&quot;? This will permanently remove the article from your library.
 						</p>
 						<div className="flex gap-3 justify-end">
 							<button
@@ -934,97 +877,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					}
 				}
 			`}</style>
-=======
 
-			{viewMode === 'grid' ? (
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{articles.map((article, index) => (
-						<div
-							key={article.id}
-							className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative group"
-							ref={index === articles.length - 1 ? lastArticleElementRef : null}
-						>
-							<button
-								onClick={(e) => handleToggleFavorite(e, article)}
-								className="absolute top-2 right-2 p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors z-10"
-								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-								</svg>
-							</button>
-							{article.image_url && (
-								<a href={`/articles/${article.id}`} className="block">
-									<img src={article.image_url} alt={article.title} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
-								</a>
-							)}
-							<div className="p-4">
-								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900">
-									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
-										{article.title}
-									</a>
-								</h3>
-								<p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.excerpt}</p>
-								<div className="flex justify-between items-center text-xs text-gray-500">
-									<span>{article.domain}</span>
-									<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
-								</div>
-								<div className="mt-2 text-right">
-									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
-										Original Link ↗
-									</a>
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-			) : (
-				<div className="space-y-4">
-					{articles.map((article, index) => (
-						<div
-							key={article.id}
-							className="bg-white rounded-lg shadow-md p-4 flex gap-4 hover:shadow-lg transition-shadow relative"
-							ref={index === articles.length - 1 ? lastArticleElementRef : null}
-						>
-							{article.image_url && (
-								<a href={`/articles/${article.id}`} className="flex-shrink-0">
-									<img src={article.image_url} alt={article.title} className="w-24 h-24 object-cover rounded" />
-								</a>
-							)}
-							<div className="flex-1 min-w-0 pr-8">
-								<h3 className="text-lg font-bold mb-1 text-gray-900 truncate">
-									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
-										{article.title}
-									</a>
-								</h3>
-								<p className="text-gray-600 text-sm mb-2 line-clamp-2">{article.excerpt}</p>
-								<div className="flex justify-between items-center text-xs text-gray-500">
-									<div className="flex gap-3">
-										<span>{article.domain}</span>
-										<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
-									</div>
-									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-										Original Link ↗
-									</a>
-								</div>
-							</div>
-							<button
-								onClick={(e) => handleToggleFavorite(e, article)}
-								className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
-								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-								</svg>
-							</button>
-						</div>
-					))}
-				</div>
-			)}
-			{loading && articles.length > 0 && (
-				<div className="text-center py-4 text-gray-600">Loading more...</div>
-			)}
->>>>>>> Stashed changes
 		</div>
 	);
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Article } from '../lib/supabase';
-import { suggestTagsForArticle, getAllPredefinedTags, searchTags, getTagColor } from '../lib/tagSuggestionService';
+import { suggestTagsForArticle, getAllPredefinedTags, searchTags } from '../lib/tagSuggestionService';
 import TagBadge from './TagBadge';
 
 interface TagManagementModalProps {
