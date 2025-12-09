@@ -503,6 +503,39 @@ export default function ArticleReaderPage() {
 					</div>
 				</header>
 
+				{/* Article Content */}
+				<div
+					ref={articleContentRef}
+					className={`prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+								prose-headings:font-bold ${colorTheme.proseHeadings}
+								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
+								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
+								prose-h3:text-xl prose-h3:mb-3 prose-h3:mt-4
+								${colorTheme.proseParagraphs} prose-p:mb-4
+								${colorTheme.proseLinks} prose-a:no-underline hover:prose-a:underline prose-a:cursor-pointer
+								${colorTheme.proseStrong} prose-strong:font-bold
+								prose-ul:my-4 prose-ol:my-4
+								${colorTheme.proseLi} prose-li:my-2
+								prose-img:rounded-xl prose-img:shadow-lg prose-img:my-6
+								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
+					style={{ fontSize: `${preferences.fontSize}px` }}
+					dangerouslySetInnerHTML={{ __html: article.content || '' }}
+				/>
+
+				{/* Divider before comments section */}
+				<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${preferences.colorTheme === 'dark'
+					? 'via-gray-600'
+					: preferences.colorTheme === 'ocean'
+						? 'via-sky-300'
+						: preferences.colorTheme === 'forest'
+							? 'via-emerald-300'
+							: preferences.colorTheme === 'sunset'
+								? 'via-violet-300'
+								: 'via-gray-300'
+					}`}></div>
+
 				{/* Comments Section */}
 				<CommentsSection
 					articleId={article.id}
