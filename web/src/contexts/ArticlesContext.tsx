@@ -108,10 +108,15 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 
 			console.log('[ArticlesContext] Received', newArticles.length, 'articles, hasMore:', more, 'requestId:', thisRequestId);
 
-			// Ignore stale responses - only apply if this is still the latest request
+			// Ignore stale responses
 			if (thisRequestId !== requestIdRef.current || currentUserIdRef.current !== userId) {
-				console.log('[ArticlesContext] Ignoring stale response, thisRequestId:', thisRequestId, 'current:', requestIdRef.current);
+				console.log('[ArticlesContext] Ignoring stale response');
 				return;
+			}
+
+			// Update offset for next call
+			if (more) {
+				offsetRef.current = currentOffset + ITEMS_PER_PAGE;
 			}
 
 			setState(prev => {
@@ -122,20 +127,13 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 					// Filter out any duplicates when appending
 					const existingIds = new Set(prev.articles.map(a => a.id));
 					const uniqueNewArticles = newArticles.filter(a => !existingIds.has(a.id));
-					const duplicateCount = newArticles.length - uniqueNewArticles.length;
-					if (duplicateCount > 0) {
-						console.log('[ArticlesContext] Filtered out', duplicateCount, 'duplicate articles');
-					}
 					updatedArticles = [...prev.articles, ...uniqueNewArticles];
 				}
-
-				const newOffset = reset ? ITEMS_PER_PAGE : prev.offset + ITEMS_PER_PAGE;
-				console.log('[ArticlesContext] Updating state: total articles:', updatedArticles.length, 'new offset:', newOffset, 'hasMore:', more);
 
 				return {
 					...prev,
 					articles: updatedArticles,
-					offset: newOffset,
+					offset: offsetRef.current,
 					hasMore: more,
 					loading: false,
 					loadingMore: false,
