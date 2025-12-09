@@ -14,9 +14,9 @@
 [data-theme="light"] {
   --app-bg-primary: #ffffff;
   --app-bg-secondary: #f9fafb;
-  --app-bg-gradient-from: #ede9fe;
-  --app-bg-gradient-via: #fae8ff;
-  --app-bg-gradient-to: #fce7f3;
+  --app-bg-gradient-from: #ffffff;
+  --app-bg-gradient-via: #ffffff;
+  --app-bg-gradient-to: #ffffff;
   --app-text-primary: #111827;
   --app-text-secondary: #6b7280;
   --app-border: #e5e7eb;

@@ -177,7 +177,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 				observer.unobserve(currentTarget);
 			}
 		};
-	}, [hasMore, loadArticles, userId]);
+	}, [hasMore, loadArticles, userId, loading, loadingMore]);
 
 	// Clear all filters
 	const clearFilters = () => {
