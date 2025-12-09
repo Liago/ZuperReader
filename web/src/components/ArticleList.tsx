@@ -1,8 +1,13 @@
 'use client';
 
+<<<<<<< Updated upstream
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteArticle, updateArticleTags, ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
+=======
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { getArticles, toggleFavorite } from '../lib/api';
+>>>>>>> Stashed changes
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
@@ -13,8 +18,92 @@ interface ArticleListProps {
 	userId: string;
 }
 
+<<<<<<< Updated upstream
 // Skeleton Loader per Grid View
 function GridSkeleton() {
+=======
+export default function ArticleList({ userId, refreshTrigger }: ArticleListProps) {
+	const [articles, setArticles] = useState<Article[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
+	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+	const [page, setPage] = useState(0);
+	const [hasMore, setHasMore] = useState(true);
+
+	const observer = useRef<IntersectionObserver | null>(null);
+	const lastArticleElementRef = useCallback((node: HTMLDivElement) => {
+		if (loading) return;
+		if (observer.current) observer.current.disconnect();
+		observer.current = new IntersectionObserver(entries => {
+			if (entries[0].isIntersecting && hasMore) {
+				setPage(prevPage => prevPage + 1);
+			}
+		});
+		if (node) observer.current.observe(node);
+	}, [loading, hasMore]);
+
+	// Initial load or refresh
+	useEffect(() => {
+		setArticles([]);
+		setPage(0);
+		setHasMore(true);
+		setLoading(true);
+
+		const fetchInitial = async () => {
+			try {
+				const data = await getArticles(userId, 0, 10);
+				setArticles(data);
+				if (data.length < 10) setHasMore(false);
+			} catch (err) {
+				setError('Failed to load articles');
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchInitial();
+	}, [userId, refreshTrigger]);
+
+	// Load more
+	useEffect(() => {
+		if (page === 0) return; // Already handled by initial load
+
+		const fetchMore = async () => {
+			setLoading(true);
+			try {
+				const data = await getArticles(userId, page, 10);
+				setArticles(prev => [...prev, ...data]);
+				if (data.length < 10) setHasMore(false);
+			} catch (err) {
+				setError('Failed to load more articles');
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchMore();
+	}, [page, userId]);
+
+	const handleToggleFavorite = async (e: React.MouseEvent, article: Article) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		// Optimistic update
+		const newStatus = !article.is_favorite;
+		setArticles(prev => prev.map(a => a.id === article.id ? { ...a, is_favorite: newStatus } : a));
+
+		try {
+			await toggleFavorite(article.id, newStatus);
+		} catch (err) {
+			// Revert on error
+			setArticles(prev => prev.map(a => a.id === article.id ? { ...a, is_favorite: !newStatus } : a));
+			console.error('Failed to toggle favorite');
+		}
+	};
+
+	if (loading && articles.length === 0) return <div className="text-center py-8 text-gray-600">Loading articles...</div>;
+	if (error && articles.length === 0) return <div className="text-center py-8 text-red-500">{error}</div>;
+	if (!loading && articles.length === 0) return <div className="text-center py-8 text-gray-600">No articles found. Add one above!</div>;
+
+>>>>>>> Stashed changes
 	return (
 		<div className="bg-white/60 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-gray-100">
 			<div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse bg-[length:200%_100%]"></div>
@@ -23,6 +112,7 @@ function GridSkeleton() {
 				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
 				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
 			</div>
+<<<<<<< Updated upstream
 		</div>
 	);
 }
@@ -844,6 +934,97 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					}
 				}
 			`}</style>
+=======
+
+			{viewMode === 'grid' ? (
+				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{articles.map((article, index) => (
+						<div
+							key={article.id}
+							className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative group"
+							ref={index === articles.length - 1 ? lastArticleElementRef : null}
+						>
+							<button
+								onClick={(e) => handleToggleFavorite(e, article)}
+								className="absolute top-2 right-2 p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors z-10"
+								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+								</svg>
+							</button>
+							{article.image_url && (
+								<a href={`/articles/${article.id}`} className="block">
+									<img src={article.image_url} alt={article.title} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
+								</a>
+							)}
+							<div className="p-4">
+								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900">
+									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
+										{article.title}
+									</a>
+								</h3>
+								<p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.excerpt}</p>
+								<div className="flex justify-between items-center text-xs text-gray-500">
+									<span>{article.domain}</span>
+									<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
+								</div>
+								<div className="mt-2 text-right">
+									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+										Original Link ↗
+									</a>
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			) : (
+				<div className="space-y-4">
+					{articles.map((article, index) => (
+						<div
+							key={article.id}
+							className="bg-white rounded-lg shadow-md p-4 flex gap-4 hover:shadow-lg transition-shadow relative"
+							ref={index === articles.length - 1 ? lastArticleElementRef : null}
+						>
+							{article.image_url && (
+								<a href={`/articles/${article.id}`} className="flex-shrink-0">
+									<img src={article.image_url} alt={article.title} className="w-24 h-24 object-cover rounded" />
+								</a>
+							)}
+							<div className="flex-1 min-w-0 pr-8">
+								<h3 className="text-lg font-bold mb-1 text-gray-900 truncate">
+									<a href={`/articles/${article.id}`} className="hover:text-blue-600">
+										{article.title}
+									</a>
+								</h3>
+								<p className="text-gray-600 text-sm mb-2 line-clamp-2">{article.excerpt}</p>
+								<div className="flex justify-between items-center text-xs text-gray-500">
+									<div className="flex gap-3">
+										<span>{article.domain}</span>
+										<span>{article.estimated_read_time ? `${article.estimated_read_time} min read` : ''}</span>
+									</div>
+									<a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+										Original Link ↗
+									</a>
+								</div>
+							</div>
+							<button
+								onClick={(e) => handleToggleFavorite(e, article)}
+								className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+								</svg>
+							</button>
+						</div>
+					))}
+				</div>
+			)}
+			{loading && articles.length > 0 && (
+				<div className="text-center py-4 text-gray-600">Loading more...</div>
+			)}
+>>>>>>> Stashed changes
 		</div>
 	);
 }

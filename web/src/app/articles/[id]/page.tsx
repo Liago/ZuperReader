@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+<<<<<<< Updated upstream
 import { getArticleById, deleteArticle, updateArticleTags } from '../../../lib/api';
+=======
+import { getArticleById, toggleFavorite } from '../../../lib/api';
+>>>>>>> Stashed changes
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -277,6 +281,7 @@ export default function ArticleReaderPage() {
 		fetchArticle();
 	}, [id, user, authLoading, router]);
 
+<<<<<<< Updated upstream
 	// Intercetta i click sui link all'interno del contenuto dell'articolo
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
@@ -311,6 +316,21 @@ export default function ArticleReaderPage() {
 			contentElement.removeEventListener('click', handleLinkClick);
 		};
 	}, [article]);
+=======
+	const handleToggleFavorite = async () => {
+		if (!article) return;
+
+		const newStatus = !article.is_favorite;
+		setArticle({ ...article, is_favorite: newStatus });
+
+		try {
+			await toggleFavorite(article.id, newStatus);
+		} catch (err) {
+			setArticle({ ...article, is_favorite: !newStatus });
+			console.error('Failed to toggle favorite');
+		}
+	};
+>>>>>>> Stashed changes
 
 	if (authLoading || loading) {
 		return (
@@ -353,12 +373,32 @@ export default function ArticleReaderPage() {
 	}
 
 	return (
+<<<<<<< Updated upstream
 		<div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
 			<div className={`${getContentWidthClass()} mx-auto`}>
 				{/* Back Button and Delete Button - Mobile First */}
 				<div className="mb-4 sm:mb-6 flex flex-wrap gap-3 justify-between items-center">
 					<Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200">
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+=======
+		<div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
+			<div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+				{/* Header Image */}
+				{article.image_url && (
+					<div className="w-full h-64 sm:h-96 relative">
+						<img
+							src={article.image_url}
+							alt={article.title}
+							className="w-full h-full object-cover"
+						/>
+					</div>
+				)}
+
+				<div className="p-8 sm:p-12">
+					{/* Back Button */}
+					<Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-blue-600 mb-8 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+>>>>>>> Stashed changes
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 						</svg>
 						<span className="text-sm sm:text-base">Back to Dashboard</span>
@@ -374,6 +414,7 @@ export default function ArticleReaderPage() {
 					</button>
 				</div>
 
+<<<<<<< Updated upstream
 				{/* Article Container */}
 				<article className={`${colorTheme.bg}/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border ${colorTheme.border}`}>
 					{/* Header Image con gradient overlay */}
@@ -387,6 +428,24 @@ export default function ArticleReaderPage() {
 							/>
 						</div>
 					)}
+=======
+					{/* Article Header */}
+					<header className="mb-8">
+						<div className="flex justify-between items-start">
+							<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight flex-1">
+								{article.title}
+							</h1>
+							<button
+								onClick={handleToggleFavorite}
+								className="ml-4 p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
+								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${article.is_favorite ? 'text-red-500 fill-current' : 'text-gray-300'}`} viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+								</svg>
+							</button>
+						</div>
+>>>>>>> Stashed changes
 
 					<div className="p-5 sm:p-8 md:p-12">
 						{/* Article Header */}

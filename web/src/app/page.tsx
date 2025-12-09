@@ -7,8 +7,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFriends } from '../contexts/FriendsContext';
 import { useArticles } from '../contexts/ArticlesContext';
 import ArticleList from '../components/ArticleList';
+<<<<<<< Updated upstream
 import AddArticleModal from '../components/AddArticleModal';
 import ThemeSelector from '../components/ThemeSelector';
+=======
+import AvatarMenu from '../components/AvatarMenu';
+>>>>>>> Stashed changes
 
 export default function Home() {
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -46,6 +50,7 @@ export default function Home() {
 	}
 
 	return (
+<<<<<<< Updated upstream
 		<main className="min-h-screen app-bg-gradient py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
 			<div className="max-w-7xl mx-auto">
 				{/* Header con design moderno */}
@@ -127,6 +132,17 @@ export default function Home() {
 								Esci
 							</button>
 						</div>
+=======
+		<main className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
+			<div className="max-w-7xl mx-auto">
+				<header className="mb-12 flex justify-between items-center">
+					<div>
+						<h1 className="text-4xl font-extrabold text-gray-900 mb-2">SuperReader</h1>
+						<p className="text-lg text-gray-600">Save and read your favorite articles</p>
+					</div>
+					<div className="flex items-center gap-4">
+						<AvatarMenu userEmail={user.email} onSignOut={signOut} />
+>>>>>>> Stashed changes
 					</div>
 				</header>
 

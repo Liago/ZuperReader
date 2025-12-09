@@ -63,6 +63,7 @@ export async function saveArticle(parsedData: any, userId: string): Promise<Arti
 	return data;
 }
 
+<<<<<<< Updated upstream
 export async function getArticles(
 	userId: string,
 	limit: number = 10,
@@ -122,6 +123,18 @@ export async function getArticles(
 	query = query.range(offset, offset + limit);
 
 	const { data, error } = await query;
+=======
+export async function getArticles(userId: string, page: number = 0, limit: number = 10): Promise<Article[]> {
+	const from = page * limit;
+	const to = from + limit - 1;
+
+	const { data, error } = await supabase
+		.from('articles')
+		.select('*')
+		.eq('user_id', userId)
+		.order('created_at', { ascending: false })
+		.range(from, to);
+>>>>>>> Stashed changes
 
 	if (error) throw new Error(error.message);
 
