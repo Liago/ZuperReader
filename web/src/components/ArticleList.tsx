@@ -567,6 +567,34 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							{article.image_url && (
 								<div className="block relative overflow-hidden">
 									<div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+									{/* Reading Status Badge */}
+									<div className="absolute top-3 left-3 z-20">
+										{article.reading_status === 'unread' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+												</svg>
+												Unread
+											</span>
+										)}
+										{article.reading_status === 'reading' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
+												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+												</svg>
+												Reading
+											</span>
+										)}
+										{article.reading_status === 'completed' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+												</svg>
+												Completed
+											</span>
+										)}
+									</div>
 									<img
 										src={article.image_url}
 										alt={article.title}
@@ -578,6 +606,36 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 							{/* Content */}
 							<div className="p-5">
+								{/* Reading Status Badge - when no image */}
+								{!article.image_url && (
+									<div className="mb-3">
+										{article.reading_status === 'unread' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+												</svg>
+												Unread
+											</span>
+										)}
+										{article.reading_status === 'reading' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+												</svg>
+												Reading
+											</span>
+										)}
+										{article.reading_status === 'completed' && (
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+												</svg>
+												Completed
+											</span>
+										)}
+									</div>
+								)}
 								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
 									{article.title}
 								</h3>
@@ -673,7 +731,31 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						>
 							{/* Immagine */}
 							{article.image_url && (
-								<div className="flex-shrink-0">
+								<div className="flex-shrink-0 relative">
+									{/* Reading Status Badge */}
+									<div className="absolute -top-2 -left-2 z-10">
+										{article.reading_status === 'unread' && (
+											<span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full shadow-lg" title="Unread">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+												</svg>
+											</span>
+										)}
+										{article.reading_status === 'reading' && (
+											<span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg" title="Reading">
+												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+												</svg>
+											</span>
+										)}
+										{article.reading_status === 'completed' && (
+											<span className="inline-flex items-center justify-center w-6 h-6 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg" title="Completed">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+												</svg>
+											</span>
+										)}
+									</div>
 									<img
 										src={article.image_url}
 										alt={article.title}
@@ -685,6 +767,35 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 							{/* Content */}
 							<div className="flex-1 min-w-0 flex flex-col">
+								{/* Reading Status Badge - when no image in list view */}
+								{!article.image_url && (
+									<div className="mb-2">
+										{article.reading_status === 'unread' && (
+											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+												</svg>
+												Unread
+											</span>
+										)}
+										{article.reading_status === 'reading' && (
+											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+												</svg>
+												Reading
+											</span>
+										)}
+										{article.reading_status === 'completed' && (
+											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/90 text-white text-xs font-medium rounded-full">
+												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+												</svg>
+												Completed
+											</span>
+										)}
+									</div>
+								)}
 								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
 									{article.title}
 								</h3>

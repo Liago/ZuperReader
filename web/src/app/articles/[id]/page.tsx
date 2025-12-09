@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite } from '../../../lib/api';
+import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -277,6 +277,51 @@ export default function ArticleReaderPage() {
 		fetchArticle();
 	}, [id, user, authLoading, router]);
 
+	// Auto-mark article as "reading" when opened (if it's unread)
+	useEffect(() => {
+		if (article && article.reading_status === 'unread') {
+			const markAsReading = async () => {
+				try {
+					await updateReadingStatus(article.id, 'reading');
+					setArticle({ ...article, reading_status: 'reading' });
+				} catch (error) {
+					console.error('Failed to update reading status:', error);
+				}
+			};
+			markAsReading();
+		}
+	}, [article?.id]); // Only run when article.id changes
+
+	// Track scroll to mark article as completed when reaching near the end
+	useEffect(() => {
+		if (!article || article.reading_status === 'completed') return;
+
+		const handleScroll = () => {
+			const contentElement = articleContentRef.current;
+			if (!contentElement) return;
+
+			const scrollPosition = window.scrollY + window.innerHeight;
+			const contentBottom = contentElement.offsetTop + contentElement.offsetHeight;
+			const scrollPercentage = (scrollPosition / contentBottom) * 100;
+
+			// Mark as completed when user scrolls to 85% of the content
+			if (scrollPercentage >= 85 && article.reading_status === 'reading') {
+				const markAsCompleted = async () => {
+					try {
+						await updateReadingStatus(article.id, 'completed');
+						setArticle({ ...article, reading_status: 'completed' });
+					} catch (error) {
+						console.error('Failed to update reading status to completed:', error);
+					}
+				};
+				markAsCompleted();
+			}
+		};
+
+		window.addEventListener('scroll', handleScroll);
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, [article?.id, article?.reading_status]);
+
 	// Intercetta i click sui link all'interno del contenuto dell'articolo
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
@@ -323,6 +368,20 @@ export default function ArticleReaderPage() {
 		} catch {
 			setArticle({ ...article, is_favorite: !newStatus });
 			console.error('Failed to toggle favorite');
+		}
+	};
+
+	const handleReadingStatusChange = async (newStatus: 'unread' | 'reading' | 'completed') => {
+		if (!article) return;
+
+		const previousStatus = article.reading_status;
+		setArticle({ ...article, reading_status: newStatus });
+
+		try {
+			await updateReadingStatus(article.id, newStatus);
+		} catch (error) {
+			console.error('Failed to update reading status:', error);
+			setArticle({ ...article, reading_status: previousStatus });
 		}
 	};
 
@@ -449,6 +508,82 @@ export default function ArticleReaderPage() {
 									</svg>
 								</a>
 							)}
+
+							<div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+
+							{/* Reading Status Dropdown */}
+							<div className="relative group">
+								<button
+									className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all shadow-sm ${article.reading_status === 'unread'
+											? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+											: article.reading_status === 'reading'
+												? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+												: 'bg-green-100 text-green-700 hover:bg-green-200'
+										}`}
+								>
+									{article.reading_status === 'unread' && (
+										<>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+											</svg>
+											Unread
+										</>
+									)}
+									{article.reading_status === 'reading' && (
+										<>
+											<svg className="w-4 h-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+											</svg>
+											Reading
+										</>
+									)}
+									{article.reading_status === 'completed' && (
+										<>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											Completed
+										</>
+									)}
+									<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+									</svg>
+								</button>
+								{/* Dropdown menu */}
+								<div className="absolute left-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+									<button
+										onClick={() => handleReadingStatusChange('unread')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 rounded-t-xl ${article.reading_status === 'unread' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+											}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+										</svg>
+										Unread
+									</button>
+									<button
+										onClick={() => handleReadingStatusChange('reading')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors flex items-center gap-2 ${article.reading_status === 'reading' ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-700'
+											}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+										</svg>
+										Reading
+									</button>
+									<button
+										onClick={() => handleReadingStatusChange('completed')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors flex items-center gap-2 rounded-b-xl ${article.reading_status === 'completed' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'
+											}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+										Completed
+									</button>
+								</div>
+							</div>
 
 							<div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
 
