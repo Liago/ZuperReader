@@ -47,6 +47,8 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
 	const currentFiltersRef = useRef<ArticleFilters>({});
 	const currentSortRef = useRef<ArticleSortOptions>({ field: 'created_at', order: 'desc' });
 
+	const offsetRef = useRef(0);
+
 	const loadArticles = useCallback(async (
 		userId: string,
 		reset: boolean = false,
