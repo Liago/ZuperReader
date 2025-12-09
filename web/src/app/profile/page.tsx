@@ -61,6 +61,27 @@ export default function ProfilePage() {
 		};
 
 		loadStatistics();
+
+		// Reload statistics when page becomes visible or window gains focus
+		const handleVisibilityChange = () => {
+			if (!document.hidden && user) {
+				loadStatistics();
+			}
+		};
+
+		const handleFocus = () => {
+			if (user) {
+				loadStatistics();
+			}
+		};
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		window.addEventListener('focus', handleFocus);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			window.removeEventListener('focus', handleFocus);
+		};
 	}, [user]);
 
 	const handleSaveProfile = async () => {
