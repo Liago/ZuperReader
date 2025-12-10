@@ -9,10 +9,55 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
-	const { signInWithOtp } = useAuth();
+	// Manual Link Verification
+	const [manualLink, setManualLink] = useState('');
+	const [verifyingLink, setVerifyingLink] = useState(false);
+	const [linkError, setLinkError] = useState('');
+	const { signInWithOtp, verifyTokenHash } = useAuth();
 
-	// We don't need router here anymore for OTP verification, but might be useful for future extensions
-	// const router = useRouter(); 
+	const router = useRouter();
+
+	// Handle manually pasted Magic Link
+	const handleManualLinkSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!manualLink.trim()) return;
+
+		setVerifyingLink(true);
+		setLinkError('');
+
+		try {
+			// Extract token_hash and type from the URL
+			// Expected format: azreader://auth/confirm?token_hash=...&type=...
+			let urlObj;
+			try {
+				urlObj = new URL(manualLink);
+			} catch (err) {
+				// If it's not a valid URL, try to prepend a protocol if missing, though azreader:// should be there
+				throw new Error('Invalid URL format');
+			}
+
+			const token_hash = urlObj.searchParams.get('token_hash');
+			const type = urlObj.searchParams.get('type');
+
+			if (!token_hash || !type) {
+				throw new Error('Invalid Magic Link: missing token or type');
+			}
+
+			const { error } = await verifyTokenHash(token_hash, type);
+
+			if (error) {
+				throw error;
+			}
+
+			// Success - redirect to home
+			router.push('/');
+
+		} catch (err: any) {
+			setLinkError(err.message || 'Failed to verify link');
+			setVerifyingLink(false);
+		}
+	};
+
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -72,9 +117,46 @@ export default function LoginPage() {
 						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
 							{email}
 						</p>
-						<p className="text-gray-500 text-sm mb-8">
+						<p className="text-gray-500 text-sm mb-6">
 							Click the link in the email to sign in. You can close this tab.
 						</p>
+
+						{/* Manual Link Entry */}
+						<div className="mb-8">
+							<div className="relative">
+								<div className="absolute inset-0 flex items-center">
+									<div className="w-full border-t border-gray-200"></div>
+								</div>
+								<div className="relative flex justify-center text-sm">
+									<span className="px-2 bg-white text-gray-400">or paste the link here</span>
+								</div>
+							</div>
+
+							<form onSubmit={handleManualLinkSubmit} className="mt-4 space-y-3">
+								<div className="relative">
+									<input
+										type="text"
+										value={manualLink}
+										onChange={(e) => setManualLink(e.target.value)}
+										placeholder="azreader://auth/confirm?..."
+										className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-900"
+										disabled={verifyingLink}
+									/>
+								</div>
+
+								{linkError && (
+									<p className="text-red-500 text-xs text-left ml-1">{linkError}</p>
+								)}
+
+								<button
+									type="submit"
+									disabled={verifyingLink || !manualLink}
+									className="w-full py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm shadow-sm"
+								>
+									{verifyingLink ? 'Verifying...' : 'Verify Link'}
+								</button>
+							</form>
+						</div>
 
 						<div className="space-y-4">
 							<button

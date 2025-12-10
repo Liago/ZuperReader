@@ -10,6 +10,7 @@ interface AuthContextType {
 	loading: boolean;
 	signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
 	verifyOtpCode: (email: string, token: string) => Promise<{ error: Error | null }>;
+	verifyTokenHash: (token_hash: string, type: any) => Promise<{ error: Error | null }>;
 	signOut: () => Promise<void>;
 }
 
@@ -75,12 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return { error: error as Error | null };
 	};
 
+	const verifyTokenHash = async (token_hash: string, type: any) => {
+		const { error } = await supabase.auth.verifyOtp({
+			token_hash,
+			type,
+		});
+		return { error: error as Error | null };
+	};
+
 	const signOut = async () => {
 		await supabase.auth.signOut();
 	};
 
 	return (
-		<AuthContext.Provider value={{ user, session, loading, signInWithOtp, verifyOtpCode, signOut }}>
+		<AuthContext.Provider value={{ user, session, loading, signInWithOtp, verifyOtpCode, verifyTokenHash, signOut }}>
 			{children}
 		</AuthContext.Provider>
 	);
