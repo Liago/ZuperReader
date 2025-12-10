@@ -55,10 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const signInWithOtp = async (email: string) => {
+		const redirectUrl = process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL || (typeof window !== 'undefined' ? `${window.location.origin}/auth/confirm` : undefined);
+
 		const { error } = await supabase.auth.signInWithOtp({
 			email,
 			options: {
-				emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/confirm` : undefined,
+				emailRedirectTo: redirectUrl,
 			},
 		});
 		return { error: error as Error | null };
