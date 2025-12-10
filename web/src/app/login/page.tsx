@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -9,12 +9,10 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
-	const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
-	const [verifyingOtp, setVerifyingOtp] = useState(false);
-	const [otpError, setOtpError] = useState('');
-	const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-	const { signInWithOtp, verifyOtpCode } = useAuth();
-	const router = useRouter();
+	const { signInWithOtp } = useAuth();
+
+	// We don't need router here anymore for OTP verification, but might be useful for future extensions
+	// const router = useRouter(); 
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -28,103 +26,22 @@ export default function LoginPage() {
 			setLoading(false);
 		} else {
 			setSuccess(true);
+			setLoading(false);
 		}
 	};
 
-	// Handle OTP input change
-	const handleOtpChange = (index: number, value: string) => {
-		// Only allow digits
-		if (value && !/^\d*$/.test(value)) return;
-
-		const newOtp = [...otpCode];
-		// Take only the last character if multiple were pasted
-		newOtp[index] = value.slice(-1);
-		setOtpCode(newOtp);
-		setOtpError('');
-
-		// Auto-focus next input
-		if (value && index < 5) {
-			otpInputRefs.current[index + 1]?.focus();
-		}
-
-		// Auto-submit when all 6 digits are entered
-		const fullCode = newOtp.join('');
-		if (fullCode.length === 6) {
-			handleOtpSubmit(fullCode);
-		}
-	};
-
-	// Handle paste in OTP inputs
-	const handleOtpPaste = (e: React.ClipboardEvent) => {
-		e.preventDefault();
-		const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-		if (pastedData.length > 0) {
-			const newOtp = [...otpCode];
-			for (let i = 0; i < pastedData.length && i < 6; i++) {
-				newOtp[i] = pastedData[i];
-			}
-			setOtpCode(newOtp);
-			setOtpError('');
-
-			// Focus the next empty input or the last one
-			const nextEmptyIndex = newOtp.findIndex(digit => !digit);
-			if (nextEmptyIndex !== -1) {
-				otpInputRefs.current[nextEmptyIndex]?.focus();
-			} else {
-				otpInputRefs.current[5]?.focus();
-				// Auto-submit if all 6 digits are pasted
-				if (pastedData.length === 6) {
-					handleOtpSubmit(pastedData);
-				}
-			}
-		}
-	};
-
-	// Handle backspace in OTP inputs
-	const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-		if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
-			otpInputRefs.current[index - 1]?.focus();
-		}
-	};
-
-	// Submit OTP code
-	const handleOtpSubmit = async (code?: string) => {
-		const otpToVerify = code || otpCode.join('');
-		if (otpToVerify.length !== 6) {
-			setOtpError('Please enter the complete 6-digit code');
-			return;
-		}
-
-		setVerifyingOtp(true);
-		setOtpError('');
-
-		const { error } = await verifyOtpCode(email, otpToVerify);
-
-		if (error) {
-			setOtpError(error.message || 'Invalid code. Please try again.');
-			setVerifyingOtp(false);
-			// Clear the OTP inputs on error
-			setOtpCode(['', '', '', '', '', '']);
-			otpInputRefs.current[0]?.focus();
-		} else {
-			// Success - redirect to home
-			router.push('/');
-		}
-	};
-
-	// Resend OTP code
-	const handleResendCode = async () => {
+	// Resend Magic Link
+	const handleResendLink = async () => {
 		setLoading(true);
-		setOtpError('');
-		setOtpCode(['', '', '', '', '', '']);
 
 		const { error } = await signInWithOtp(email);
 
 		setLoading(false);
 		if (error) {
-			setOtpError(error.message);
+			setError(error.message);
 		} else {
-			otpInputRefs.current[0]?.focus();
+			// Optional: Show a toast or small message that link was resent
+			// For now, staying on the success screen is enough
 		}
 	};
 
@@ -139,81 +56,44 @@ export default function LoginPage() {
 
 				<div className="max-w-md w-full relative">
 					<div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-10 text-center border border-white/20 animate-fade-in-up">
-						{/* Success Icon */}
-						<div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-scale-in">
+						{/* Email Icon */}
+						<div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg animate-scale-in">
 							<svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 							</svg>
 						</div>
 
 						<h1 className="text-3xl font-bold text-gray-900 mb-4">
-							Enter verification code
+							Check your email
 						</h1>
 						<p className="text-gray-600 mb-2 text-lg">
-							We&apos;ve sent a 6-digit code to
+							We&apos;ve sent a magic link to
 						</p>
 						<p className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-xl mb-6">
 							{email}
 						</p>
-						<p className="text-gray-500 text-sm mb-6">
-							Enter the 6-digit code from your email to sign in. The code will expire in 10 minutes.
+						<p className="text-gray-500 text-sm mb-8">
+							Click the link in the email to sign in. You can close this tab.
 						</p>
 
-						{/* OTP Input Section */}
-						<div className="mb-6">
-							<div className="flex justify-center gap-2 mb-4">
-								{otpCode.map((digit, index) => (
-									<input
-										key={index}
-										ref={(el) => { otpInputRefs.current[index] = el; }}
-										type="text"
-										inputMode="numeric"
-										maxLength={1}
-										value={digit}
-										onChange={(e) => handleOtpChange(index, e.target.value)}
-										onKeyDown={(e) => handleOtpKeyDown(index, e)}
-										onPaste={handleOtpPaste}
-										disabled={verifyingOtp}
-										className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-										autoFocus={index === 0}
-									/>
-								))}
-							</div>
-
-							{otpError && (
-								<div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl mb-4">
-									<svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-										<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-									</svg>
-									<p className="text-red-700 text-xs font-medium">{otpError}</p>
-								</div>
-							)}
-
-							{verifyingOtp && (
-								<div className="flex items-center justify-center space-x-2 text-indigo-600 mb-4">
-									<svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-									</svg>
-									<span className="font-medium">Verifying...</span>
-								</div>
-							)}
-
+						<div className="space-y-4">
 							<button
-								onClick={handleResendCode}
-								disabled={loading || verifyingOtp}
+								onClick={handleResendLink}
+								disabled={loading}
 								className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-all hover:underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{loading ? 'Sending...' : "Didn't receive the code? Resend"}
+								{loading ? 'Sending...' : "Didn't receive the email? Resend"}
 							</button>
-						</div>
 
-						<button
-							onClick={() => setSuccess(false)}
-							className="text-indigo-600 hover:text-indigo-700 font-semibold transition-all hover:underline underline-offset-4"
-						>
-							← Try a different email
-						</button>
+							<div className="block">
+								<button
+									onClick={() => setSuccess(false)}
+									className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-all hover:underline underline-offset-4"
+								>
+									← Try a different email
+								</button>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -241,7 +121,7 @@ export default function LoginPage() {
 							Welcome to ZuperReader
 						</h1>
 						<p className="text-gray-600">
-							Sign in with a verification code – no password needed
+							Sign in with a magic link – no password needed
 						</p>
 					</div>
 
@@ -288,11 +168,11 @@ export default function LoginPage() {
 										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 									</svg>
-									<span>Sending code...</span>
+									<span>Sending...</span>
 								</>
 							) : (
 								<>
-									<span>Send Verification Code</span>
+									<span>Send Magic Link</span>
 									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
 									</svg>
