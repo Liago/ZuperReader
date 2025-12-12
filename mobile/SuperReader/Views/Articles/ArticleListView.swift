@@ -180,6 +180,23 @@ struct ArticleListView: View {
         Group {
             if viewModel.isLoading && viewModel.articles.isEmpty {
                 loadingView
+            } else if let error = viewModel.errorMessage {
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.red)
+                    Text("Error loading articles")
+                        .font(.headline)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        Task { await viewModel.refresh() }
+                    }
+                    .padding()
+                }
+                .padding()
             } else if viewModel.articles.isEmpty {
                 emptyView
             } else if themeManager.viewMode == .grid {

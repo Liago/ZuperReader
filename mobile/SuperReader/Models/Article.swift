@@ -52,8 +52,8 @@ struct Article: Identifiable, Codable, Equatable {
     let commentCount: Int
     let readingStatus: ReadingStatus
     let estimatedReadTime: Int?
-    let isPublic: Bool
-    let scrapedAt: String
+    let isPublic: Bool?
+    let scrapedAt: String?
     let createdAt: String
     let updatedAt: String
     

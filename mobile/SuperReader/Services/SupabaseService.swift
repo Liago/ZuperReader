@@ -587,7 +587,7 @@ actor SupabaseService {
         
         let sharedByMe: [ArticleShare] = try await client
             .from("article_shares")
-            .select("id")
+            .select()
             .eq("shared_by", value: userId)
             .execute()
             .value
