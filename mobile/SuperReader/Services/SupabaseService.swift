@@ -75,10 +75,10 @@ actor SupabaseService {
         filters: ArticleFilters? = nil,
         sort: ArticleSortOptions? = nil
     ) async throws -> (articles: [Article], hasMore: Bool) {
-        var query = client.database
+        var query = client
             .from("articles")
-            .select()
-            .eq("user_id", value: userId)
+            .select() // Returns PostgrestTransformBuilder
+            .eq("user_id", value: userId) // Returns PostgrestFilterBuilder
         
         // Apply filters
         if let filters = filters {
@@ -103,22 +103,25 @@ actor SupabaseService {
             }
         }
         
-        // Apply sorting
+        // Apply sorting and pagination - We must cast or just chain from here since .order changes type
         let sortField = sort?.field.rawValue ?? "created_at"
         let ascending = sort?.order == .ascending
-        query = query.order(sortField, ascending: ascending)
+        
+        // Note: query is PostgrestFilterBuilder. .order returns PostgrestTransformBuilder.
+        // We create a new variable for the transformed query
+        var orderedQuery = query.order(sortField, ascending: ascending)
         
         // Apply pagination
-        query = query.range(from: offset, to: offset + limit - 1)
+        orderedQuery = orderedQuery.range(from: offset, to: offset + limit - 1)
         
-        let articles: [Article] = try await query.execute().value
+        let articles: [Article] = try await orderedQuery.execute().value
         let hasMore = articles.count == limit
         
         return (articles, hasMore)
     }
     
     func getArticleById(_ id: String) async throws -> Article? {
-        let articles: [Article] = try await client.database
+        let articles: [Article] = try await client
             .from("articles")
             .select()
             .eq("id", value: id)
@@ -146,7 +149,7 @@ actor SupabaseService {
             "estimated_read_time": estimatedReadTime.map { .integer($0) } ?? .null
         ]
         
-        let articles: [Article] = try await client.database
+        let articles: [Article] = try await client
             .from("articles")
             .insert(articleData)
             .select()
@@ -161,7 +164,7 @@ actor SupabaseService {
     }
     
     func deleteArticle(articleId: String) async throws {
-        try await client.database
+        try await client
             .from("articles")
             .delete()
             .eq("id", value: articleId)
@@ -169,7 +172,7 @@ actor SupabaseService {
     }
     
     func toggleFavorite(articleId: String, isFavorite: Bool) async throws {
-        try await client.database
+        try await client
             .from("articles")
             .update(["is_favorite": isFavorite])
             .eq("id", value: articleId)
@@ -177,7 +180,7 @@ actor SupabaseService {
     }
     
     func updateReadingStatus(articleId: String, status: ReadingStatus) async throws {
-        try await client.database
+        try await client
             .from("articles")
             .update(["reading_status": status.rawValue])
             .eq("id", value: articleId)
@@ -185,7 +188,7 @@ actor SupabaseService {
     }
     
     func updateArticleTags(articleId: String, tags: [String]) async throws -> Article {
-        let articles: [Article] = try await client.database
+        let articles: [Article] = try await client
             .from("articles")
             .update(["tags": tags])
             .eq("id", value: articleId)
@@ -204,7 +207,7 @@ actor SupabaseService {
     
     func toggleLike(articleId: String, userId: String) async throws -> (liked: Bool, likeCount: Int) {
         // Check if already liked
-        let existingLikes: [Like] = try await client.database
+        let existingLikes: [Like] = try await client
             .from("likes")
             .select()
             .eq("article_id", value: articleId)
@@ -214,14 +217,14 @@ actor SupabaseService {
         
         if let existingLike = existingLikes.first {
             // Unlike
-            try await client.database
+            try await client
                 .from("likes")
                 .delete()
                 .eq("id", value: existingLike.id)
                 .execute()
             
             // Decrement count
-            try await client.database
+            try await client
                 .rpc("decrement_like_count", params: ["article_id_param": articleId])
                 .execute()
             
@@ -229,7 +232,7 @@ actor SupabaseService {
             return (false, count)
         } else {
             // Like
-            try await client.database
+            try await client
                 .from("likes")
                 .insert([
                     "article_id": articleId,
@@ -238,7 +241,7 @@ actor SupabaseService {
                 .execute()
             
             // Increment count
-            try await client.database
+            try await client
                 .rpc("increment_like_count", params: ["article_id_param": articleId])
                 .execute()
             
@@ -248,7 +251,7 @@ actor SupabaseService {
     }
     
     func checkIfUserLiked(articleId: String, userId: String) async throws -> Bool {
-        let likes: [Like] = try await client.database
+        let likes: [Like] = try await client
             .from("likes")
             .select()
             .eq("article_id", value: articleId)
@@ -261,7 +264,7 @@ actor SupabaseService {
     }
     
     func getLikesCount(articleId: String) async throws -> Int {
-        let result: [Article] = try await client.database
+        let result: [Article] = try await client
             .from("articles")
             .select("like_count")
             .eq("id", value: articleId)
@@ -275,7 +278,7 @@ actor SupabaseService {
     // MARK: - Comments
     
     func addComment(articleId: String, userId: String, content: String) async throws -> Comment {
-        let comments: [Comment] = try await client.database
+        let comments: [Comment] = try await client
             .from("comments")
             .insert([
                 "article_id": articleId,
@@ -291,7 +294,7 @@ actor SupabaseService {
         }
         
         // Increment comment count
-        try await client.database
+        try await client
             .rpc("increment_comment_count", params: ["article_id_param": articleId])
             .execute()
         
@@ -299,7 +302,7 @@ actor SupabaseService {
     }
     
     func getComments(articleId: String) async throws -> [Comment] {
-        let comments: [Comment] = try await client.database
+        let comments: [Comment] = try await client
             .from("comments")
             .select("*, user:user_profiles(*)")
             .eq("article_id", value: articleId)
@@ -311,14 +314,14 @@ actor SupabaseService {
     }
     
     func deleteComment(commentId: String, articleId: String) async throws {
-        try await client.database
+        try await client
             .from("comments")
             .delete()
             .eq("id", value: commentId)
             .execute()
         
         // Decrement comment count
-        try await client.database
+        try await client
             .rpc("decrement_comment_count", params: ["article_id_param": articleId])
             .execute()
     }
@@ -326,7 +329,7 @@ actor SupabaseService {
     // MARK: - User Profile
     
     func getUserProfile(userId: String) async throws -> UserProfile? {
-        let profiles: [UserProfile] = try await client.database
+        let profiles: [UserProfile] = try await client
             .from("user_profiles")
             .select()
             .eq("id", value: userId)
@@ -346,7 +349,7 @@ actor SupabaseService {
             updates["bio"] = .string(bio)
         }
         
-        let profiles: [UserProfile] = try await client.database
+        let profiles: [UserProfile] = try await client
             .from("user_profiles")
             .update(updates)
             .eq("id", value: userId)
@@ -362,7 +365,7 @@ actor SupabaseService {
     }
     
     func searchUsers(query: String, currentUserId: String) async throws -> [UserProfile] {
-        let profiles: [UserProfile] = try await client.database
+        let profiles: [UserProfile] = try await client
             .from("user_profiles")
             .select()
             .or("display_name.ilike.%\(query)%,email.ilike.%\(query)%")
@@ -377,7 +380,7 @@ actor SupabaseService {
     // MARK: - Friends
     
     func sendFriendRequest(requesterId: String, addresseeId: String) async throws -> Friendship {
-        let friendships: [Friendship] = try await client.database
+        let friendships: [Friendship] = try await client
             .from("friendships")
             .insert([
                 "requester_id": requesterId,
@@ -396,7 +399,7 @@ actor SupabaseService {
     }
     
     func respondToFriendRequest(friendshipId: String, status: String) async throws -> Friendship {
-        let friendships: [Friendship] = try await client.database
+        let friendships: [Friendship] = try await client
             .from("friendships")
             .update(["status": status])
             .eq("id", value: friendshipId)
@@ -412,7 +415,7 @@ actor SupabaseService {
     }
     
     func removeFriend(friendshipId: String) async throws {
-        try await client.database
+        try await client
             .from("friendships")
             .delete()
             .eq("id", value: friendshipId)
@@ -421,7 +424,7 @@ actor SupabaseService {
     
     func getFriends(userId: String) async throws -> [Friend] {
         // Get accepted friendships where user is requester or addressee
-        let friendships: [Friendship] = try await client.database
+        let friendships: [Friendship] = try await client
             .from("friendships")
             .select("*, requester:user_profiles!requester_id(*), addressee:user_profiles!addressee_id(*)")
             .eq("status", value: "accepted")
@@ -445,7 +448,7 @@ actor SupabaseService {
     }
     
     func getPendingFriendRequests(userId: String) async throws -> [Friend] {
-        let friendships: [Friendship] = try await client.database
+        let friendships: [Friendship] = try await client
             .from("friendships")
             .select("*, requester:user_profiles!requester_id(*)")
             .eq("addressee_id", value: userId)
@@ -467,7 +470,7 @@ actor SupabaseService {
     }
     
     func getSentFriendRequests(userId: String) async throws -> [Friend] {
-        let friendships: [Friendship] = try await client.database
+        let friendships: [Friendship] = try await client
             .from("friendships")
             .select("*, addressee:user_profiles!addressee_id(*)")
             .eq("requester_id", value: userId)
@@ -505,7 +508,7 @@ actor SupabaseService {
             data["message"] = .string(message)
         }
         
-        let shares: [ArticleShare] = try await client.database
+        let shares: [ArticleShare] = try await client
             .from("article_shares")
             .insert(data)
             .select()
@@ -520,7 +523,7 @@ actor SupabaseService {
     }
     
     func getSharedWithMe(userId: String) async throws -> [ArticleShare] {
-        let shares: [ArticleShare] = try await client.database
+        let shares: [ArticleShare] = try await client
             .from("article_shares")
             .select("*, article:articles(*), sharer:user_profiles!shared_by(*)")
             .eq("shared_with", value: userId)
@@ -532,7 +535,7 @@ actor SupabaseService {
     }
     
     func markShareAsRead(shareId: String) async throws {
-        try await client.database
+        try await client
             .from("article_shares")
             .update(["is_read": true])
             .eq("id", value: shareId)
@@ -540,7 +543,7 @@ actor SupabaseService {
     }
     
     func getUnreadSharesCount(userId: String) async throws -> Int {
-        let shares: [ArticleShare] = try await client.database
+        let shares: [ArticleShare] = try await client
             .from("article_shares")
             .select("id")
             .eq("shared_with", value: userId)
@@ -552,7 +555,7 @@ actor SupabaseService {
     }
     
     func deleteArticleShare(shareId: String) async throws {
-        try await client.database
+        try await client
             .from("article_shares")
             .delete()
             .eq("id", value: shareId)
@@ -563,7 +566,7 @@ actor SupabaseService {
     
     func getUserStatistics(userId: String) async throws -> UserStatistics {
         // Get article counts
-        let articles: [Article] = try await client.database
+        let articles: [Article] = try await client
             .from("articles")
             .select()
             .eq("user_id", value: userId)
@@ -582,7 +585,7 @@ actor SupabaseService {
         // Get shared counts
         let sharedWithMe = try await getSharedWithMe(userId: userId)
         
-        let sharedByMe: [ArticleShare] = try await client.database
+        let sharedByMe: [ArticleShare] = try await client
             .from("article_shares")
             .select("id")
             .eq("shared_by", value: userId)
@@ -604,7 +607,7 @@ actor SupabaseService {
     // MARK: - User Preferences
     
     func getUserPreferences(userId: String) async throws -> UserPreferences? {
-        let preferences: [UserPreferences] = try await client.database
+        let preferences: [UserPreferences] = try await client
             .from("user_preferences")
             .select()
             .eq("id", value: userId)
@@ -626,7 +629,7 @@ actor SupabaseService {
             "view_mode": .string(preferences.viewMode.rawValue)
         ]
         
-        let savedPrefs: [UserPreferences] = try await client.database
+        let savedPrefs: [UserPreferences] = try await client
             .from("user_preferences")
             .upsert(data)
             .select()
