@@ -444,7 +444,7 @@ export default function ArticleReaderPage() {
 	return (
 		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
 			{/* Reading Progress Indicator */}
-			<ReadingProgressIndicator contentRef={articleContentRef} />
+			<ReadingProgressIndicator contentRef={articleContentRef} hidden={showStickyToolbar} />
 
 			{/* Sticky Toolbar */}
 			<div
@@ -454,8 +454,16 @@ export default function ArticleReaderPage() {
 			>
 				<div className={`${getContentWidthClass()} mx-auto px-4 py-3`}>
 					<div className="flex items-center justify-between gap-4">
-						{/* Left side - Article title (truncated) */}
-						<div className="flex-1 min-w-0">
+						{/* Left side - Reading progress indicator and article title */}
+						<div className="flex items-center gap-3 flex-1 min-w-0">
+							{/* Reading Progress Indicator - Inline variant */}
+							<div className="flex-shrink-0">
+								<ReadingProgressIndicator
+									contentRef={articleContentRef}
+									variant="inline"
+								/>
+							</div>
+							{/* Article title (truncated) */}
 							<h2 className="text-sm font-semibold text-gray-900 truncate">
 								{article.title}
 							</h2>
