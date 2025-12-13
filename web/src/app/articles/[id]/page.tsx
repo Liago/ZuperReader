@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus } from '../../../lib/api';
+import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus, updateReadingProgress } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -31,8 +31,10 @@ export default function ArticleReaderPage() {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [showStickyToolbar, setShowStickyToolbar] = useState(false);
+	const [hasRestoredPosition, setHasRestoredPosition] = useState(false);
 	const articleContentRef = useRef<HTMLDivElement>(null);
 	const actionBarRef = useRef<HTMLDivElement>(null);
+	const saveProgressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const id = params?.id as string;
 
@@ -161,6 +163,70 @@ export default function ArticleReaderPage() {
 	};
 
 	const colorTheme = getColorThemeClasses();
+
+	// Save reading progress with debouncing (save after 2 seconds of no scroll)
+	const handleProgressChange = useCallback((progress: number) => {
+		if (!article) return;
+
+		// Clear existing timeout
+		if (saveProgressTimeoutRef.current) {
+			clearTimeout(saveProgressTimeoutRef.current);
+		}
+
+		// Set new timeout to save progress after 2 seconds of no change
+		saveProgressTimeoutRef.current = setTimeout(async () => {
+			try {
+				await updateReadingProgress(article.id, progress);
+			} catch (error) {
+				console.error('Failed to save reading progress:', error);
+			}
+		}, 2000);
+	}, [article?.id]);
+
+	// Restore scroll position based on saved reading progress
+	useEffect(() => {
+		if (!article || !articleContentRef.current || hasRestoredPosition) return;
+
+		// Only restore if there's saved progress (> 0) and article is not completed
+		if (article.reading_progress > 0 && article.reading_status !== 'completed') {
+			// Wait for content to be fully rendered
+			const restorePosition = () => {
+				const contentElement = articleContentRef.current;
+				if (!contentElement) return;
+
+				const contentTop = contentElement.offsetTop;
+				const contentHeight = contentElement.offsetHeight;
+				const windowHeight = window.innerHeight;
+
+				// Calculate scroll position based on saved progress
+				const scrollRange = contentHeight - windowHeight;
+				const targetScroll = contentTop + (scrollRange * article.reading_progress / 100);
+
+				// Scroll to the saved position
+				window.scrollTo({
+					top: Math.max(0, targetScroll),
+					behavior: 'smooth'
+				});
+
+				setHasRestoredPosition(true);
+			};
+
+			// Use a small delay to ensure content is rendered
+			const timeoutId = setTimeout(restorePosition, 100);
+			return () => clearTimeout(timeoutId);
+		} else {
+			setHasRestoredPosition(true);
+		}
+	}, [article?.id, article?.reading_progress, article?.reading_status, hasRestoredPosition]);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (saveProgressTimeoutRef.current) {
+				clearTimeout(saveProgressTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	// Funzione per eliminare l'articolo
 	const handleDeleteArticle = async () => {
@@ -444,7 +510,11 @@ export default function ArticleReaderPage() {
 	return (
 		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
 			{/* Reading Progress Indicator */}
-			<ReadingProgressIndicator contentRef={articleContentRef} hidden={showStickyToolbar} />
+			<ReadingProgressIndicator
+				contentRef={articleContentRef}
+				hidden={showStickyToolbar}
+				onProgressChange={handleProgressChange}
+			/>
 
 			{/* Sticky Toolbar */}
 			<div
@@ -461,6 +531,7 @@ export default function ArticleReaderPage() {
 								<ReadingProgressIndicator
 									contentRef={articleContentRef}
 									variant="inline"
+									onProgressChange={handleProgressChange}
 								/>
 							</div>
 							{/* Article title (truncated) */}
