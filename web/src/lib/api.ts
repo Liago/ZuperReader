@@ -309,14 +309,14 @@ export async function addComment(articleId: string, userId: string, content: str
 	if (updateError) throw new Error(updateError.message);
 
 	// Transform the data to flatten the user_profiles object
-	const comment = {
-		...data,
-		author_display_name: data.user_profiles?.display_name || null,
-		author_avatar_url: data.user_profiles?.avatar_url || null,
-		user_profiles: undefined
+	const { user_profiles, ...commentData } = data;
+	const comment: Comment = {
+		...commentData,
+		author_display_name: user_profiles?.display_name || null,
+		author_avatar_url: user_profiles?.avatar_url || null,
 	};
 
-	return comment as Comment;
+	return comment;
 }
 
 export async function getComments(articleId: string): Promise<Comment[]> {
@@ -335,14 +335,16 @@ export async function getComments(articleId: string): Promise<Comment[]> {
 	if (error) throw new Error(error.message);
 
 	// Transform the data to flatten the user_profiles object
-	const comments = (data || []).map(comment => ({
-		...comment,
-		author_display_name: comment.user_profiles?.display_name || null,
-		author_avatar_url: comment.user_profiles?.avatar_url || null,
-		user_profiles: undefined
-	}));
+	const comments = (data || []).map(item => {
+		const { user_profiles, ...commentData } = item;
+		return {
+			...commentData,
+			author_display_name: user_profiles?.display_name || null,
+			author_avatar_url: user_profiles?.avatar_url || null,
+		} as Comment;
+	});
 
-	return comments as Comment[];
+	return comments;
 }
 
 export async function deleteComment(commentId: string, articleId: string): Promise<void> {
@@ -375,14 +377,14 @@ export async function updateComment(commentId: string, content: string): Promise
 	if (error) throw new Error(error.message);
 
 	// Transform the data to flatten the user_profiles object
-	const comment = {
-		...data,
-		author_display_name: data.user_profiles?.display_name || null,
-		author_avatar_url: data.user_profiles?.avatar_url || null,
-		user_profiles: undefined
+	const { user_profiles, ...commentData } = data;
+	const comment: Comment = {
+		...commentData,
+		author_display_name: user_profiles?.display_name || null,
+		author_avatar_url: user_profiles?.avatar_url || null,
 	};
 
-	return comment as Comment;
+	return comment;
 }
 
 // ==================== SHARE FUNCTIONS ====================
