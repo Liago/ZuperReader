@@ -95,7 +95,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 					value={newComment}
 					onChange={(e) => setNewComment(e.target.value)}
 					placeholder="Write a comment..."
-					className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+					className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
 					rows={3}
 					disabled={loading}
 				/>
@@ -162,7 +162,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 									<textarea
 										value={editContent}
 										onChange={(e) => setEditContent(e.target.value)}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
 										rows={3}
 									/>
 									<div className="mt-2 flex gap-2">
