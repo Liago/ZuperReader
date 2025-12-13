@@ -118,6 +118,18 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 						<div key={comment.id} className="bg-gray-50 rounded-lg p-4">
 							<div className="flex items-start justify-between mb-2">
 								<div className="flex-1">
+									<div className="flex items-center gap-2 mb-1">
+										{comment.author_avatar_url && (
+											<img
+												src={comment.author_avatar_url}
+												alt={comment.author_display_name || 'User'}
+												className="w-6 h-6 rounded-full"
+											/>
+										)}
+										<span className="font-medium text-gray-900">
+											{comment.author_display_name || 'Anonymous'}
+										</span>
+									</div>
 									<p className="text-sm text-gray-500">
 										{new Date(comment.created_at).toLocaleDateString('en-US', {
 											year: 'numeric',

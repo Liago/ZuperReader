@@ -270,7 +270,13 @@ export async function addComment(articleId: string, userId: string, content: str
 	const { data, error } = await supabase
 		.from('comments')
 		.insert([{ article_id: articleId, user_id: userId, content }])
-		.select()
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.single();
 
 	if (error) throw new Error(error.message);
@@ -279,18 +285,41 @@ export async function addComment(articleId: string, userId: string, content: str
 	const { error: updateError } = await supabase.rpc('increment_comment_count', { article_id: articleId });
 	if (updateError) throw new Error(updateError.message);
 
-	return data;
+	// Transform the data to flatten the user_profiles object
+	const comment = {
+		...data,
+		author_display_name: data.user_profiles?.display_name || null,
+		author_avatar_url: data.user_profiles?.avatar_url || null,
+		user_profiles: undefined
+	};
+
+	return comment as Comment;
 }
 
 export async function getComments(articleId: string): Promise<Comment[]> {
 	const { data, error } = await supabase
 		.from('comments')
-		.select('*')
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.eq('article_id', articleId)
 		.order('created_at', { ascending: false });
 
 	if (error) throw new Error(error.message);
-	return data || [];
+
+	// Transform the data to flatten the user_profiles object
+	const comments = (data || []).map(comment => ({
+		...comment,
+		author_display_name: comment.user_profiles?.display_name || null,
+		author_avatar_url: comment.user_profiles?.avatar_url || null,
+		user_profiles: undefined
+	}));
+
+	return comments as Comment[];
 }
 
 export async function deleteComment(commentId: string, articleId: string): Promise<void> {
@@ -311,11 +340,26 @@ export async function updateComment(commentId: string, content: string): Promise
 		.from('comments')
 		.update({ content })
 		.eq('id', commentId)
-		.select()
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.single();
 
 	if (error) throw new Error(error.message);
-	return data;
+
+	// Transform the data to flatten the user_profiles object
+	const comment = {
+		...data,
+		author_display_name: data.user_profiles?.display_name || null,
+		author_avatar_url: data.user_profiles?.avatar_url || null,
+		user_profiles: undefined
+	};
+
+	return comment as Comment;
 }
 
 // ==================== SHARE FUNCTIONS ====================

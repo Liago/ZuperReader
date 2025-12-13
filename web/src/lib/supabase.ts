@@ -43,6 +43,9 @@ export type Comment = {
 	content: string;
 	created_at: string;
 	updated_at: string;
+	// Author information from user_profiles
+	author_display_name?: string | null;
+	author_avatar_url?: string | null;
 };
 
 export type Share = {
