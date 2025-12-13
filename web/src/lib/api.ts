@@ -175,6 +175,29 @@ export async function updateReadingStatus(articleId: string, status: 'unread' | 
 	if (error) throw new Error(error.message);
 }
 
+export async function updateReadingProgress(articleId: string, progress: number): Promise<void> {
+	// Ensure progress is between 0 and 100
+	const clampedProgress = Math.max(0, Math.min(100, Math.round(progress)));
+
+	const { error } = await supabase
+		.from('articles')
+		.update({ reading_progress: clampedProgress })
+		.eq('id', articleId);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function getReadingProgress(articleId: string): Promise<number> {
+	const { data, error } = await supabase
+		.from('articles')
+		.select('reading_progress')
+		.eq('id', articleId)
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data?.reading_progress || 0;
+}
+
 export async function updateArticleTags(articleId: string, tags: string[]): Promise<Article> {
 	const { data, error } = await supabase
 		.from('articles')
