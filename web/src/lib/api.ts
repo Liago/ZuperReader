@@ -175,6 +175,29 @@ export async function updateReadingStatus(articleId: string, status: 'unread' | 
 	if (error) throw new Error(error.message);
 }
 
+export async function updateReadingProgress(articleId: string, progress: number): Promise<void> {
+	// Ensure progress is between 0 and 100
+	const clampedProgress = Math.max(0, Math.min(100, Math.round(progress)));
+
+	const { error } = await supabase
+		.from('articles')
+		.update({ reading_progress: clampedProgress })
+		.eq('id', articleId);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function getReadingProgress(articleId: string): Promise<number> {
+	const { data, error } = await supabase
+		.from('articles')
+		.select('reading_progress')
+		.eq('id', articleId)
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data?.reading_progress || 0;
+}
+
 export async function updateArticleTags(articleId: string, tags: string[]): Promise<Article> {
 	const { data, error } = await supabase
 		.from('articles')
@@ -270,7 +293,13 @@ export async function addComment(articleId: string, userId: string, content: str
 	const { data, error } = await supabase
 		.from('comments')
 		.insert([{ article_id: articleId, user_id: userId, content }])
-		.select()
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.single();
 
 	if (error) throw new Error(error.message);
@@ -279,18 +308,43 @@ export async function addComment(articleId: string, userId: string, content: str
 	const { error: updateError } = await supabase.rpc('increment_comment_count', { article_id: articleId });
 	if (updateError) throw new Error(updateError.message);
 
-	return data;
+	// Transform the data to flatten the user_profiles object
+	const { user_profiles, ...commentData } = data;
+	const comment: Comment = {
+		...commentData,
+		author_display_name: user_profiles?.display_name || null,
+		author_avatar_url: user_profiles?.avatar_url || null,
+	};
+
+	return comment;
 }
 
 export async function getComments(articleId: string): Promise<Comment[]> {
 	const { data, error } = await supabase
 		.from('comments')
-		.select('*')
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.eq('article_id', articleId)
 		.order('created_at', { ascending: false });
 
 	if (error) throw new Error(error.message);
-	return data || [];
+
+	// Transform the data to flatten the user_profiles object
+	const comments = (data || []).map(item => {
+		const { user_profiles, ...commentData } = item;
+		return {
+			...commentData,
+			author_display_name: user_profiles?.display_name || null,
+			author_avatar_url: user_profiles?.avatar_url || null,
+		} as Comment;
+	});
+
+	return comments;
 }
 
 export async function deleteComment(commentId: string, articleId: string): Promise<void> {
@@ -311,11 +365,26 @@ export async function updateComment(commentId: string, content: string): Promise
 		.from('comments')
 		.update({ content })
 		.eq('id', commentId)
-		.select()
+		.select(`
+			*,
+			user_profiles!comments_user_id_fkey (
+				display_name,
+				avatar_url
+			)
+		`)
 		.single();
 
 	if (error) throw new Error(error.message);
-	return data;
+
+	// Transform the data to flatten the user_profiles object
+	const { user_profiles, ...commentData } = data;
+	const comment: Comment = {
+		...commentData,
+		author_display_name: user_profiles?.display_name || null,
+		author_avatar_url: user_profiles?.avatar_url || null,
+	};
+
+	return comment;
 }
 
 // ==================== SHARE FUNCTIONS ====================

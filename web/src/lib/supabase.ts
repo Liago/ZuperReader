@@ -22,6 +22,7 @@ export type Article = {
 	like_count: number;
 	comment_count: number;
 	reading_status: 'unread' | 'reading' | 'completed';
+	reading_progress: number; // 0-100 percentage of article read
 	estimated_read_time: number | null;
 	is_public: boolean;
 	scraped_at: string;
@@ -43,6 +44,9 @@ export type Comment = {
 	content: string;
 	created_at: string;
 	updated_at: string;
+	// Author information from user_profiles
+	author_display_name?: string | null;
+	author_avatar_url?: string | null;
 };
 
 export type Share = {

@@ -6,6 +6,7 @@ import { deleteArticle, updateArticleTags, toggleFavorite, ArticleFilters, Artic
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
+import { useArticleFilters } from '../contexts/ArticleFiltersContext';
 import { TagList } from './TagBadge';
 import TagManagementModal from './TagManagementModal';
 
@@ -51,19 +52,35 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [articleForTags, setArticleForTags] = useState<Article | null>(null);
 
-	// Local filter states for UI
-	const [searchQuery, setSearchQuery] = useState('');
-	const [readingStatus, setReadingStatus] = useState<'all' | 'unread' | 'reading' | 'completed'>('all');
-	const [isFavorite, setIsFavorite] = useState<boolean | undefined>(undefined);
-	const [sortField, setSortField] = useState<ArticleSortField>('created_at');
-	const [sortOrder, setSortOrder] = useState<ArticleSortOrder>('desc');
-	const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [selectedDomain, setSelectedDomain] = useState('');
-
 	const router = useRouter();
 	const { preferences, updatePreferences } = useReadingPreferences();
 	const viewMode = preferences.viewMode;
+
+	// Use filter state from context instead of local state
+	const {
+		filters,
+		setSearchQuery,
+		setReadingStatus,
+		setIsFavorite,
+		setSortField,
+		setSortOrder,
+		setSelectedTags,
+		setSelectedDomain,
+		setShowAdvancedFilters,
+		resetFilters,
+	} = useArticleFilters();
+
+	// Destructure filter values for easier access
+	const {
+		searchQuery,
+		readingStatus,
+		isFavorite,
+		sortField,
+		sortOrder,
+		selectedTags,
+		selectedDomain,
+		showAdvancedFilters,
+	} = filters;
 
 	const observerTarget = useRef<HTMLDivElement>(null);
 	const prevUserIdRef = useRef<string>('');
@@ -179,15 +196,9 @@ export default function ArticleList({ userId }: ArticleListProps) {
 		};
 	}, [hasMore, loadArticles, userId, loading, loadingMore]);
 
-	// Clear all filters
+	// Clear all filters - now using context
 	const clearFilters = () => {
-		setSearchQuery('');
-		setSelectedTags([]);
-		setReadingStatus('all');
-		setIsFavorite(undefined);
-		setSelectedDomain('');
-		setSortField('created_at');
-		setSortOrder('desc');
+		resetFilters();
 	};
 
 	// Toggle tag selection

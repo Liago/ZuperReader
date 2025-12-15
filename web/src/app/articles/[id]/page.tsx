@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus } from '../../../lib/api';
+import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus, updateReadingProgress } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -30,7 +30,11 @@ export default function ArticleReaderPage() {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showTagModal, setShowTagModal] = useState(false);
+	const [showStickyToolbar, setShowStickyToolbar] = useState(false);
+	const [hasRestoredPosition, setHasRestoredPosition] = useState(false);
 	const articleContentRef = useRef<HTMLDivElement>(null);
+	const actionBarRef = useRef<HTMLDivElement>(null);
+	const saveProgressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const id = params?.id as string;
 
@@ -159,6 +163,70 @@ export default function ArticleReaderPage() {
 	};
 
 	const colorTheme = getColorThemeClasses();
+
+	// Save reading progress with debouncing (save after 2 seconds of no scroll)
+	const handleProgressChange = useCallback((progress: number) => {
+		if (!article) return;
+
+		// Clear existing timeout
+		if (saveProgressTimeoutRef.current) {
+			clearTimeout(saveProgressTimeoutRef.current);
+		}
+
+		// Set new timeout to save progress after 2 seconds of no change
+		saveProgressTimeoutRef.current = setTimeout(async () => {
+			try {
+				await updateReadingProgress(article.id, progress);
+			} catch (error) {
+				console.error('Failed to save reading progress:', error);
+			}
+		}, 2000);
+	}, [article?.id]);
+
+	// Restore scroll position based on saved reading progress
+	useEffect(() => {
+		if (!article || !articleContentRef.current || hasRestoredPosition) return;
+
+		// Only restore if there's saved progress (> 0) and article is not completed
+		if (article.reading_progress > 0 && article.reading_status !== 'completed') {
+			// Wait for content to be fully rendered
+			const restorePosition = () => {
+				const contentElement = articleContentRef.current;
+				if (!contentElement) return;
+
+				const contentTop = contentElement.offsetTop;
+				const contentHeight = contentElement.offsetHeight;
+				const windowHeight = window.innerHeight;
+
+				// Calculate scroll position based on saved progress
+				const scrollRange = contentHeight - windowHeight;
+				const targetScroll = contentTop + (scrollRange * article.reading_progress / 100);
+
+				// Scroll to the saved position
+				window.scrollTo({
+					top: Math.max(0, targetScroll),
+					behavior: 'smooth'
+				});
+
+				setHasRestoredPosition(true);
+			};
+
+			// Use a small delay to ensure content is rendered
+			const timeoutId = setTimeout(restorePosition, 100);
+			return () => clearTimeout(timeoutId);
+		} else {
+			setHasRestoredPosition(true);
+		}
+	}, [article?.id, article?.reading_progress, article?.reading_status, hasRestoredPosition]);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (saveProgressTimeoutRef.current) {
+				clearTimeout(saveProgressTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	// Funzione per eliminare l'articolo
 	const handleDeleteArticle = async () => {
@@ -294,12 +362,25 @@ export default function ArticleReaderPage() {
 	}, [article?.id]); // Only run when article.id changes
 
 	// Track scroll to mark article as completed when reaching near the end
+	// and handle sticky toolbar visibility
 	useEffect(() => {
-		if (!article || article.reading_status === 'completed') return;
+		if (!article) return;
 
 		const handleScroll = () => {
 			const contentElement = articleContentRef.current;
-			if (!contentElement) return;
+			const actionBar = actionBarRef.current;
+
+			// Handle sticky toolbar visibility
+			if (actionBar) {
+				const actionBarBottom = actionBar.offsetTop + actionBar.offsetHeight;
+				const scrollPosition = window.scrollY;
+
+				// Show sticky toolbar when scrolled past the action bar
+				setShowStickyToolbar(scrollPosition > actionBarBottom);
+			}
+
+			// Handle reading status
+			if (article.reading_status === 'completed' || !contentElement) return;
 
 			const scrollPosition = window.scrollY + window.innerHeight;
 			const contentBottom = contentElement.offsetTop + contentElement.offsetHeight;
@@ -429,7 +510,147 @@ export default function ArticleReaderPage() {
 	return (
 		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
 			{/* Reading Progress Indicator */}
-			<ReadingProgressIndicator contentRef={articleContentRef} />
+			<ReadingProgressIndicator
+				contentRef={articleContentRef}
+				hidden={showStickyToolbar}
+				onProgressChange={handleProgressChange}
+			/>
+
+			{/* Sticky Toolbar */}
+			<div
+				className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200 z-40 transition-all duration-300 ${
+					showStickyToolbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+				}`}
+			>
+				<div className={`${getContentWidthClass()} mx-auto px-4 py-3`}>
+					<div className="flex items-center justify-between gap-4">
+						{/* Left side - Reading progress indicator and article title */}
+						<div className="flex items-center gap-3 flex-1 min-w-0">
+							{/* Reading Progress Indicator - Inline variant */}
+							<div className="flex-shrink-0">
+								<ReadingProgressIndicator
+									contentRef={articleContentRef}
+									variant="inline"
+									onProgressChange={handleProgressChange}
+								/>
+							</div>
+							{/* Article title (truncated) */}
+							<h2 className="text-sm font-semibold text-gray-900 truncate">
+								{article.title}
+							</h2>
+						</div>
+
+						{/* Right side - Action buttons */}
+						<div className="flex items-center gap-2 flex-shrink-0">
+							{/* Reading Status Dropdown - compact version */}
+							<div className="relative group">
+								<button
+									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-sm ${
+										article.reading_status === 'unread'
+											? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+											: article.reading_status === 'reading'
+												? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+												: 'bg-green-100 text-green-700 hover:bg-green-200'
+									}`}
+								>
+									{article.reading_status === 'reading' && (
+										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+										</svg>
+									)}
+									<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+									</svg>
+								</button>
+								{/* Dropdown menu */}
+								<div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+									<button
+										onClick={() => handleReadingStatusChange('unread')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 rounded-t-xl ${
+											article.reading_status === 'unread' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+										}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+										</svg>
+										Unread
+									</button>
+									<button
+										onClick={() => handleReadingStatusChange('reading')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors flex items-center gap-2 ${
+											article.reading_status === 'reading' ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-700'
+										}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+										</svg>
+										Reading
+									</button>
+									<button
+										onClick={() => handleReadingStatusChange('completed')}
+										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors flex items-center gap-2 rounded-b-xl ${
+											article.reading_status === 'completed' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'
+										}`}
+									>
+										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+										Completed
+									</button>
+								</div>
+							</div>
+
+							{/* Favorite button */}
+							<button
+								onClick={handleToggleFavorite}
+								className={`p-2 rounded-full border transition-all ${
+									article.is_favorite
+										? 'bg-red-50 border-red-200 text-red-600'
+										: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+								}`}
+								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+							>
+								<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+								</svg>
+							</button>
+
+							{/* Like button - compact version */}
+							<LikeButton
+								articleId={article.id}
+								userId={user!.id}
+								initialLikeCount={article.like_count}
+							/>
+
+							{/* Internal Share button - compact version */}
+							<InternalShareButton
+								articleId={article.id}
+								articleTitle={article.title}
+							/>
+
+							{/* Share button */}
+							<ShareButton
+								articleId={article.id}
+								userId={user!.id}
+								articleUrl={article.url}
+								articleTitle={article.title}
+							/>
+
+							{/* Tags button */}
+							<button
+								onClick={() => setShowTagModal(true)}
+								className="p-2 rounded-full bg-white border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-all"
+								title="Manage tags"
+							>
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 
 			<article className={`${getContentWidthClass()} mx-auto`}>
 				{/* Navigation Row */}
@@ -497,7 +718,7 @@ export default function ArticleReaderPage() {
 					</div>
 
 					{/* Action Bar */}
-					<div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+					<div ref={actionBarRef} className="flex flex-wrap items-center justify-between gap-4 mb-8">
 						<div className="flex flex-wrap items-center gap-3">
 							{article.url && (
 								<a

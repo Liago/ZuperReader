@@ -6,6 +6,7 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { ReadingPreferencesProvider } from "../contexts/ReadingPreferencesContext";
 import { FriendsProvider } from "../contexts/FriendsContext";
 import { ArticlesProvider } from "../contexts/ArticlesContext";
+import { ArticleFiltersProvider } from "../contexts/ArticleFiltersContext";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -59,9 +60,11 @@ export default function RootLayout({
 					<ThemeProvider>
 						<FriendsProvider>
 							<ReadingPreferencesProvider>
-								<ArticlesProvider>
-									{children}
-								</ArticlesProvider>
+								<ArticleFiltersProvider>
+									<ArticlesProvider>
+										{children}
+									</ArticlesProvider>
+								</ArticleFiltersProvider>
 							</ReadingPreferencesProvider>
 						</FriendsProvider>
 					</ThemeProvider>

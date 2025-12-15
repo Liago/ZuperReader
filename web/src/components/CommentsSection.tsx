@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { addComment, getComments, deleteComment, updateComment } from '@/lib/api';
 import type { Comment } from '@/lib/supabase';
+import UserAvatar from './UserAvatar';
 
 interface CommentsSectionProps {
 	articleId: string;
@@ -94,7 +95,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 					value={newComment}
 					onChange={(e) => setNewComment(e.target.value)}
 					placeholder="Write a comment..."
-					className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+					className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
 					rows={3}
 					disabled={loading}
 				/>
@@ -118,6 +119,16 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 						<div key={comment.id} className="bg-gray-50 rounded-lg p-4">
 							<div className="flex items-start justify-between mb-2">
 								<div className="flex-1">
+									<div className="flex items-center gap-2 mb-1">
+										<UserAvatar
+											avatarUrl={comment.author_avatar_url}
+											displayName={comment.author_display_name}
+											size="xs"
+										/>
+										<span className="font-medium text-gray-900">
+											{comment.author_display_name || 'Anonymous'}
+										</span>
+									</div>
 									<p className="text-sm text-gray-500">
 										{new Date(comment.created_at).toLocaleDateString('en-US', {
 											year: 'numeric',
@@ -151,7 +162,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 									<textarea
 										value={editContent}
 										onChange={(e) => setEditContent(e.target.value)}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
 										rows={3}
 									/>
 									<div className="mt-2 flex gap-2">
