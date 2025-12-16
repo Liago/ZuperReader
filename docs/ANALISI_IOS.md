@@ -2,617 +2,460 @@
 
 **Data**: 16 Dicembre 2025
 **Versione**: ZuperReader iOS (Swift/SwiftUI)
-**Stato Generale**: ❌ Non Implementata
+**Stato Generale**: ✅ Implementata e Funzionante
 
 ---
 
 ## Sommario Esecutivo
 
-La versione iOS di ZuperReader è **completamente da implementare**. Esiste solo un documento di pianificazione (`IMPLEMENTATION_IOS.md`) che descrive le fasi di sviluppo, ma nessun codice Swift è stato scritto. Questo rappresenta un **gap critico** considerando che gran parte degli utenti target utilizza dispositivi mobile.
+La versione iOS di ZuperReader è **ampiamente implementata** con la maggior parte delle funzionalità core. L'app utilizza SwiftUI con architettura MVVM, integra Supabase Swift SDK per backend, e offre quasi tutte le funzionalità della versione web. Esistono alcune aree da completare e migliorare.
 
 ---
 
-## 1. Stato Attuale
+## 1. Struttura del Progetto
 
-### 1.1 Cosa Esiste
-| Elemento | Stato |
-|----------|-------|
-| Documento di pianificazione | ✅ Presente |
-| Struttura progetto Xcode | ❌ Mancante |
-| Codice Swift | ❌ Mancante |
-| UI SwiftUI | ❌ Mancante |
-| Integrazione Supabase | ❌ Mancante |
+### 1.1 Organizzazione File
 
-### 1.2 File Presenti
 ```
-/ios/
-└── SuperReader/
-    └── (vuoto)
-```
-
----
-
-## 2. Funzionalità da Implementare
-
-### 2.1 FASE 1: Setup Progetto e Architettura Core
-
-#### 📋 Struttura Progetto Xcode
-**Descrizione**: Creare progetto Xcode con struttura MVC/MVVM.
-**Priorità**: CRITICA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- iOS 16.0+ come minimum deployment target
-- SwiftUI come UI framework principale
-- Struttura cartelle organizzata
-
-**Struttura Suggerita**:
-```
-SuperReader/
-├── App/
-│   ├── SuperReaderApp.swift
-│   └── AppDelegate.swift
-├── Models/
-│   ├── Article.swift
-│   ├── User.swift
-│   ├── Comment.swift
-│   ├── Friendship.swift
-│   └── ArticleShare.swift
-├── Views/
-│   ├── Authentication/
+ios/SuperReader/SuperReader/
+├── SuperReaderApp.swift              # Entry point
+├── ContentView.swift                 # Root view con auth check
+├── Info.plist                        # Configurazione app
+│
+├── Models/                           # 5 modelli dati
+│   ├── Article.swift                 # Articolo + filtri + sort
+│   ├── ArticleShare.swift            # Condivisione articoli
+│   ├── Comment.swift                 # Commenti
+│   ├── User.swift                    # Profilo utente + amicizia
+│   └── UserPreferences.swift         # Preferenze lettura
+│
+├── Views/                            # 13 views
+│   ├── Auth/
+│   │   ├── LoginView.swift           # Login magic link
+│   │   └── MagicLinkSentView.swift   # Conferma invio link
+│   ├── Main/
+│   │   ├── HomeView.swift            # Home con lista articoli
+│   │   └── MainTabView.swift         # Tab navigation
 │   ├── Articles/
-│   ├── Reader/
+│   │   ├── ArticleListView.swift     # Lista grid/list
+│   │   ├── ArticleCardView.swift     # Card per grid
+│   │   ├── ArticleRowView.swift      # Row per list
+│   │   ├── ArticleReaderView.swift   # Reader completo
+│   │   ├── ArticlePreferencesView.swift # Preferenze lettura
+│   │   └── AddArticleSheet.swift     # Aggiunta articolo
 │   ├── Social/
-│   ├── Profile/
-│   └── Components/
-├── ViewModels/
-│   ├── AuthViewModel.swift
-│   ├── ArticlesViewModel.swift
-│   ├── ReaderViewModel.swift
-│   ├── FriendsViewModel.swift
-│   └── ProfileViewModel.swift
-├── Services/
-│   ├── SupabaseService.swift
-│   ├── ArticleParserService.swift
-│   └── NotificationService.swift
-├── Utilities/
-│   ├── Extensions/
-│   └── Helpers/
-└── Resources/
-    ├── Assets.xcassets
-    └── Localizable.strings
+│   │   ├── FriendsView.swift         # Gestione amici
+│   │   ├── CommentsView.swift        # Commenti articolo
+│   │   ├── ShareArticleSheet.swift   # Condivisione interna
+│   │   └── SharedInboxView.swift     # Inbox condivisioni
+│   └── Profile/
+│       └── ProfileView.swift         # Profilo + statistiche
+│
+├── Components/                       # 6 componenti riutilizzabili
+│   ├── AsyncImageView.swift          # Caricamento immagini async
+│   ├── GlassCard.swift               # Card glassmorphism
+│   ├── GradientButton.swift          # Bottoni gradient
+│   ├── LoadingView.swift             # Stati di caricamento
+│   ├── SkeletonView.swift            # Skeleton loaders
+│   └── TagBadge.swift                # Badge per tag
+│
+├── Services/                         # 4 servizi
+│   ├── SupabaseService.swift         # API Supabase (675 linee)
+│   ├── AuthManager.swift             # Gestione autenticazione
+│   ├── ArticleParser.swift           # Parser articoli
+│   └── ReadingPreferencesManager.swift # Gestione preferenze
+│
+├── Core/
+│   ├── Theme/
+│   │   ├── Theme.swift               # Design system completo
+│   │   └── ThemeManager.swift        # Gestione tema
+│   └── Extensions/
+│       ├── String+HTML.swift         # Decode HTML
+│       └── View+Modifiers.swift      # Modifiers custom
+│
+├── Resources/
+│   └── Fonts/                        # 5 font custom
+│       ├── CrimsonText-Regular.ttf
+│       ├── Inter-Regular.ttf
+│       ├── Lora-Regular.ttf
+│       ├── Montserrat-Regular.ttf
+│       └── Poppins-Regular.ttf
+│
+└── Assets.xcassets/                  # Icone e colori
 ```
 
-#### 📋 Integrazione Supabase Swift SDK
-**Descrizione**: Configurare Supabase per autenticazione e database.
-**Priorità**: CRITICA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Installazione via SPM: `supabase-swift`
-- Configurazione client con API keys
-- Type-safe queries con Codable models
+### 1.2 Metriche Codebase
 
-**Codice Esempio**:
+| Metrica | Valore |
+|---------|--------|
+| File Swift | 28 |
+| Linee di codice (stimate) | ~5,500 |
+| Views | 13 |
+| Components | 6 |
+| Models | 5 |
+| Services | 4 |
+| Font custom | 5 |
+
+---
+
+## 2. Funzionalità Implementate
+
+### 2.1 Autenticazione ✅
+
+| Funzionalità | Stato | File |
+|--------------|-------|------|
+| Magic Link OTP | ✅ | `AuthManager.swift`, `LoginView.swift` |
+| Deep Link handling | ✅ | `azreader://auth/confirm` |
+| Session management | ✅ | Auto-refresh token |
+| Sign out | ✅ | Con cleanup |
+| Schermata conferma invio | ✅ | `MagicLinkSentView.swift` |
+
+**Codice chiave** (`AuthManager.swift:92-113`):
 ```swift
-import Supabase
-
-let supabase = SupabaseClient(
-    supabaseURL: URL(string: "YOUR_SUPABASE_URL")!,
-    supabaseKey: "YOUR_SUPABASE_ANON_KEY"
-)
-```
-
-#### 📋 Design System
-**Descrizione**: Creare sistema di design consistente con versione web.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Color palette (gradient purple-pink-blue)
-- Typography scale
-- Spacing system
-- Component library base
-
-**Colori da Implementare**:
-```swift
-extension Color {
-    static let primaryGradient = LinearGradient(
-        colors: [.purple, .pink, .blue],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    // 5 temi lettura
-    static let lightTheme = ThemeColors(...)
-    static let darkTheme = ThemeColors(...)
-    static let oceanTheme = ThemeColors(...)
-    static let forestTheme = ThemeColors(...)
-    static let sunsetTheme = ThemeColors(...)
+func handleDeepLink(url: URL) async -> Bool {
+    guard url.scheme == "azreader",
+          url.host == "auth",
+          url.path == "/confirm" else { return false }
+    // Parse token_hash e type, verifica OTP
 }
 ```
 
----
+### 2.2 Gestione Articoli ✅
 
-### 2.2 FASE 2: Autenticazione
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Lista articoli | ✅ | Grid e List view switchabili |
+| Lazy loading | ✅ | Pagination con offset |
+| Pull-to-refresh | ✅ | Su tutte le liste |
+| Aggiunta via URL | ✅ | Con parsing Netlify function |
+| Eliminazione | ✅ | Con swipe actions |
+| Toggle preferiti | ✅ | Optimistic update |
+| Stati lettura | ✅ | unread/reading/completed |
+| Filtri | ✅ | Status, preferiti, tag, dominio |
+| Ordinamento | ✅ | Data, titolo, stato |
+| Ricerca | ✅ | Su titolo, excerpt, dominio |
+| Empty states | ✅ | Design appropriato |
+| Skeleton loaders | ✅ | Per grid e list |
 
-#### 📋 Magic Link OTP Flow
-**Descrizione**: Implementare autenticazione via email magic link.
-**Priorità**: CRITICA
-**Effort stimato**: 3-4 giorni
-**Requisiti**:
-- Input email con validazione
-- Invio OTP via Supabase
-- Verifica token
-- Session management
+### 2.3 Reader Articolo ✅
 
-**Screens Necessarie**:
-1. `LoginView.swift` - Input email
-2. `OTPVerificationView.swift` - Input codice (fallback manuale)
-3. `AuthSuccessView.swift` - Conferma login
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Visualizzazione contenuto | ✅ | HTML decoded |
+| Hero image | ✅ | Con gradient overlay |
+| Metadata (autore, dominio, tempo) | ✅ | - |
+| Toolbar azioni | ✅ | Favorite, like, share, tag |
+| Progress bar | ✅ | Barra superiore |
+| Link originale | ✅ | Pulsante "Read Original" |
+| Delete con conferma | ✅ | Alert dialog |
 
-#### 📋 Deep Link Handling
-**Descrizione**: Gestire magic links che aprono direttamente l'app.
-**Priorità**: CRITICA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- Custom URL scheme: `azreader://`
-- Universal Links (opzionale)
-- Parse token da URL
-- Auto-verify e redirect
+**Personalizzazioni Lettura Implementate**:
 
-**Info.plist Configuration**:
-```xml
-<key>CFBundleURLTypes</key>
-<array>
-    <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-            <string>azreader</string>
-        </array>
-    </dict>
-</array>
-```
+| Opzione | Implementato | Valori |
+|---------|--------------|--------|
+| Font Family | ✅ | serif, sans, mono, crimson, inter, lora, montserrat, poppins |
+| Font Size | ✅ | 12-50px |
+| Color Theme | ✅ | light, dark, ocean, forest, sunset |
+| Line Height | ✅ | compact, normal, relaxed, loose |
+| Content Width | ✅ | narrow, normal, wide |
+| View Mode | ✅ | grid, list |
 
-#### 📋 Session Management
-**Descrizione**: Gestire persistenza sessione utente.
-**Priorità**: ALTA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- Token storage sicuro (Keychain)
-- Auto-refresh token
-- Logout con cleanup
-- Handle session expiry
+### 2.4 Sistema Tag ✅
 
----
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Visualizzazione tag | ✅ | Con badge colorati |
+| Gestione tag articolo | ✅ | Modal editor |
+| Filtro per tag | ✅ | Nella ricerca |
+| Salvataggio tag | ✅ | Update su Supabase |
 
-### 2.3 FASE 3: Gestione Articoli
+### 2.5 Funzionalità Social ✅
 
-#### 📋 Lista Articoli
-**Descrizione**: Visualizzare lista articoli salvati dall'utente.
-**Priorità**: CRITICA
-**Effort stimato**: 3-4 giorni
-**Requisiti**:
-- Grid view e List view switchabili
-- Lazy loading con pagination
-- Pull-to-refresh
-- Empty state design
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Lista amici | ✅ | Con avatar e bio |
+| Ricerca utenti | ✅ | Per nome o email |
+| Invio richiesta amicizia | ✅ | - |
+| Accept/Reject richieste | ✅ | - |
+| Richieste inviate | ✅ | Tab dedicata |
+| Condivisione articoli | ✅ | Con messaggio personalizzato |
+| Inbox condivisioni | ✅ | Con mark as read |
+| Delete condivisione | ✅ | Swipe action |
 
-**Screens Necessarie**:
-- `ArticlesListView.swift`
-- `ArticleCardView.swift` (grid)
-- `ArticleRowView.swift` (list)
+### 2.6 Like ✅
 
-#### 📋 Aggiunta Articolo via URL
-**Descrizione**: Permettere salvataggio articoli incollando URL.
-**Priorità**: CRITICA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Modal con input URL
-- Validazione URL
-- Chiamata parser API (Netlify function)
-- Feedback saving/success/error
-- Share extension (opzionale ma molto utile)
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Toggle like | ✅ | - |
+| Counter likes | ✅ | Visualizzato |
+| Check stato liked | ✅ | Per utente |
+| Operazioni atomiche | ✅ | Via RPC increment/decrement |
 
-#### 📋 Article Reader
-**Descrizione**: Schermata lettura articolo con personalizzazione.
-**Priorità**: CRITICA
-**Effort stimato**: 4-5 giorni
-**Requisiti**:
-- Rendering contenuto HTML
-- Toolbar azioni (back, favorite, share, settings)
-- Progress indicator
-- Auto-save reading progress
+### 2.7 Commenti ✅
 
-**Personalizzazioni Necessarie**:
-| Opzione | Range/Valori |
-|---------|--------------|
-| Font Family | 7 opzioni (sans, serif, mono, roboto, lato, openSans, ubuntu) |
-| Font Size | 12-50px |
-| Color Theme | 5 temi (light, dark, ocean, forest, sunset) |
-| Line Height | 4 opzioni (compact, normal, relaxed, loose) |
-| Content Width | 3 opzioni (narrow, normal, wide) |
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Lista commenti | ✅ | Con avatar autore |
+| Aggiunta commento | ✅ | - |
+| Eliminazione commento | ✅ | Solo propri |
+| Counter commenti | ✅ | - |
 
-#### 📋 Ricerca e Filtri
-**Descrizione**: Permettere ricerca e filtro articoli.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Search bar con debounce
-- Filtri: status lettura, preferiti, tag, dominio
-- Sort: data, titolo, tempo lettura
-- Persist filtri in session
+### 2.8 Profilo Utente ✅
 
-#### 📋 Gestione Tag
-**Descrizione**: Aggiungere/rimuovere tag da articoli.
-**Priorità**: MEDIA
-**Effort stimato**: 2 giorni
-**Requisiti**:
-- Tag editor modal
-- Suggerimenti automatici (port dal web)
-- Colori per categoria
-- Creazione nuovi tag
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Visualizzazione profilo | ✅ | Avatar, nome, bio, email |
+| Edit profilo | ✅ | Display name e bio |
+| Statistiche | ✅ | 4 metriche visualizzate |
+| Sign out | ✅ | Con conferma |
+
+**Statistiche Visualizzate** (4 su 8):
+1. ✅ Articoli totali
+2. ✅ Articoli letti
+3. ✅ Numero amici
+4. ✅ Like ricevuti
+
+### 2.9 Preferenze e Tema ✅
+
+| Funzionalità | Stato | Note |
+|--------------|-------|------|
+| Sync preferenze DB | ✅ | Upsert su user_preferences |
+| Persist locale | ✅ | @AppStorage |
+| 5 temi colore | ✅ | Light, dark, ocean, forest, sunset |
+| Theme manager | ✅ | ObservableObject globale |
+
+### 2.10 Design System ✅
+
+| Elemento | Stato | Note |
+|----------|-------|------|
+| Gradient backgrounds | ✅ | Purple-pink-blue |
+| Glassmorphism | ✅ | GlassCard component |
+| Typography scale | ✅ | Sistema completo |
+| Spacing system | ✅ | Costanti definite |
+| Corner radius | ✅ | Costanti definite |
+| Premium gradients | ✅ | Per bottoni e accenti |
 
 ---
 
-### 2.4 FASE 4: Funzionalità Social
+## 3. Funzionalità Mancanti o Incomplete
 
-#### 📋 Lista Amici
-**Descrizione**: Visualizzare e gestire lista amici.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Lista amici con avatar e nome
-- Rimozione amico con conferma
-- Badge contatore amici
+### 3.1 Priorità ALTA
 
-**Screens Necessarie**:
-- `FriendsListView.swift`
-- `FriendRowView.swift`
+#### 🔴 Reading Progress Tracking
+**Descrizione**: La versione web salva automaticamente la % di lettura (scroll position) e marca come "completed" all'85%. iOS ha solo la progress bar visiva ma non salva.
+**Impatto**: Utenti perdono il progresso di lettura.
+**Soluzione**: Implementare `updateReadingProgress` nel reader con debounce.
 
-#### 📋 Ricerca Utenti
-**Descrizione**: Cercare utenti per aggiungere come amici.
-**Priorità**: ALTA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- Search input
-- Risultati real-time
-- Pulsante "Invia richiesta"
-- Stato amicizia visibile
+#### 🔴 Edit Commenti
+**Descrizione**: Possibile solo eliminare, non modificare commenti esistenti.
+**Impatto**: UX limitata per correzioni.
+**Soluzione**: Aggiungere `updateComment` in SupabaseService e UI per edit.
 
-#### 📋 Gestione Richieste Amicizia
-**Descrizione**: Visualizzare e rispondere a richieste amicizia.
-**Priorità**: ALTA
-**Effort stimato**: 2 giorni
-**Requisiti**:
-- Tab richieste ricevute
-- Tab richieste inviate
-- Accept/Reject buttons
-- Notifica nuove richieste
+#### 🔴 Tag Suggestion Automatico
+**Descrizione**: Web ha sistema intelligente di suggerimento tag basato su dominio/contenuto. iOS non ce l'ha.
+**Impatto**: Tagging manuale più laborioso.
+**Soluzione**: Portare `tagSuggestionService` da web a Swift.
 
-#### 📋 Condivisione Articoli (Interna)
-**Descrizione**: Condividere articoli con amici.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Pulsante share in article detail
-- Selezione amico destinatario
-- Messaggio personalizzato opzionale
-- Conferma invio
+#### 🔴 Statistiche Complete
+**Descrizione**: Profilo mostra solo 4 statistiche su 8 disponibili.
+**Mancanti**:
+- Articoli preferiti
+- Commenti ricevuti
+- Articoli condivisi
+- Articoli ricevuti
+**Soluzione**: Aggiungere altre 4 StatCard nella griglia.
 
-#### 📋 Inbox Articoli Condivisi
-**Descrizione**: Visualizzare articoli ricevuti da amici.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Lista condivisioni con info sender
-- Timestamp e messaggio
-- Mark as read
-- Delete condivisione
-- Badge unread count
+### 3.2 Priorità MEDIA
 
-#### 📋 Commenti
-**Descrizione**: Sistema commenti su articoli.
-**Priorità**: MEDIA
-**Effort stimato**: 3-4 giorni
-**Requisiti**:
-- Lista commenti sotto articolo
-- Add comment form
-- Edit/Delete propri commenti
-- Avatar e nome autore
-- Timestamp
+#### 🟡 Share Extension
+**Descrizione**: Non è possibile salvare articoli direttamente da Safari.
+**Impatto**: Friction significativa per aggiungere articoli.
+**Soluzione**: Creare App Extension con condivisione App Groups.
 
-#### 📋 Like
-**Descrizione**: Sistema like su articoli.
-**Priorità**: MEDIA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- Pulsante like con toggle
-- Counter likes
-- Stato liked/not liked
-- Operazione atomica (RPC)
+#### 🟡 Push Notifications
+**Descrizione**: Nessuna notifica per nuove condivisioni, commenti, richieste amicizia.
+**Impatto**: Engagement ridotto.
+**Soluzione**: Integrare APNs + backend trigger.
 
----
+#### 🟡 Offline Reading
+**Descrizione**: App richiede sempre connessione.
+**Impatto**: Impossibile leggere senza internet.
+**Soluzione**: Cache articoli con Core Data o SwiftData.
 
-### 2.5 FASE 5: Profilo Utente e Impostazioni
+#### 🟡 Condivisione Pubblica
+**Descrizione**: Solo condivisione interna tra amici, manca share su social (Twitter, LinkedIn).
+**Impatto**: Limitata viralità.
+**Soluzione**: Usare UIActivityViewController per share system.
 
-#### 📋 Pagina Profilo
-**Descrizione**: Visualizzare e modificare profilo utente.
-**Priorità**: ALTA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Display name (editabile)
-- Bio (editabile)
-- Avatar (display, eventualmente upload)
-- Statistiche utente
+#### 🟡 Favicon Articoli
+**Descrizione**: Web mostra favicon del dominio, iOS no.
+**Impatto**: Meno riconoscibilità visiva.
+**Soluzione**: Caricare favicon in ArticleCardView/RowView.
 
-**Statistiche da Mostrare**:
-1. Articoli totali
-2. Articoli letti
-3. Articoli preferiti
-4. Like ricevuti
-5. Commenti ricevuti
-6. Numero amici
-7. Articoli condivisi
-8. Articoli ricevuti
+### 3.3 Priorità BASSA
 
-#### 📋 Preferenze Lettura
-**Descrizione**: Impostazioni di personalizzazione lettura.
-**Priorità**: ALTA
-**Effort stimato**: 2 giorni
-**Requisiti**:
-- Settings screen dedicata
-- Preview live delle modifiche
-- Sync con database (come web)
-- Persist in UserDefaults come fallback
+#### 🟢 iPad Support
+**Descrizione**: Layout non ottimizzato per schermi grandi.
+**Soluzione**: Adaptive layout con NavigationSplitView.
 
-#### 📋 Tema Applicazione
-**Descrizione**: Selettore tema light/dark/system.
-**Priorità**: MEDIA
-**Effort stimato**: 1 giorno
-**Requisiti**:
-- Respect system setting default
-- Override manuale
-- Persist preference
+#### 🟢 Widget iOS
+**Descrizione**: Nessun widget home screen.
+**Soluzione**: WidgetKit con articoli da leggere.
+
+#### 🟢 Biometric Auth
+**Descrizione**: Nessun Face ID / Touch ID.
+**Soluzione**: LocalAuthentication framework.
+
+#### 🟢 Siri Shortcuts
+**Descrizione**: Nessuna integrazione Siri.
+**Soluzione**: App Intents framework.
+
+#### 🟢 Haptic Feedback
+**Descrizione**: Feedback tattile limitato.
+**Soluzione**: UIImpactFeedbackGenerator su azioni.
 
 ---
 
-### 2.6 FASE 6: Polish e Refinement
+## 4. Confronto iOS vs Web
 
-#### 📋 Animazioni e Transizioni
-**Descrizione**: Smooth UX con animazioni appropriate.
-**Priorità**: MEDIA
-**Effort stimato**: 2-3 giorni
-**Requisiti**:
-- Transizioni navigazione
-- Loading animations
-- Feedback tattile (Haptic)
-- Micro-interactions
-
-#### 📋 Pull-to-Refresh
-**Descrizione**: Aggiornamento contenuti con gesture.
-**Priorità**: MEDIA
-**Effort stimato**: 0.5 giorni
-**Requisiti**:
-- Su liste articoli
-- Su lista amici
-- Su inbox condivisioni
-
-#### 📋 Loading States
-**Descrizione**: Feedback visivo durante caricamento.
-**Priorità**: ALTA
-**Effort stimato**: 1-2 giorni
-**Requisiti**:
-- Skeleton loaders
-- Spinner appropriati
-- Progress indicators
-
-#### 📋 Empty States
-**Descrizione**: Design per stati vuoti.
-**Priorità**: MEDIA
-**Effort stimato**: 1 giorno
-**Requisiti**:
-- Nessun articolo salvato
-- Nessun amico
-- Nessuna condivisione
-- CTA appropriate
-
-#### 📋 Error Handling
-**Descrizione**: Gestione errori user-friendly.
-**Priorità**: ALTA
-**Effort stimato**: 2 giorni
-**Requisiti**:
-- Alert per errori critici
-- Inline errors per form
-- Retry buttons
-- Offline detection
+| Feature | Web | iOS | Gap |
+|---------|-----|-----|-----|
+| **Autenticazione** | ✅ | ✅ | Parità |
+| **Lista Articoli** | ✅ | ✅ | Parità |
+| **Grid/List View** | ✅ | ✅ | Parità |
+| **Lazy Loading** | ✅ | ✅ | Parità |
+| **Filtri e Ricerca** | ✅ | ✅ | Parità |
+| **Article Reader** | ✅ | ✅ | Parità |
+| **Preferenze Lettura** | ✅ 6 opzioni | ✅ 6 opzioni | Parità |
+| **5 Temi Colore** | ✅ | ✅ | Parità |
+| **Reading Progress Save** | ✅ | ❌ | **iOS mancante** |
+| **Auto-mark Completed** | ✅ (85%) | ❌ | **iOS mancante** |
+| **Tag Management** | ✅ | ✅ | Parità |
+| **Tag Suggestion** | ✅ 30+ categorie | ❌ | **iOS mancante** |
+| **Like** | ✅ | ✅ | Parità |
+| **Commenti CRUD** | ✅ | ⚠️ Solo CD | **Edit mancante** |
+| **Amici** | ✅ | ✅ | Parità |
+| **Condivisione Interna** | ✅ | ✅ | Parità |
+| **Condivisione Social** | ✅ | ❌ | **iOS mancante** |
+| **Inbox Condivisioni** | ✅ | ✅ | Parità |
+| **Profilo** | ✅ | ✅ | Parità |
+| **Statistiche** | ✅ 8 metriche | ⚠️ 4 metriche | **iOS incompleto** |
+| **Offline** | ❌ | ❌ | Entrambi mancanti |
+| **Notifiche** | ❌ | ❌ | Entrambi mancanti |
+| **Share Extension** | N/A | ❌ | iOS mancante |
 
 ---
 
-## 3. Funzionalità Extra (Non presenti in Web)
+## 5. Aree da Migliorare
 
-Queste funzionalità sarebbero un valore aggiunto per iOS:
+### 5.1 Performance
 
-### 3.1 Share Extension
-**Descrizione**: Salvare articoli direttamente da Safari/altre app.
-**Priorità**: MOLTO ALTA
-**Effort stimato**: 3-4 giorni
-**Valore**: Game-changer per UX mobile
+#### HTML Rendering
+**Attuale**: Semplice `Text(content.decodedHTML)` che rimuove tag HTML.
+**Problema**: Perde formattazione (grassetto, link, immagini inline).
+**Miglioramento**: Usare `WKWebView` o `AttributedString` per HTML ricco.
 
-### 3.2 Widget iOS
-**Descrizione**: Widget home screen con articoli da leggere.
-**Priorità**: MEDIA
-**Effort stimato**: 2-3 giorni
-**Valore**: Engagement aumentato
+#### Image Caching
+**Attuale**: AsyncImageView con cache base.
+**Miglioramento**: Integrare SDWebImage o Kingfisher per caching aggressivo.
 
-### 3.3 Offline Reading
-**Descrizione**: Scaricare articoli per lettura offline.
-**Priorità**: ALTA
-**Effort stimato**: 4-5 giorni
-**Valore**: Essential per mobile use case
+### 5.2 UX/UI
 
-### 3.4 Push Notifications
-**Descrizione**: Notifiche per nuove condivisioni, commenti, etc.
-**Priorità**: ALTA
-**Effort stimato**: 3-4 giorni
-**Valore**: Engagement e retention
+#### Loading States
+**Attuale**: Skeleton loaders presenti ma non ovunque.
+**Miglioramento**: Aggiungere skeleton in CommentsView, ProfileView.
 
-### 3.5 Siri Shortcuts
-**Descrizione**: Integrazione con Siri per azioni rapide.
-**Priorità**: BASSA
-**Effort stimato**: 2 giorni
-**Valore**: Power user feature
+#### Error Handling
+**Attuale**: Print in console, alcuni alert.
+**Miglioramento**: Toast/snackbar per errori non-bloccanti.
 
-### 3.6 Dark Mode Automatico
-**Descrizione**: Sync con impostazioni sistema iOS.
-**Priorità**: MEDIA
-**Effort stimato**: 0.5 giorni
-**Valore**: Expected iOS behavior
+#### Animations
+**Attuale**: Transizioni base SwiftUI.
+**Miglioramento**: Micro-interactions, spring animations.
 
-### 3.7 Biometric Auth
-**Descrizione**: Face ID / Touch ID per accesso rapido.
-**Priorità**: MEDIA
-**Effort stimato**: 1-2 giorni
-**Valore**: Security + convenience
+### 5.3 Code Quality
 
-### 3.8 iPad Support
-**Descrizione**: Layout ottimizzato per iPad.
-**Priorità**: MEDIA
-**Effort stimato**: 3-4 giorni
-**Valore**: Market expansion
+#### Testing
+**Attuale**: Nessun test visibile.
+**Miglioramento**: Unit test per Services, UI test per flussi critici.
+
+#### Documentation
+**Attuale**: Commenti MARK presenti.
+**Miglioramento**: DocC documentation per API pubbliche.
 
 ---
 
-## 4. Dipendenze Tecniche
+## 6. Roadmap Miglioramenti
 
-### 4.1 Swift Packages Necessari
+### Sprint 1: Completamento Feature Parity
+- [ ] Implementare reading progress save
+- [ ] Aggiungere auto-mark completed all'85%
+- [ ] Implementare edit commenti
+- [ ] Completare statistiche profilo (8/8)
 
-| Package | Uso | URL |
-|---------|-----|-----|
-| Supabase Swift | Backend integration | github.com/supabase/supabase-swift |
-| SDWebImageSwiftUI | Image loading/caching | github.com/SDWebImage/SDWebImageSwiftUI |
-| SwiftSoup | HTML parsing | github.com/scinfu/SwiftSoup |
-| KeychainAccess | Secure storage | github.com/kishikawakatsumi/KeychainAccess |
+### Sprint 2: Tag e Social
+- [ ] Portare tag suggestion service
+- [ ] Aggiungere condivisione social (UIActivityViewController)
+- [ ] Mostrare favicon negli articoli
 
-### 4.2 Configurazioni Necessarie
-
-| Configurazione | File | Descrizione |
-|----------------|------|-------------|
-| URL Scheme | Info.plist | `azreader://` per deep links |
-| App Transport Security | Info.plist | HTTPS requirements |
-| Supabase Keys | Config.xcconfig | API keys (non in source control) |
-| App Groups | Entitlements | Per share extension |
-
----
-
-## 5. Roadmap Implementazione
-
-### Sprint 1: Foundation (2 settimane)
-- [ ] Setup progetto Xcode
-- [ ] Integrazione Supabase
-- [ ] Design system base
-- [ ] Autenticazione completa
-- [ ] Deep link handling
-
-### Sprint 2: Core Features (2 settimane)
-- [ ] Lista articoli (grid/list)
-- [ ] Aggiunta articolo via URL
-- [ ] Article reader base
-- [ ] Preferenze lettura
-- [ ] Search e filtri
-
-### Sprint 3: Social (2 settimane)
-- [ ] Sistema amici completo
-- [ ] Condivisione articoli
-- [ ] Inbox condivisioni
-- [ ] Commenti
-- [ ] Like
-
-### Sprint 4: Profile & Polish (1 settimana)
-- [ ] Pagina profilo
-- [ ] Statistiche utente
-- [ ] Loading states
-- [ ] Empty states
-- [ ] Error handling
-
-### Sprint 5: Extra Features (2 settimane)
+### Sprint 3: iOS Specifico
 - [ ] Share Extension
 - [ ] Push Notifications
+- [ ] Haptic feedback
+
+### Sprint 4: Offline e Performance
 - [ ] Offline reading base
-- [ ] Widget iOS
+- [ ] Migliorare HTML rendering
+- [ ] Image caching avanzato
 
-### Sprint 6: Testing & Release (1 settimana)
-- [ ] QA testing
-- [ ] Performance optimization
-- [ ] App Store preparation
-- [ ] Beta release (TestFlight)
-
----
-
-## 6. Rischi e Mitigazioni
-
-| Rischio | Impatto | Mitigazione |
-|---------|---------|-------------|
-| Supabase Swift SDK limitazioni | Alto | Test early, alternative REST API |
-| Deep link non funzionanti | Alto | Universal Links come backup |
-| Performance HTML rendering | Medio | WKWebView con CSS custom |
-| App Store rejection | Alto | Follow HIG, test guidelines |
-| Sync offline complesso | Medio | MVP senza offline, aggiungere dopo |
-
----
-
-## 7. Metriche di Successo
-
-### MVP (Minimum Viable Product)
-- [ ] Login funzionante
-- [ ] Aggiunta articoli via URL
-- [ ] Lettura articoli con personalizzazione
-- [ ] Lista articoli con search
-- [ ] Preferiti e stati lettura
-
-### v1.0
-- [ ] Tutte le features social (amici, condivisioni, commenti)
-- [ ] Share Extension
-- [ ] Push notifications
-- [ ] Profilo completo
-
-### v1.x
-- [ ] Offline reading
-- [ ] Widget
+### Sprint 5: Extra
 - [ ] iPad support
-- [ ] Siri shortcuts
+- [ ] Widget iOS
+- [ ] Biometric auth
 
 ---
 
-## 8. Confronto con Versione Web
+## 7. Dipendenze Attuali
 
-| Feature | Web | iOS (Target) | Gap |
-|---------|-----|--------------|-----|
-| Autenticazione | ✅ | 📋 | Full implementation needed |
-| Gestione Articoli | ✅ | 📋 | Full implementation needed |
-| Reader Customization | ✅ 6 opzioni | 📋 | Parity target |
-| Social Features | ✅ | 📋 | Full implementation needed |
-| Offline | ❌ | 📋 | iOS should have it first |
-| Notifications | ❌ | 📋 | iOS should have it first |
-| Share Extension | N/A | 📋 | iOS unique advantage |
-| Widget | N/A | 📋 | iOS unique advantage |
+### Swift Packages
+
+| Package | Versione | Uso |
+|---------|----------|-----|
+| Supabase | Latest | Backend integration |
+| (Built-in) | - | AsyncImage, SwiftUI |
+
+### Configurazioni
+
+| Config | Valore | File |
+|--------|--------|------|
+| URL Scheme | `azreader://` | Info.plist |
+| Min iOS | 16.0+ | project.pbxproj |
+| Supabase URL | Hardcoded | SupabaseService.swift |
 
 ---
 
-## 9. Conclusioni
+## 8. Conclusioni
 
-### Stato Critico
-La versione iOS è **completamente assente**. Considerando che:
-- Il 50%+ degli utenti web probabilmente usa iOS
-- L'esperienza mobile è fondamentale per app di reading
-- Competitors (Pocket, Instapaper) hanno app iOS mature
+### Stato Attuale: Buono
+L'app iOS è **funzionante e utilizzabile** con la maggior parte delle feature core implementate. L'architettura è pulita e manutenibile.
 
-L'implementazione iOS dovrebbe essere la **priorità assoluta**.
+### Gap Principali
+1. **Reading progress** non viene salvato
+2. **Tag suggestion** assente
+3. **Edit commenti** mancante
+4. **Statistiche** incomplete
+5. **Share Extension** non implementata
 
-### Effort Totale Stimato
-- **MVP**: 4-5 settimane developer iOS senior
-- **v1.0 completa**: 8-10 settimane
-- **v1.x con extras**: 12-14 settimane
+### Priorità Immediate
+1. ✅ L'app è già usabile per il flusso base
+2. 🔴 Completare reading progress per parità con web
+3. 🔴 Share Extension per UX mobile ottimale
+4. 🟡 Push notifications per engagement
 
-### Raccomandazione
-Iniziare immediatamente con Sprint 1 (Foundation) per avere un'app funzionante il prima possibile, poi iterare sulle features in ordine di priorità.
+### Effort Stimato per Completamento
+- **Feature parity completa**: 1-2 settimane
+- **iOS-specific features**: 2-3 settimane
+- **Polish e ottimizzazioni**: 1 settimana
 
 ---
 
