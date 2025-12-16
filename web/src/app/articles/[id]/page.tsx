@@ -404,6 +404,54 @@ export default function ArticleReaderPage() {
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, [article?.id, article?.reading_status]);
 
+	// Enhance images in article content with lazy loading
+	useEffect(() => {
+		const contentElement = articleContentRef.current;
+		if (!contentElement) return;
+
+		const images = contentElement.querySelectorAll('img');
+		const imageObserver = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						const img = entry.target as HTMLImageElement;
+						// Add loading class
+						img.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+
+						// Load the image if it has data-src (lazy loading)
+						const dataSrc = img.getAttribute('data-src');
+						if (dataSrc && !img.src) {
+							img.src = dataSrc;
+						}
+
+						// When loaded, fade in
+						img.onload = () => {
+							img.classList.remove('opacity-0');
+							img.classList.add('opacity-100');
+						};
+
+						// Stop observing this image
+						imageObserver.unobserve(img);
+					}
+				});
+			},
+			{
+				rootMargin: '50px',
+			}
+		);
+
+		images.forEach((img) => {
+			// Add loading attribute
+			img.setAttribute('loading', 'lazy');
+			img.setAttribute('decoding', 'async');
+			imageObserver.observe(img);
+		});
+
+		return () => {
+			imageObserver.disconnect();
+		};
+	}, [article?.content]);
+
 	// Intercetta i click sui link all'interno del contenuto dell'articolo
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
