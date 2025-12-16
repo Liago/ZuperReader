@@ -7,6 +7,7 @@ import { ReadingPreferencesProvider } from "../contexts/ReadingPreferencesContex
 import { FriendsProvider } from "../contexts/FriendsContext";
 import { ArticlesProvider } from "../contexts/ArticlesContext";
 import { ArticleFiltersProvider } from "../contexts/ArticleFiltersContext";
+import { QueryProvider } from "../contexts/QueryProvider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -56,19 +57,21 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} antialiased`}
 			>
-				<AuthProvider>
-					<ThemeProvider>
-						<FriendsProvider>
-							<ReadingPreferencesProvider>
-								<ArticleFiltersProvider>
-									<ArticlesProvider>
-										{children}
-									</ArticlesProvider>
-								</ArticleFiltersProvider>
-							</ReadingPreferencesProvider>
-						</FriendsProvider>
-					</ThemeProvider>
-				</AuthProvider>
+				<QueryProvider>
+					<AuthProvider>
+						<ThemeProvider>
+							<FriendsProvider>
+								<ReadingPreferencesProvider>
+									<ArticleFiltersProvider>
+										<ArticlesProvider>
+											{children}
+										</ArticlesProvider>
+									</ArticleFiltersProvider>
+								</ReadingPreferencesProvider>
+							</FriendsProvider>
+						</ThemeProvider>
+					</AuthProvider>
+				</QueryProvider>
 			</body>
 		</html>
 	);

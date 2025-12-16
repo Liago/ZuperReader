@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteArticle, updateArticleTags, toggleFavorite, ArticleFilters, ArticleSortOptions, ArticleSortField, ArticleSortOrder } from '../lib/api';
+import { deleteArticle, updateArticleTags, toggleFavorite, ArticleFilters, ArticleSortOptions, ArticleSortField } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
 import { useArticleFilters } from '../contexts/ArticleFiltersContext';
 import { TagList } from './TagBadge';
 import TagManagementModal from './TagManagementModal';
+import OptimizedImage from './OptimizedImage';
 
 interface ArticleListProps {
 	userId: string;
@@ -606,11 +607,11 @@ export default function ArticleList({ userId }: ArticleListProps) {
 											</span>
 										)}
 									</div>
-									<img
+									<OptimizedImage
 										src={article.image_url}
 										alt={article.title}
-										className="w-full h-48 sm:h-52 object-cover transform group-hover:scale-105 transition-transform duration-500"
-										loading="lazy"
+										className="w-full h-48 sm:h-52"
+										priority={index < 3}
 									/>
 								</div>
 							)}
@@ -767,11 +768,11 @@ export default function ArticleList({ userId }: ArticleListProps) {
 											</span>
 										)}
 									</div>
-									<img
+									<OptimizedImage
 										src={article.image_url}
 										alt={article.title}
-										className="w-20 h-20 sm:w-28 sm:h-28 object-cover rounded-xl transform group-hover:scale-105 transition-transform duration-300"
-										loading="lazy"
+										className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl"
+										priority={index < 5}
 									/>
 								</div>
 							)}
