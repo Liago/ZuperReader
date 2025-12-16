@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
 	toggleLike,
-	getLikeStatus,
+	checkIfUserLiked,
 	addComment,
 	getComments,
 	deleteComment,
@@ -25,7 +25,7 @@ export const socialKeys = {
 export function useLikeStatus(articleId: string, userId: string, enabled = true) {
 	return useQuery({
 		queryKey: socialKeys.likes(articleId, userId),
-		queryFn: () => getLikeStatus(articleId, userId),
+		queryFn: () => checkIfUserLiked(articleId, userId),
 		enabled: enabled && !!articleId && !!userId,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
@@ -199,7 +199,7 @@ export function useDeleteComment() {
 
 	return useMutation({
 		mutationFn: async ({ commentId, articleId }: { commentId: string; articleId: string }) => {
-			await deleteComment(commentId);
+			await deleteComment(commentId, articleId);
 			return { commentId, articleId };
 		},
 		onMutate: async ({ commentId, articleId }) => {
