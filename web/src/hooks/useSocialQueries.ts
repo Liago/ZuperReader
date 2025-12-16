@@ -156,7 +156,7 @@ export function useAddComment() {
 				user_id: userId,
 				content,
 				created_at: new Date().toISOString(),
-				user_profile: null,
+				updated_at: new Date().toISOString(),
 			};
 
 			// Optimistically add the comment
