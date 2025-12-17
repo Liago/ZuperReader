@@ -1,5 +1,5 @@
 import { gotScraping } from 'got-scraping';
-import Mercury from '../../lib/mercury.js';
+import Mercury from '../../lib/mercury.cjs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
