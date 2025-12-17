@@ -36,7 +36,16 @@ exports.handler = async (event) => {
 		console.log(`Parsing URL: ${url}`);
 		const result = await Mercury.parse(url, {
 			headers: {
-				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+				'Accept-Language': 'en-US,en;q=0.9,it;q=0.8',
+				'Referer': 'https://www.google.com/',
+				'Upgrade-Insecure-Requests': '1',
+				'Sec-Fetch-Dest': 'document',
+				'Sec-Fetch-Mode': 'navigate',
+				'Sec-Fetch-Site': 'cross-site',
+				'Sec-Fetch-User': '?1',
+				'Cache-Control': 'max-age=0'
 			}
 		});
 
