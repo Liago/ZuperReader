@@ -11,7 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@postlight/parser": "file:../parser",
     "@babel/runtime-corejs2": "^7.2.0",
     "cheerio": "^0.22.0",
     "difflib": "github:postlight/difflib.js",

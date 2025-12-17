@@ -1,4 +1,4 @@
-const Mercury = require('@postlight/parser');
+const Mercury = require('../lib/mercury');
 
 exports.handler = async (event) => {
 	// Handle CORS preflight
