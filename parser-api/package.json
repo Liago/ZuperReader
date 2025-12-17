@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@babel/runtime-corejs2": "^7.2.0",
     "cheerio": "^0.22.0",

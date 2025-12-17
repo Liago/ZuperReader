@@ -1,7 +1,10 @@
-const { gotScraping } = require('got-scraping');
-const Mercury = require('../../lib/mercury');
+import { gotScraping } from 'got-scraping';
+import Mercury from '../../lib/mercury.js';
+import { createRequire } from 'module';
 
-exports.handler = async (event) => {
+const require = createRequire(import.meta.url);
+
+export const handler = async (event) => {
 	// Handle CORS preflight
 	if (event.httpMethod === 'OPTIONS') {
 		return {
@@ -24,7 +27,8 @@ exports.handler = async (event) => {
 	}
 
 	try {
-		const { url } = JSON.parse(event.body || '{}');
+		const body = JSON.parse(event.body || '{}');
+		const url = body.url;
 
 		if (!url) {
 			return {
