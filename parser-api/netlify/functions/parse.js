@@ -33,7 +33,16 @@ exports.handler = async (event) => {
 			};
 		}
 
-		const result = await Mercury.parse(url);
+		console.log(`Parsing URL: ${url}`);
+		const result = await Mercury.parse(url, {
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+			}
+		});
+
+		if (result.error) {
+			console.error('Mercury Parser returned error:', result);
+		}
 
 		return {
 			statusCode: 200,
@@ -41,24 +50,14 @@ exports.handler = async (event) => {
 				'Content-Type': 'application/json',
 				'Access-Control-Allow-Origin': '*',
 			},
-			body: JSON.stringify({
-				url: result.url,
-				title: result.title,
-				content: result.content,
-				excerpt: result.excerpt,
-				lead_image_url: result.lead_image_url,
-				author: result.author,
-				date_published: result.date_published,
-				domain: result.domain,
-				word_count: result.word_count,
-			}),
+			body: JSON.stringify(result), // Return full result for debugging
 		};
 	} catch (error) {
 		console.error('Parse error:', error);
 		return {
 			statusCode: 500,
 			headers: { 'Access-Control-Allow-Origin': '*' },
-			body: JSON.stringify({ error: 'Failed to parse URL' }),
+			body: JSON.stringify({ error: 'Failed to parse URL', details: error.message }),
 		};
 	}
 };
