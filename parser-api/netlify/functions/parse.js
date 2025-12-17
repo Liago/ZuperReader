@@ -1,5 +1,4 @@
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+const { gotScraping } = require('got-scraping');
 const Mercury = require('../../lib/mercury');
 
 exports.handler = async (event) => {
@@ -24,12 +23,8 @@ exports.handler = async (event) => {
 		};
 	}
 
-	let browser = null;
-	let url = '';
-
 	try {
-		const body = JSON.parse(event.body || '{}');
-		url = body.url;
+		const { url } = JSON.parse(event.body || '{}');
 
 		if (!url) {
 			return {
@@ -39,41 +34,27 @@ exports.handler = async (event) => {
 			};
 		}
 
-		console.log(`Launching browser for URL: ${url}`);
+		console.log(`Fetching URL with got-scraping: ${url}`);
 
-		// Setup Chromium for Lambda
-		browser = await puppeteer.launch({
-			args: chromium.args,
-			defaultViewport: chromium.defaultViewport,
-			executablePath: await chromium.executablePath(),
-			headless: chromium.headless,
-			ignoreHTTPSErrors: true,
+		// Use got-scraping to mimic a real browser request (TLS, headers, etc)
+		const response = await gotScraping({
+			url,
+			headerGeneratorOptions: {
+				browsers: [{ name: 'chrome', minVersion: 120 }],
+				devices: ['desktop'],
+				locales: ['en-US', 'en'],
+				operatingSystems: ['windows', 'macos'],
+			}
 		});
 
-		const page = await browser.newPage();
-
-		// mimic real browser to bypass generic bot detection
-		await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
-
-		console.log('Navigating to page...');
-		// Wait until network is idle (no connections for 500ms) - good for SPAs and Cloudflare redirection
-		await page.goto(url, { waitUntil: 'networkidle0', timeout: 25000 });
-
-		// Extra safety check: fail if title indicates we are still challenged
-		const title = await page.title();
-		console.log(`Page title: ${title}`);
-
-		if (title.includes('Just a moment') || title.includes('Cloudflare')) {
-			// Wait a bit more if we are stuck on challenge page
-			console.log('Detected Cloudflare challenge, waiting more...');
-			await new Promise(r => setTimeout(r, 5000));
+		console.log(`Fetched status: ${response.statusCode}`);
+		if (response.statusCode !== 200) {
+			console.warn(`Non-200 status: ${response.statusCode}, Body preview: ${response.body.substring(0, 500)}`);
 		}
 
-		const content = await page.content();
-		console.log('Content retrieved, length:', content.length);
-
-		console.log('Parsing with Mercury...');
-		const result = await Mercury.parse(url, { html: content });
+		console.log('Parsing content with Mercury...');
+		// Pass the HTML directly to Mercury
+		const result = await Mercury.parse(url, { html: response.body });
 
 		return {
 			statusCode: 200,
@@ -85,7 +66,7 @@ exports.handler = async (event) => {
 		};
 
 	} catch (error) {
-		console.error('Puppeteer/Parse error:', error);
+		console.error('Parse error:', error);
 		return {
 			statusCode: 500,
 			headers: { 'Access-Control-Allow-Origin': '*' },
@@ -95,9 +76,5 @@ exports.handler = async (event) => {
 				stack: error.stack
 			}),
 		};
-	} finally {
-		if (browser !== null) {
-			await browser.close();
-		}
 	}
 };
