@@ -1,4 +1,4 @@
-const Mercury = require('../lib/mercury');
+const Mercury = require('../../lib/mercury');
 
 exports.handler = async (event) => {
 	// Handle CORS preflight
