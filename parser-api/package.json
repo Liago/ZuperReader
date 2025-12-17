@@ -26,7 +26,7 @@
     "valid-url": "^1.0.9",
     "wuzzy": "^0.1.4",
     "yargs-parser": "^15.0.1",
-    "puppeteer-core": "^21.0.0",
-    "@sparticuz/chromium": "^119.0.0"
+    "puppeteer-core": "^22.0.0",
+    "@sparticuz/chromium": "^123.0.0"
   }
 }
