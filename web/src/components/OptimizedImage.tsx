@@ -79,14 +79,17 @@ export default function OptimizedImage({
 		return `${url} 1x`;
 	};
 
+	// Build container and image styles conditionally
+	const containerStyle = width || height ? {
+		width: width ? `${width}px` : undefined,
+		height: height ? `${height}px` : undefined,
+	} : undefined;
+
 	return (
 		<div
 			ref={containerRef}
 			className={`relative overflow-hidden ${className}`}
-			style={{
-				width: width ? `${width}px` : '100%',
-				height: height ? `${height}px` : 'auto',
-			}}
+			style={containerStyle}
 		>
 			{/* Blur placeholder */}
 			{!isLoaded && !hasError && (
@@ -126,10 +129,6 @@ export default function OptimizedImage({
 					className={`w-full h-full object-cover transition-opacity duration-300 ${
 						isLoaded ? 'opacity-100' : 'opacity-0'
 					}`}
-					style={{
-						width: width ? `${width}px` : '100%',
-						height: height ? `${height}px` : 'auto',
-					}}
 				/>
 			)}
 
