@@ -1,6 +1,6 @@
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
-const Mercury = require('../../lib/mercury');
+const Mercury = require('@postlight/mercury-parser');
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',

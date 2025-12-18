@@ -12,6 +12,8 @@
   "type": "commonjs",
   "dependencies": {
     "@babel/runtime-corejs2": "^7.2.0",
+    "@postlight/mercury-parser": "^2.2.1",
+    "@sparticuz/chromium": "^119.0.0",
     "cheerio": "^0.22.0",
     "difflib": "github:postlight/difflib.js",
     "ellipsize": "0.1.0",
@@ -21,12 +23,11 @@
     "moment-parseformat": "3.0.0",
     "moment-timezone": "0.5.37",
     "postman-request": "^2.88.1-postman.31",
+    "puppeteer-core": "^21.0.0",
     "string-direction": "^0.1.2",
     "turndown": "^7.1.1",
     "valid-url": "^1.0.9",
     "wuzzy": "^0.1.4",
-    "yargs-parser": "^15.0.1",
-    "puppeteer-core": "^21.0.0",
-    "@sparticuz/chromium": "^119.0.0"
+    "yargs-parser": "^15.0.1"
   }
 }
