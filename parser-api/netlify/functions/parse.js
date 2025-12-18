@@ -1,11 +1,62 @@
 const Mercury = require('@postlight/mercury-parser');
 const he = require('he');
+const iconv = require('iconv-lite');
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Headers': 'Content-Type',
 	'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
+
+/**
+ * Detect encoding from HTTP headers or HTML meta tags
+ */
+function detectEncoding(buffer, contentTypeHeader) {
+	// First, try to get encoding from Content-Type header
+	if (contentTypeHeader) {
+		const charsetMatch = contentTypeHeader.match(/charset=([^;]+)/i);
+		if (charsetMatch) {
+			const charset = charsetMatch[1].trim().replace(/['"]/g, '');
+			if (iconv.encodingExists(charset)) {
+				return charset;
+			}
+		}
+	}
+
+	// If not found in headers, check HTML meta tags
+	// Convert first 2KB to ASCII to search for charset declaration
+	const htmlStart = buffer.slice(0, 2048).toString('ascii');
+
+	// Check for HTML5 meta charset
+	const html5Match = htmlStart.match(/<meta\s+charset=["']?([^"'\s>]+)/i);
+	if (html5Match) {
+		const charset = html5Match[1];
+		if (iconv.encodingExists(charset)) {
+			return charset;
+		}
+	}
+
+	// Check for older meta http-equiv
+	const httpEquivMatch = htmlStart.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?[^"'>]*charset=([^"'\s>]+)/i);
+	if (httpEquivMatch) {
+		const charset = httpEquivMatch[1];
+		if (iconv.encodingExists(charset)) {
+			return charset;
+		}
+	}
+
+	// Check for content-type meta tag
+	const contentMatch = htmlStart.match(/<meta\s+content=["']?[^"'>]*charset=([^"'\s>]+)/i);
+	if (contentMatch) {
+		const charset = contentMatch[1];
+		if (iconv.encodingExists(charset)) {
+			return charset;
+		}
+	}
+
+	// Default to UTF-8
+	return 'utf-8';
+}
 
 exports.handler = async (event) => {
 	// Handle CORS preflight
@@ -46,6 +97,7 @@ exports.handler = async (event) => {
 
 		const response = await gotScraping({
 			url,
+			responseType: 'buffer', // Fetch as buffer to properly handle encoding
 			headerGeneratorOptions: {
 				browsers: [
 					{
@@ -63,7 +115,13 @@ exports.handler = async (event) => {
 			},
 		});
 
-		const content = response.body;
+		// Detect the correct encoding
+		const contentTypeHeader = response.headers['content-type'];
+		const detectedEncoding = detectEncoding(response.body, contentTypeHeader);
+		console.log(`Detected encoding: ${detectedEncoding}`);
+
+		// Convert to UTF-8 string
+		const content = iconv.decode(response.body, detectedEncoding);
 		console.log('Content retrieved, length:', content.length);
 
 		console.log('Parsing with Mercury...');
