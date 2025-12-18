@@ -17,6 +17,7 @@
     "difflib": "github:postlight/difflib.js",
     "ellipsize": "0.1.0",
     "got-scraping": "^4.1.2",
+    "he": "^1.2.0",
     "iconv-lite": "0.5.0",
     "jquery": "^3.5.0",
     "moment": "^2.23.0",
