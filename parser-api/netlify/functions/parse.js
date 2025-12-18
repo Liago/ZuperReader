@@ -45,8 +45,6 @@ exports.handler = async (event) => {
 
 		const response = await gotScraping({
 			url,
-			responseType: 'text',
-			encoding: 'utf-8',
 			headerGeneratorOptions: {
 				browsers: [
 					{
