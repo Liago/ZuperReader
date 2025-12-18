@@ -85,13 +85,33 @@ exports.handler = async (event) => {
 		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
 		// Extra safety check: fail if title indicates we are still challenged
-		const title = await page.title();
-		console.log(`Page title: ${title}`);
+		const isCloudflare = async () => {
+			const t = await page.title();
+			const c = await page.content();
+			return t.includes('Just a moment') ||
+				t.includes('Cloudflare') ||
+				c.includes('Verifying you are human') ||
+				c.includes('genesys.com') ||
+				c.includes('needs to review the security');
+		};
 
-		if (title.includes('Just a moment') || title.includes('Cloudflare')) {
-			// Wait a bit more if we are stuck on challenge page
-			console.log('Detected Cloudflare challenge, waiting more...');
-			await new Promise(r => setTimeout(r, 5000));
+		let retries = 0;
+		const MAX_RETRIES = 5;
+
+		if (await isCloudflare()) {
+			console.log('Detected Cloudflare challenge initially, entering wait loop...');
+
+			while ((await isCloudflare()) && retries < MAX_RETRIES) {
+				console.log(`Still seeing Cloudflare challenge (attempt ${retries + 1}/${MAX_RETRIES}), waiting 4s...`);
+				await new Promise(r => setTimeout(r, 4000));
+				retries++;
+			}
+
+			if (await isCloudflare()) {
+				console.log('Exceeded max retries, challenge still present. Attempting to parse anyway...');
+			} else {
+				console.log('Cloudflare challenge appears to have cleared.');
+			}
 		}
 
 		const content = await page.content();
