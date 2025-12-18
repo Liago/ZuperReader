@@ -1,4 +1,5 @@
 const Mercury = require('@postlight/mercury-parser');
+const he = require('he');
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
@@ -67,6 +68,14 @@ exports.handler = async (event) => {
 
 		console.log('Parsing with Mercury...');
 		const result = await Mercury.parse(url, { html: content });
+
+		// Decode HTML entities in all text fields
+		if (result) {
+			if (result.title) result.title = he.decode(result.title);
+			if (result.content) result.content = he.decode(result.content);
+			if (result.excerpt) result.excerpt = he.decode(result.excerpt);
+			if (result.author) result.author = he.decode(result.author);
+		}
 
 		return {
 			statusCode: 200,
