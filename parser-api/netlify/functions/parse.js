@@ -52,12 +52,21 @@ exports.handler = async (event) => {
 
 		const page = await browser.newPage();
 
+		await page.setRequestInterception(true);
+		page.on('request', (req) => {
+			if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
+				req.abort();
+			} else {
+				req.continue();
+			}
+		});
+
 		// mimic real browser to bypass generic bot detection
 		await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
 
 		console.log('Navigating to page...');
-		// Wait until network is idle (no connections for 500ms) - good for SPAs and Cloudflare redirection
-		await page.goto(url, { waitUntil: 'networkidle0', timeout: 25000 });
+		// Optimize: Wait for DOM ready instead of network idle to speed up processing
+		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
 
 		// Extra safety check: fail if title indicates we are still challenged
 		const title = await page.title();
