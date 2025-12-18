@@ -1,6 +1,9 @@
 const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const Mercury = require('@postlight/mercury-parser');
+
+puppeteer.use(StealthPlugin());
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
@@ -46,6 +49,7 @@ exports.handler = async (event) => {
 		// Setup Chromium for Lambda
 		// Wrap launch in try/catch to catch startup errors specifically
 		try {
+			// puppeteer-extra wraps the vanilla puppeteer, so we pass the executablePath and args as usual
 			browser = await puppeteer.launch({
 				args: chromium.args,
 				defaultViewport: chromium.defaultViewport,

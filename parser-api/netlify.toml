@@ -6,4 +6,4 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@sparticuz/chromium", "@postlight/mercury-parser"]
+  external_node_modules = ["@sparticuz/chromium", "@postlight/mercury-parser", "puppeteer-extra", "puppeteer-extra-plugin-stealth"]

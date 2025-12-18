@@ -24,6 +24,8 @@
     "moment-timezone": "0.5.37",
     "postman-request": "^2.88.1-postman.31",
     "puppeteer-core": "^21.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "string-direction": "^0.1.2",
     "turndown": "^7.1.1",
     "valid-url": "^1.0.9",
