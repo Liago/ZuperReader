@@ -2,16 +2,18 @@ const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 const Mercury = require('../../lib/mercury');
 
+const CORS_HEADERS = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Headers': 'Content-Type',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
 	// Handle CORS preflight
 	if (event.httpMethod === 'OPTIONS') {
 		return {
 			statusCode: 200,
-			headers: {
-				'Access-Control-Allow-Origin': '*',
-				'Access-Control-Allow-Headers': 'Content-Type',
-				'Access-Control-Allow-Methods': 'POST, OPTIONS',
-			},
+			headers: CORS_HEADERS,
 			body: '',
 		};
 	}
@@ -19,7 +21,7 @@ exports.handler = async (event) => {
 	if (event.httpMethod !== 'POST') {
 		return {
 			statusCode: 405,
-			headers: { 'Access-Control-Allow-Origin': '*' },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ error: 'Method not allowed' }),
 		};
 	}
@@ -34,7 +36,7 @@ exports.handler = async (event) => {
 		if (!url) {
 			return {
 				statusCode: 400,
-				headers: { 'Access-Control-Allow-Origin': '*' },
+				headers: CORS_HEADERS,
 				body: JSON.stringify({ error: 'URL is required' }),
 			};
 		}
@@ -42,13 +44,26 @@ exports.handler = async (event) => {
 		console.log(`Launching browser for URL: ${url}`);
 
 		// Setup Chromium for Lambda
-		browser = await puppeteer.launch({
-			args: chromium.args,
-			defaultViewport: chromium.defaultViewport,
-			executablePath: await chromium.executablePath(),
-			headless: chromium.headless,
-			ignoreHTTPSErrors: true,
-		});
+		// Wrap launch in try/catch to catch startup errors specifically
+		try {
+			browser = await puppeteer.launch({
+				args: chromium.args,
+				defaultViewport: chromium.defaultViewport,
+				executablePath: await chromium.executablePath(),
+				headless: chromium.headless,
+				ignoreHTTPSErrors: true,
+			});
+		} catch (launchError) {
+			console.error('Failed to launch browser:', launchError);
+			return {
+				statusCode: 500,
+				headers: CORS_HEADERS,
+				body: JSON.stringify({
+					error: 'Failed to launch browser',
+					details: launchError.message
+				}),
+			};
+		}
 
 		const page = await browser.newPage();
 
@@ -66,7 +81,8 @@ exports.handler = async (event) => {
 
 		console.log('Navigating to page...');
 		// Optimize: Wait for DOM ready instead of network idle to speed up processing
-		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
+		// Increased timeout to 30s to be safe
+		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
 		// Extra safety check: fail if title indicates we are still challenged
 		const title = await page.title();
@@ -87,8 +103,8 @@ exports.handler = async (event) => {
 		return {
 			statusCode: 200,
 			headers: {
+				...CORS_HEADERS,
 				'Content-Type': 'application/json',
-				'Access-Control-Allow-Origin': '*',
 			},
 			body: JSON.stringify(result),
 		};
@@ -97,7 +113,7 @@ exports.handler = async (event) => {
 		console.error('Puppeteer/Parse error:', error);
 		return {
 			statusCode: 500,
-			headers: { 'Access-Control-Allow-Origin': '*' },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({
 				error: 'Failed to process URL',
 				details: error.message,
@@ -106,7 +122,11 @@ exports.handler = async (event) => {
 		};
 	} finally {
 		if (browser !== null) {
-			await browser.close();
+			try {
+				await browser.close();
+			} catch (closeError) {
+				console.error('Error closing browser:', closeError);
+			}
 		}
 	}
 };
