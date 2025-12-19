@@ -231,9 +231,13 @@ exports.handler = async (event) => {
 		// Load got-scraping dynamically (ESM module)
 		const { gotScraping } = await import('got-scraping');
 
+		// For unaparolaalgiorno.it, let got-scraping handle encoding automatically
+		// to avoid encoding corruption issues
+		const isUnaparola = url.includes('unaparolaalgiorno.it');
+
 		const response = await gotScraping({
 			url,
-			responseType: 'buffer', // Fetch as buffer to properly handle encoding
+			responseType: isUnaparola ? 'text' : 'buffer',
 			headerGeneratorOptions: {
 				browsers: [
 					{
@@ -251,52 +255,53 @@ exports.handler = async (event) => {
 			},
 		});
 
-		// Detect the correct encoding
-		const contentTypeHeader = response.headers['content-type'];
-		let detectedEncoding = detectEncoding(response.body, contentTypeHeader);
+		let content;
 
-		// Force UTF-8 for unaparolaalgiorno.it as it declares charset=utf-8
-		if (url.includes('unaparolaalgiorno.it')) {
-			console.log('Forcing UTF-8 for unaparolaalgiorno.it');
-			detectedEncoding = 'utf-8';
-		}
+		if (isUnaparola) {
+			// For unaparolaalgiorno.it, response.body is already a properly decoded string
+			console.log('Using automatic encoding detection from got-scraping');
+			content = response.body;
+		} else {
+			// For other sites, use manual encoding detection
+			const contentTypeHeader = response.headers['content-type'];
+			let detectedEncoding = detectEncoding(response.body, contentTypeHeader);
+			console.log(`Using encoding: ${detectedEncoding}`);
 
-		console.log(`Using encoding: ${detectedEncoding}`);
+			// Convert to UTF-8 string
+			content = iconv.decode(response.body, detectedEncoding);
 
-		// Convert to UTF-8 string
-		let content = iconv.decode(response.body, detectedEncoding);
+			// Check if the decoded content contains replacement characters (�)
+			// This indicates encoding issues
+			const replacementCharCount = (content.match(/\uFFFD/g) || []).length;
+			if (replacementCharCount > 0) {
+				console.log(`Warning: Found ${replacementCharCount} replacement characters (�) in decoded content`);
 
-		// Check if the decoded content contains replacement characters (�)
-		// This indicates encoding issues
-		const replacementCharCount = (content.match(/\uFFFD/g) || []).length;
-		if (replacementCharCount > 0) {
-			console.log(`Warning: Found ${replacementCharCount} replacement characters (�) in decoded content`);
+				// Try alternative encodings commonly used for European languages
+				const alternativeEncodings = ['windows-1252', 'iso-8859-1', 'utf-8'];
+				let bestContent = content;
+				let minReplacements = replacementCharCount;
 
-			// Try alternative encodings commonly used for European languages
-			const alternativeEncodings = ['windows-1252', 'iso-8859-1', 'utf-8'];
-			let bestContent = content;
-			let minReplacements = replacementCharCount;
+				for (const altEncoding of alternativeEncodings) {
+					if (altEncoding.toLowerCase() === detectedEncoding.toLowerCase()) continue;
 
-			for (const altEncoding of alternativeEncodings) {
-				if (altEncoding.toLowerCase() === detectedEncoding.toLowerCase()) continue;
+					try {
+						const altContent = iconv.decode(response.body, altEncoding);
+						const altReplacements = (altContent.match(/\uFFFD/g) || []).length;
 
-				try {
-					const altContent = iconv.decode(response.body, altEncoding);
-					const altReplacements = (altContent.match(/\uFFFD/g) || []).length;
+						console.log(`Trying ${altEncoding}: ${altReplacements} replacement characters`);
 
-					console.log(`Trying ${altEncoding}: ${altReplacements} replacement characters`);
-
-					if (altReplacements < minReplacements) {
-						minReplacements = altReplacements;
-						bestContent = altContent;
-						console.log(`Using ${altEncoding} instead (fewer replacement characters)`);
+						if (altReplacements < minReplacements) {
+							minReplacements = altReplacements;
+							bestContent = altContent;
+							console.log(`Using ${altEncoding} instead (fewer replacement characters)`);
+						}
+					} catch (err) {
+						console.log(`Failed to decode with ${altEncoding}:`, err.message);
 					}
-				} catch (err) {
-					console.log(`Failed to decode with ${altEncoding}:`, err.message);
 				}
-			}
 
-			content = bestContent;
+				content = bestContent;
+			}
 		}
 
 		console.log('Content retrieved, length:', content.length);
