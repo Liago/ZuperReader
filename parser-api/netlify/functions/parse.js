@@ -3,6 +3,62 @@ const he = require('he');
 const iconv = require('iconv-lite');
 const jschardet = require('jschardet');
 
+// Custom extractor for unaparolaalgiorno.it
+const unaparolaalgiornoltExtractor = {
+	domain: 'unaparolaalgiorno.it',
+	title: {
+		selectors: [
+			'article.word h1',
+			'h1',
+			['meta[property="og:title"]', 'value'],
+		],
+	},
+	author: {
+		selectors: [
+			['meta[name="author"]', 'value'],
+		],
+	},
+	date_published: {
+		selectors: [
+			['meta[property="article:published_time"]', 'value'],
+			'.word-datapub',
+		],
+	},
+	lead_image_url: {
+		selectors: [
+			['meta[property="og:image"]', 'value'],
+		],
+	},
+	content: {
+		selectors: [
+			'article.word .content',
+			'.word .content',
+			'article.word',
+		],
+		clean: [
+			'.social-share-container',
+			'.social-share',
+			'#quiz-section-container',
+			'#daily-quiz-section',
+			'script',
+			'style',
+			'.newsletter-box',
+			'#comments-container',
+			'#next-section-container',
+		],
+	},
+	excerpt: {
+		selectors: [
+			['meta[name="description"]', 'value'],
+			['meta[property="og:description"]', 'value'],
+			'.word-significato',
+		],
+	},
+};
+
+// Add custom extractor to Mercury Parser
+Mercury.addExtractor(unaparolaalgiornoltExtractor);
+
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Headers': 'Content-Type',
