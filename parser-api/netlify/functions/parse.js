@@ -293,10 +293,15 @@ exports.handler = async (event) => {
 
 		console.log('Content retrieved, length:', content.length);
 
+		// Decode HTML entities BEFORE parsing with Mercury
+		// This ensures special characters like ŏ (o with breve) are properly decoded
+		console.log('Decoding HTML entities in source...');
+		content = he.decode(content);
+
 		console.log('Parsing with Mercury...');
 		const result = await Mercury.parse(url, { html: content });
 
-		// Decode HTML entities in all text fields
+		// Double-decode to catch any entities that Mercury might have escaped
 		if (result) {
 			if (result.title) result.title = he.decode(result.title);
 			if (result.content) result.content = he.decode(result.content);
