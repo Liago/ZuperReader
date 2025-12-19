@@ -31,9 +31,8 @@ const unaparolaalgiornoltExtractor = {
 	},
 	content: {
 		selectors: [
+			// Use only the most specific selector
 			'article.word .content',
-			'.word .content',
-			'article.word',
 		],
 		clean: [
 			'.social-share-container',
@@ -46,6 +45,8 @@ const unaparolaalgiornoltExtractor = {
 			'#comments-container',
 			'#next-section-container',
 		],
+		// Don't clean too aggressively - keep all text content
+		defaultCleaner: false,
 	},
 	excerpt: {
 		selectors: [
@@ -252,8 +253,15 @@ exports.handler = async (event) => {
 
 		// Detect the correct encoding
 		const contentTypeHeader = response.headers['content-type'];
-		const detectedEncoding = detectEncoding(response.body, contentTypeHeader);
-		console.log(`Detected encoding: ${detectedEncoding}`);
+		let detectedEncoding = detectEncoding(response.body, contentTypeHeader);
+
+		// Force UTF-8 for unaparolaalgiorno.it as it declares charset=utf-8
+		if (url.includes('unaparolaalgiorno.it')) {
+			console.log('Forcing UTF-8 for unaparolaalgiorno.it');
+			detectedEncoding = 'utf-8';
+		}
+
+		console.log(`Using encoding: ${detectedEncoding}`);
 
 		// Convert to UTF-8 string
 		let content = iconv.decode(response.body, detectedEncoding);
@@ -293,15 +301,10 @@ exports.handler = async (event) => {
 
 		console.log('Content retrieved, length:', content.length);
 
-		// Decode HTML entities BEFORE parsing with Mercury
-		// This ensures special characters like ŏ (o with breve) are properly decoded
-		console.log('Decoding HTML entities in source...');
-		content = he.decode(content);
-
 		console.log('Parsing with Mercury...');
 		const result = await Mercury.parse(url, { html: content });
 
-		// Double-decode to catch any entities that Mercury might have escaped
+		// Decode HTML entities in all text fields after Mercury parsing
 		if (result) {
 			if (result.title) result.title = he.decode(result.title);
 			if (result.content) result.content = he.decode(result.content);
