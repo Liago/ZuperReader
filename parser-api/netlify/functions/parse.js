@@ -1,8 +1,5 @@
 const Mercury = require('@postlight/mercury-parser');
 const he = require('he');
-const iconv = require('iconv-lite');
-const jschardet = require('jschardet');
-
 // Custom extractor for unaparolaalgiorno.it
 const unaparolaalgiornoltExtractor = {
 	domain: 'unaparolaalgiorno.it',
@@ -83,134 +80,6 @@ function repairMojibake(text) {
 	}
 }
 
-/**
- * Detect encoding from HTTP headers, HTML meta tags, and content analysis
- */
-function detectEncoding(buffer, contentTypeHeader) {
-	let declaredEncoding = null;
-
-	// First, try to get encoding from Content-Type header
-	if (contentTypeHeader) {
-		const charsetMatch = contentTypeHeader.match(/charset=([^;]+)/i);
-		if (charsetMatch) {
-			const charset = charsetMatch[1].trim().replace(/['"]/g, '');
-			if (iconv.encodingExists(charset)) {
-				declaredEncoding = charset;
-			}
-		}
-	}
-
-	// If not found in headers, check HTML meta tags
-	// Convert first 2KB to ASCII to search for charset declaration
-	if (!declaredEncoding) {
-		const htmlStart = buffer.slice(0, 2048).toString('ascii');
-
-		// Check for HTML5 meta charset
-		const html5Match = htmlStart.match(/<meta\s+charset=["']?([^"'\s>]+)/i);
-		if (html5Match) {
-			const charset = html5Match[1];
-			if (iconv.encodingExists(charset)) {
-				declaredEncoding = charset;
-			}
-		}
-
-		// Check for older meta http-equiv
-		if (!declaredEncoding) {
-			const httpEquivMatch = htmlStart.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?[^"'>]*charset=([^"'\s>]+)/i);
-			if (httpEquivMatch) {
-				const charset = httpEquivMatch[1];
-				if (iconv.encodingExists(charset)) {
-					declaredEncoding = charset;
-				}
-			}
-		}
-
-		// Check for content-type meta tag
-		if (!declaredEncoding) {
-			const contentMatch = htmlStart.match(/<meta\s+content=["']?[^"'>]*charset=([^"'\s>]+)/i);
-			if (contentMatch) {
-				const charset = contentMatch[1];
-				if (iconv.encodingExists(charset)) {
-					declaredEncoding = charset;
-				}
-			}
-		}
-	}
-
-	// Use content-based detection with jschardet as additional validation
-	const detected = jschardet.detect(buffer);
-	console.log(`Charset detection - Declared: ${declaredEncoding}, Detected: ${detected.encoding} (confidence: ${detected.confidence})`);
-
-	// If we have a declared encoding and high confidence detection, compare them
-	if (declaredEncoding && detected.encoding) {
-		const normalizedDeclared = declaredEncoding.toLowerCase().replace(/[-_]/g, '');
-		const normalizedDetected = detected.encoding.toLowerCase().replace(/[-_]/g, '');
-
-		// If they match, use declared encoding
-		if (normalizedDeclared === normalizedDetected) {
-			console.log(`Using declared encoding: ${declaredEncoding}`);
-			return declaredEncoding;
-		}
-
-		// If detection has high confidence (>0.8), prefer detected encoding
-		if (detected.confidence > 0.8) {
-			const detectedEncoding = mapCharsetName(detected.encoding);
-			if (iconv.encodingExists(detectedEncoding)) {
-				console.log(`Using detected encoding with high confidence: ${detectedEncoding}`);
-				return detectedEncoding;
-			}
-		}
-
-		// Otherwise, use declared encoding
-		console.log(`Using declared encoding (low detection confidence): ${declaredEncoding}`);
-		return declaredEncoding;
-	}
-
-	// If only detected encoding is available
-	if (detected.encoding && detected.confidence > 0.7) {
-		const detectedEncoding = mapCharsetName(detected.encoding);
-		if (iconv.encodingExists(detectedEncoding)) {
-			console.log(`Using detected encoding: ${detectedEncoding}`);
-			return detectedEncoding;
-		}
-	}
-
-	// If only declared encoding is available
-	if (declaredEncoding) {
-		console.log(`Using declared encoding (no detection): ${declaredEncoding}`);
-		return declaredEncoding;
-	}
-
-	// Default to UTF-8
-	console.log('Defaulting to UTF-8');
-	return 'utf-8';
-}
-
-/**
- * Map charset names from jschardet to iconv-lite compatible names
- */
-function mapCharsetName(charset) {
-	if (!charset) return 'utf-8';
-
-	const normalizedCharset = charset.toLowerCase();
-	const charsetMap = {
-		'iso-8859-1': 'latin1',
-		'iso-8859-2': 'latin2',
-		'windows-1252': 'win1252',
-		'windows-1251': 'win1251',
-		'gb2312': 'gb2312',
-		'gbk': 'gbk',
-		'big5': 'big5',
-		'shift_jis': 'shift_jis',
-		'euc-jp': 'eucjp',
-		'euc-kr': 'euckr',
-		'utf-8': 'utf8',
-		'ascii': 'ascii',
-	};
-
-	return charsetMap[normalizedCharset] || charset;
-}
-
 exports.handler = async (event) => {
 	// Handle CORS preflight
 	if (event.httpMethod === 'OPTIONS') {
@@ -248,9 +117,10 @@ exports.handler = async (event) => {
 		// Load got-scraping dynamically (ESM module)
 		const { gotScraping } = await import('got-scraping');
 
+		// Use got-scraping with default settings (auto-decodes based on headers/content)
 		const response = await gotScraping({
 			url,
-			responseType: 'buffer', // Always use buffer for manual encoding control
+			// responseType: 'text' is the default, which handles encoding automatically
 			headerGeneratorOptions: {
 				browsers: [
 					{
@@ -268,55 +138,10 @@ exports.handler = async (event) => {
 			},
 		});
 
-		let content;
+		const content = response.body;
 
-		// For unaparolaalgiorno.it, force UTF-8 without any detection
-		if (url.includes('unaparolaalgiorno.it')) {
-			console.log('Forcing UTF-8 for unaparolaalgiorno.it');
-			content = response.body.toString('utf-8');
-		} else {
-			// For other sites, use manual encoding detection
-			const contentTypeHeader = response.headers['content-type'];
-			let detectedEncoding = detectEncoding(response.body, contentTypeHeader);
-			console.log(`Using encoding: ${detectedEncoding}`);
-
-			// Convert to UTF-8 string
-			content = iconv.decode(response.body, detectedEncoding);
-
-			// Check if the decoded content contains replacement characters (�)
-			// This indicates encoding issues
-			const replacementCharCount = (content.match(/\uFFFD/g) || []).length;
-			if (replacementCharCount > 0) {
-				console.log(`Warning: Found ${replacementCharCount} replacement characters (�) in decoded content`);
-
-				// Try alternative encodings commonly used for European languages
-				const alternativeEncodings = ['windows-1252', 'iso-8859-1', 'utf-8'];
-				let bestContent = content;
-				let minReplacements = replacementCharCount;
-
-				for (const altEncoding of alternativeEncodings) {
-					if (altEncoding.toLowerCase() === detectedEncoding.toLowerCase()) continue;
-
-					try {
-						const altContent = iconv.decode(response.body, altEncoding);
-						const altReplacements = (altContent.match(/\uFFFD/g) || []).length;
-
-						console.log(`Trying ${altEncoding}: ${altReplacements} replacement characters`);
-
-						if (altReplacements < minReplacements) {
-							minReplacements = altReplacements;
-							bestContent = altContent;
-							console.log(`Using ${altEncoding} instead (fewer replacement characters)`);
-						}
-					} catch (err) {
-						console.log(`Failed to decode with ${altEncoding}:`, err.message);
-					}
-				}
-
-				content = bestContent;
-			}
-		}
-
+		// Log encoding information for debugging
+		console.log(`Content Type: ${response.headers['content-type']}`);
 		console.log('Content retrieved, length:', content.length);
 
 		console.log('Parsing with Mercury...');
