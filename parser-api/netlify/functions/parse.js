@@ -67,6 +67,23 @@ const CORS_HEADERS = {
 };
 
 /**
+ * Repair mojibake - fix text where UTF-8 bytes were incorrectly decoded as ISO-8859-1
+ */
+function repairMojibake(text) {
+	if (!text) return text;
+
+	try {
+		// Convert the string to bytes as if it were ISO-8859-1
+		const bytes = Buffer.from(text, 'latin1');
+		// Then decode those bytes as UTF-8
+		return bytes.toString('utf-8');
+	} catch (e) {
+		// If repair fails, return original
+		return text;
+	}
+}
+
+/**
  * Detect encoding from HTTP headers, HTML meta tags, and content analysis
  */
 function detectEncoding(buffer, contentTypeHeader) {
@@ -311,6 +328,15 @@ exports.handler = async (event) => {
 			if (result.content) result.content = he.decode(result.content);
 			if (result.excerpt) result.excerpt = he.decode(result.excerpt);
 			if (result.author) result.author = he.decode(result.author);
+		}
+
+		// For unaparolaalgiorno.it, repair mojibake (UTF-8 decoded as ISO-8859-1)
+		if (url.includes('unaparolaalgiorno.it') && result) {
+			console.log('Repairing mojibake for unaparolaalgiorno.it');
+			if (result.title) result.title = repairMojibake(result.title);
+			if (result.content) result.content = repairMojibake(result.content);
+			if (result.excerpt) result.excerpt = repairMojibake(result.excerpt);
+			if (result.author) result.author = repairMojibake(result.author);
 		}
 
 		return {
