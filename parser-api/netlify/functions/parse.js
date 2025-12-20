@@ -231,13 +231,9 @@ exports.handler = async (event) => {
 		// Load got-scraping dynamically (ESM module)
 		const { gotScraping } = await import('got-scraping');
 
-		// For unaparolaalgiorno.it, let got-scraping handle encoding automatically
-		// to avoid encoding corruption issues
-		const isUnaparola = url.includes('unaparolaalgiorno.it');
-
 		const response = await gotScraping({
 			url,
-			responseType: isUnaparola ? 'text' : 'buffer',
+			responseType: 'buffer', // Always use buffer for manual encoding control
 			headerGeneratorOptions: {
 				browsers: [
 					{
@@ -257,10 +253,10 @@ exports.handler = async (event) => {
 
 		let content;
 
-		if (isUnaparola) {
-			// For unaparolaalgiorno.it, response.body is already a properly decoded string
-			console.log('Using automatic encoding detection from got-scraping');
-			content = response.body;
+		// For unaparolaalgiorno.it, force UTF-8 without any detection
+		if (url.includes('unaparolaalgiorno.it')) {
+			console.log('Forcing UTF-8 for unaparolaalgiorno.it');
+			content = response.body.toString('utf-8');
 		} else {
 			// For other sites, use manual encoding detection
 			const contentTypeHeader = response.headers['content-type'];
