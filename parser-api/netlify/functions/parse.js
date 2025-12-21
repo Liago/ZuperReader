@@ -150,6 +150,7 @@ exports.handler = async (event) => {
 			contentType: response.headers['content-type']
 		});
 
+
 		// Decode HTML entities in all text fields after Mercury parsing
 		if (result) {
 			if (result.title) result.title = he.decode(result.title);
@@ -158,14 +159,7 @@ exports.handler = async (event) => {
 			if (result.author) result.author = he.decode(result.author);
 		}
 
-		// For unaparolaalgiorno.it, repair mojibake (UTF-8 decoded as ISO-8859-1)
-		if (url.includes('unaparolaalgiorno.it') && result) {
-			console.log('Repairing mojibake for unaparolaalgiorno.it');
-			if (result.title) result.title = repairMojibake(result.title);
-			if (result.content) result.content = repairMojibake(result.content);
-			if (result.excerpt) result.excerpt = repairMojibake(result.excerpt);
-			if (result.author) result.author = repairMojibake(result.author);
-		}
+
 
 		return {
 			statusCode: 200,
