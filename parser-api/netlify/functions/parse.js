@@ -120,7 +120,7 @@ exports.handler = async (event) => {
 		// Use got-scraping with default settings (auto-decodes based on headers/content)
 		const response = await gotScraping({
 			url,
-			// responseType: 'text' is the default, which handles encoding automatically
+			responseType: 'buffer',
 			headerGeneratorOptions: {
 				browsers: [
 					{
@@ -145,7 +145,10 @@ exports.handler = async (event) => {
 		console.log('Content retrieved, length:', content.length);
 
 		console.log('Parsing with Mercury...');
-		const result = await Mercury.parse(url, { html: content });
+		const result = await Mercury.parse(url, {
+			html: content,
+			contentType: response.headers['content-type']
+		});
 
 		// Decode HTML entities in all text fields after Mercury parsing
 		if (result) {
