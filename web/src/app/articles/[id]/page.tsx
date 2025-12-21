@@ -574,6 +574,17 @@ export default function ArticleReaderPage() {
 					<div className="flex items-center justify-between gap-4">
 						{/* Left side - Reading progress indicator and article title */}
 						<div className="flex items-center gap-3 flex-1 min-w-0">
+							{/* Back Button */}
+							<Link
+								href="/"
+								className="flex-shrink-0 p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+								title="Go back"
+							>
+								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+								</svg>
+							</Link>
+
 							{/* Reading Progress Indicator - Inline variant */}
 							<div className="flex-shrink-0">
 								<ReadingProgressIndicator
