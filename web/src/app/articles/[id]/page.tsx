@@ -35,7 +35,7 @@ export default function ArticleReaderPage() {
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [showStickyToolbar, setShowStickyToolbar] = useState(false);
 	const [hasRestoredPosition, setHasRestoredPosition] = useState(false);
-	const [imageGallery, setImageGallery] = useState<{ images: string[]; currentIndex: number } | null>(null);
+	const [imageGallery, setImageGallery] = useState<{ images: string[]; captions: string[]; currentIndex: number } | null>(null);
 	const articleContentRef = useRef<HTMLDivElement>(null);
 	const actionBarRef = useRef<HTMLDivElement>(null);
 	const saveProgressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -461,6 +461,18 @@ export default function ArticleReaderPage() {
 			if (target.tagName === 'IMG') {
 				const clickedImg = target as HTMLImageElement;
 				const allImages = Array.from(images).map(img => img.src);
+				const allCaptions = Array.from(images).map((img: HTMLImageElement) => {
+					// Try to get caption from alt, title, or figcaption
+					const alt = img.getAttribute('alt');
+					const title = img.getAttribute('title');
+
+					// Check if image is inside a figure with figcaption
+					const figure = img.closest('figure');
+					const figcaption = figure?.querySelector('figcaption')?.textContent;
+
+					// Return the first available caption (priority: figcaption > title > alt)
+					return figcaption || title || alt || '';
+				});
 				const clickedIndex = allImages.indexOf(clickedImg.src);
 
 				if (clickedIndex !== -1 && allImages.length > 0) {
@@ -468,6 +480,7 @@ export default function ArticleReaderPage() {
 					e.stopPropagation();
 					setImageGallery({
 						images: allImages,
+						captions: allCaptions,
 						currentIndex: clickedIndex
 					});
 				}
@@ -1208,6 +1221,7 @@ export default function ArticleReaderPage() {
 				imageGallery && (
 					<ImageGalleryModal
 						images={imageGallery.images}
+						captions={imageGallery.captions}
 						initialIndex={imageGallery.currentIndex}
 						onClose={() => setImageGallery(null)}
 					/>
