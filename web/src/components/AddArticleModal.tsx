@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { parseArticle, saveArticle } from '../lib/api';
 
 interface AddArticleModalProps {
@@ -15,6 +15,58 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	const [loading, setLoading] = useState(false);
 	const [parsingStep, setParsingStep] = useState<'idle' | 'parsing' | 'saving'>('idle');
 	const [error, setError] = useState('');
+	const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
+	const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
+
+	// Check clipboard when modal opens
+	useEffect(() => {
+		if (isOpen) {
+			checkClipboard();
+		} else {
+			setClipboardUrl(null);
+			setShowClipboardPrompt(false);
+		}
+	}, [isOpen]);
+
+	const checkClipboard = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			// Check if it's a URL
+			if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+				setClipboardUrl(text);
+				setShowClipboardPrompt(true);
+			}
+		} catch (err) {
+			// Permission denied or clipboard not available
+			console.log('Clipboard access denied:', err);
+		}
+	};
+
+	const handlePasteFromClipboard = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+				setUrl(text);
+				setShowClipboardPrompt(false);
+			} else {
+				setError('No valid URL found in clipboard');
+			}
+		} catch (err) {
+			setError('Unable to read from clipboard. Please allow clipboard access.');
+		}
+	};
+
+	const handleUseClipboardUrl = () => {
+		if (clipboardUrl) {
+			setUrl(clipboardUrl);
+			setShowClipboardPrompt(false);
+		}
+	};
+
+	const handleDismissClipboardPrompt = () => {
+		setShowClipboardPrompt(false);
+		setClipboardUrl(null);
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -86,8 +138,19 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 				{/* Content */}
 				<form onSubmit={handleSubmit} className="p-5">
 					<div className="relative">
-						<label htmlFor="article-url" className="block text-sm font-medium text-gray-700 mb-2">
-							Article URL
+						<label htmlFor="article-url" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+							<span>Article URL</span>
+							<button
+								type="button"
+								onClick={handlePasteFromClipboard}
+								disabled={loading}
+								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+								</svg>
+								Paste from Clipboard
+							</button>
 						</label>
 						<div className="relative">
 							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -118,6 +181,39 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 							)}
 						</div>
 					</div>
+
+					{/* Clipboard prompt */}
+					{showClipboardPrompt && clipboardUrl && (
+						<div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+							<div className="flex items-start gap-3">
+								<div className="flex-shrink-0 mt-0.5">
+									<svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+									</svg>
+								</div>
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-medium text-blue-900 mb-1">Link found in clipboard</p>
+									<p className="text-xs text-blue-700 break-all mb-3">{clipboardUrl}</p>
+									<div className="flex gap-2">
+										<button
+											type="button"
+											onClick={handleUseClipboardUrl}
+											className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+										>
+											Use this link
+										</button>
+										<button
+											type="button"
+											onClick={handleDismissClipboardPrompt}
+											className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition-colors"
+										>
+											Dismiss
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
 
 					{/* Loading progress indicator */}
 					{loading && (
