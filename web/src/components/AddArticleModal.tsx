@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { parseArticle, saveArticle } from '../lib/api';
 
 interface AddArticleModalProps {
@@ -17,6 +17,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	const [error, setError] = useState('');
 	const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
 	const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	// Check clipboard when modal opens
 	useEffect(() => {
@@ -35,10 +36,16 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 			if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
 				setClipboardUrl(text);
 				setShowClipboardPrompt(true);
+				// Don't focus input when clipboard URL is found - show prompt instead
+			} else {
+				// No URL in clipboard, focus the input field
+				setTimeout(() => inputRef.current?.focus(), 100);
 			}
 		} catch (err) {
 			// Permission denied or clipboard not available
 			console.log('Clipboard access denied:', err);
+			// Focus input field when clipboard is not available
+			setTimeout(() => inputRef.current?.focus(), 100);
 		}
 	};
 
@@ -66,6 +73,8 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	const handleDismissClipboardPrompt = () => {
 		setShowClipboardPrompt(false);
 		setClipboardUrl(null);
+		// Focus input field after dismissing clipboard prompt
+		setTimeout(() => inputRef.current?.focus(), 100);
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -159,6 +168,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 								</svg>
 							</div>
 							<input
+								ref={inputRef}
 								id="article-url"
 								type="url"
 								value={url}
