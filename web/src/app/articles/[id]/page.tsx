@@ -15,6 +15,7 @@ import InternalShareButton from '../../../components/InternalShareButton';
 import { TagList } from '../../../components/TagBadge';
 import TagManagementModal from '../../../components/TagManagementModal';
 import ReadingProgressIndicator from '../../../components/ReadingProgressIndicator';
+import ImageGalleryModal from '../../../components/ImageGalleryModal';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -32,6 +33,7 @@ export default function ArticleReaderPage() {
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [showStickyToolbar, setShowStickyToolbar] = useState(false);
 	const [hasRestoredPosition, setHasRestoredPosition] = useState(false);
+	const [imageGallery, setImageGallery] = useState<{ images: string[]; currentIndex: number } | null>(null);
 	const articleContentRef = useRef<HTMLDivElement>(null);
 	const actionBarRef = useRef<HTMLDivElement>(null);
 	const saveProgressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -404,12 +406,14 @@ export default function ArticleReaderPage() {
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, [article?.id, article?.reading_status]);
 
-	// Enhance images in article content with lazy loading
+	// Enhance images in article content with lazy loading and gallery click handler
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
 		if (!contentElement) return;
 
 		const images = contentElement.querySelectorAll('img');
+
+		// Lazy loading observer
 		const imageObserver = new IntersectionObserver(
 			(entries) => {
 				entries.forEach((entry) => {
@@ -444,11 +448,35 @@ export default function ArticleReaderPage() {
 			// Add loading attribute
 			img.setAttribute('loading', 'lazy');
 			img.setAttribute('decoding', 'async');
+			// Add cursor pointer to indicate clickability
+			img.style.cursor = 'pointer';
 			imageObserver.observe(img);
 		});
 
+		// Click handler for opening image gallery
+		const handleImageClick = (e: MouseEvent) => {
+			const target = e.target as HTMLElement;
+			if (target.tagName === 'IMG') {
+				const clickedImg = target as HTMLImageElement;
+				const allImages = Array.from(images).map(img => img.src);
+				const clickedIndex = allImages.indexOf(clickedImg.src);
+
+				if (clickedIndex !== -1 && allImages.length > 0) {
+					e.preventDefault();
+					e.stopPropagation();
+					setImageGallery({
+						images: allImages,
+						currentIndex: clickedIndex
+					});
+				}
+			}
+		};
+
+		contentElement.addEventListener('click', handleImageClick);
+
 		return () => {
 			imageObserver.disconnect();
+			contentElement.removeEventListener('click', handleImageClick);
 		};
 	}, [article?.content]);
 
@@ -1065,6 +1093,17 @@ export default function ArticleReaderPage() {
 						onClose={() => setShowTagModal(false)}
 						article={article}
 						onSave={handleSaveTags}
+					/>
+				)
+			}
+
+			{/* Image Gallery Modal */}
+			{
+				imageGallery && (
+					<ImageGalleryModal
+						images={imageGallery.images}
+						initialIndex={imageGallery.currentIndex}
+						onClose={() => setImageGallery(null)}
 					/>
 				)
 			}
