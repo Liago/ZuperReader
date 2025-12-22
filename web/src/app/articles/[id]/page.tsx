@@ -8,6 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
 import ReadingPreferencesModal from '../../../components/ReadingPreferencesModal';
 import LinkPreviewModal from '../../../components/LinkPreviewModal';
+import VideoModal from '../../../components/VideoModal';
 import LikeButton from '../../../components/LikeButton';
 import CommentsSection from '../../../components/CommentsSection';
 import ShareButton from '../../../components/ShareButton';
@@ -27,6 +28,7 @@ export default function ArticleReaderPage() {
 	const [error, setError] = useState('');
 	const [showPreferencesModal, setShowPreferencesModal] = useState(false);
 	const [linkPreviewUrl, setLinkPreviewUrl] = useState<string | null>(null);
+	const [videoSrc, setVideoSrc] = useState<string | null>(null);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showTagModal, setShowTagModal] = useState(false);
@@ -484,6 +486,98 @@ export default function ArticleReaderPage() {
 		// Cleanup
 		return () => {
 			contentElement.removeEventListener('click', handleLinkClick);
+		};
+	}, [article]);
+
+	// Intercetta i click sui video iframe per aprire la modale e aggiungi stili
+	useEffect(() => {
+		const contentElement = articleContentRef.current;
+		if (!contentElement) return;
+
+		// Trova tutti gli iframe video e applica stili
+		const iframes = contentElement.querySelectorAll('iframe');
+		const videoIframes: HTMLIFrameElement[] = [];
+
+		iframes.forEach((iframe) => {
+			const src = iframe.getAttribute('src');
+			if (!src) return;
+
+			const isVideo =
+				src.includes('youtube.com') ||
+				src.includes('youtube-nocookie.com') ||
+				src.includes('vimeo.com') ||
+				src.includes('redditmedia.com');
+
+			if (isVideo) {
+				videoIframes.push(iframe);
+				// Aggiungi stili per rendere l'iframe cliccabile
+				iframe.style.cursor = 'pointer';
+				iframe.style.transition = 'all 0.3s ease';
+				iframe.style.borderRadius = '12px';
+				iframe.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+
+				// Aggiungi effetto hover
+				const addHoverEffect = () => {
+					iframe.style.transform = 'scale(1.02)';
+					iframe.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+				};
+
+				const removeHoverEffect = () => {
+					iframe.style.transform = 'scale(1)';
+					iframe.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+				};
+
+				iframe.addEventListener('mouseenter', addHoverEffect);
+				iframe.addEventListener('mouseleave', removeHoverEffect);
+			}
+		});
+
+		const handleVideoClick = (e: MouseEvent) => {
+			const target = e.target as HTMLElement;
+
+			// Trova l'iframe più vicino
+			const iframe = target.closest('iframe');
+			if (!iframe) return;
+
+			// Verifica se è un video
+			const src = iframe.getAttribute('src');
+			if (!src) return;
+
+			const isVideo =
+				src.includes('youtube.com') ||
+				src.includes('youtube-nocookie.com') ||
+				src.includes('vimeo.com') ||
+				src.includes('redditmedia.com');
+
+			if (!isVideo) return;
+
+			// Previeni il comportamento di default
+			e.preventDefault();
+			e.stopPropagation();
+
+			// Apri la modale video
+			setVideoSrc(src);
+		};
+
+		// Aggiungi event listener
+		contentElement.addEventListener('click', handleVideoClick);
+
+		// Cleanup
+		return () => {
+			contentElement.removeEventListener('click', handleVideoClick);
+			// Rimuovi gli event listener hover
+			videoIframes.forEach((iframe) => {
+				const addHoverEffect = () => {
+					iframe.style.transform = 'scale(1.02)';
+					iframe.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+				};
+				const removeHoverEffect = () => {
+					iframe.style.transform = 'scale(1)';
+					iframe.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+				};
+				iframe.removeEventListener('mouseenter', addHoverEffect);
+				iframe.removeEventListener('mouseleave', removeHoverEffect);
+			});
 		};
 	}, [article]);
 
@@ -1001,6 +1095,18 @@ export default function ArticleReaderPage() {
 							// Opzionalmente puoi ricaricare la lista degli articoli o mostrare un messaggio
 							console.log('Article saved from link preview');
 						}}
+					/>
+				)
+			}
+
+			{/* Video Modal */}
+			{
+				videoSrc && (
+					<VideoModal
+						isOpen={true}
+						onClose={() => setVideoSrc(null)}
+						videoSrc={videoSrc}
+						videoTitle={article?.title}
 					/>
 				)
 			}
