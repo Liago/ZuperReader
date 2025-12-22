@@ -4,11 +4,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface ImageGalleryModalProps {
 	images: string[];
+	captions?: string[];
 	initialIndex: number;
 	onClose: () => void;
 }
 
-export default function ImageGalleryModal({ images, initialIndex, onClose }: ImageGalleryModalProps) {
+export default function ImageGalleryModal({ images, captions = [], initialIndex, onClose }: ImageGalleryModalProps) {
 	const [currentIndex, setCurrentIndex] = useState(initialIndex);
 	const [scale, setScale] = useState(1);
 	const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -19,6 +20,7 @@ export default function ImageGalleryModal({ images, initialIndex, onClose }: Ima
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const currentImage = images[currentIndex];
+	const currentCaption = captions[currentIndex];
 
 	// Reset zoom and position when changing images
 	useEffect(() => {
@@ -250,7 +252,15 @@ export default function ImageGalleryModal({ images, initialIndex, onClose }: Ima
 
 			{/* Bottom Controls */}
 			<div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-4">
-				<div className="flex items-center justify-center gap-3 max-w-7xl mx-auto">
+				<div className="flex flex-col items-center gap-3 max-w-7xl mx-auto">
+					{/* Image Caption */}
+					{currentCaption && (
+						<div className="text-white/90 text-sm text-center px-4 py-2 bg-black/40 rounded-lg backdrop-blur-sm max-w-3xl">
+							{currentCaption}
+						</div>
+					)}
+
+					<div className="flex items-center justify-center gap-3">
 					{/* Zoom Controls */}
 					<div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm">
 						<button
@@ -292,6 +302,7 @@ export default function ImageGalleryModal({ images, initialIndex, onClose }: Ima
 					{/* Hint Text */}
 					<div className="hidden md:block text-white/60 text-xs bg-white/5 px-3 py-1.5 rounded-full backdrop-blur-sm">
 						Ctrl + Scroll to zoom • Arrow keys to navigate
+					</div>
 					</div>
 				</div>
 			</div>
