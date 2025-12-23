@@ -751,6 +751,122 @@ export async function getUserStatistics(userId: string): Promise<{
 	};
 }
 
+// ==================== ARTICLE SUMMARY FUNCTIONS ====================
+
+/**
+ * Get articles from the last N days for summary generation
+ */
+export async function getArticlesForSummary(
+	userId: string,
+	days: 7 | 30
+): Promise<Article[]> {
+	const now = new Date();
+	const startDate = new Date(now);
+	startDate.setDate(now.getDate() - days);
+
+	const { data, error } = await supabase
+		.from('articles')
+		.select('*')
+		.eq('user_id', userId)
+		.gte('created_at', startDate.toISOString())
+		.order('created_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+/**
+ * Generate a summary text from articles
+ */
+export function generateArticleSummary(articles: Article[], days: 7 | 30): {
+	summary: string;
+	stats: {
+		total: number;
+		read: number;
+		reading: number;
+		unread: number;
+		favorites: number;
+		totalReadTime: number;
+		topDomains: { domain: string; count: number }[];
+		topTags: { tag: string; count: number }[];
+	};
+} {
+	const stats = {
+		total: articles.length,
+		read: articles.filter(a => a.reading_status === 'completed').length,
+		reading: articles.filter(a => a.reading_status === 'reading').length,
+		unread: articles.filter(a => a.reading_status === 'unread').length,
+		favorites: articles.filter(a => a.is_favorite).length,
+		totalReadTime: articles.reduce((sum, a) => sum + (a.estimated_read_time || 0), 0),
+		topDomains: [] as { domain: string; count: number }[],
+		topTags: [] as { tag: string; count: number }[]
+	};
+
+	// Calculate top domains
+	const domainCounts = new Map<string, number>();
+	articles.forEach(article => {
+		if (article.domain) {
+			domainCounts.set(article.domain, (domainCounts.get(article.domain) || 0) + 1);
+		}
+	});
+	stats.topDomains = Array.from(domainCounts.entries())
+		.map(([domain, count]) => ({ domain, count }))
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 5);
+
+	// Calculate top tags
+	const tagCounts = new Map<string, number>();
+	articles.forEach(article => {
+		article.tags.forEach(tag => {
+			tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+		});
+	});
+	stats.topTags = Array.from(tagCounts.entries())
+		.map(([tag, count]) => ({ tag, count }))
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 5);
+
+	// Generate summary text
+	const period = days === 7 ? 'ultima settimana' : 'ultimi 30 giorni';
+	let summary = `Negli ${period}, hai salvato **${stats.total} articoli**. `;
+
+	if (stats.read > 0) {
+		summary += `Ne hai completati **${stats.read}** (${Math.round((stats.read / stats.total) * 100)}%), `;
+	}
+	if (stats.reading > 0) {
+		summary += `**${stats.reading}** sono in corso di lettura, `;
+	}
+	if (stats.unread > 0) {
+		summary += `e **${stats.unread}** sono ancora da leggere. `;
+	}
+
+	if (stats.favorites > 0) {
+		summary += `\n\nHai aggiunto **${stats.favorites} articoli ai preferiti**. `;
+	}
+
+	if (stats.totalReadTime > 0) {
+		const hours = Math.floor(stats.totalReadTime / 60);
+		const minutes = stats.totalReadTime % 60;
+		summary += `\n\nTempo di lettura stimato totale: **${hours > 0 ? `${hours}h ` : ''}${minutes}min**. `;
+	}
+
+	if (stats.topDomains.length > 0) {
+		summary += `\n\n### Fonti principali\n`;
+		stats.topDomains.forEach(({ domain, count }) => {
+			summary += `- **${domain}**: ${count} articol${count > 1 ? 'i' : 'o'}\n`;
+		});
+	}
+
+	if (stats.topTags.length > 0) {
+		summary += `\n### Tag più utilizzati\n`;
+		stats.topTags.forEach(({ tag, count }) => {
+			summary += `- **${tag}**: ${count} articol${count > 1 ? 'i' : 'o'}\n`;
+		});
+	}
+
+	return { summary, stats };
+}
+
 // ==================== USER PREFERENCES ====================
 
 /**
