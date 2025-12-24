@@ -9,11 +9,13 @@
 
 const comingsoonIt = require('./comingsoon.it.js');
 const unaparolaalgiorno = require('./unaparolaalgiorno.it.js');
+const ultimouomo = require('./ultimouomo.it.js');
 
 // Array of all custom extractors
 const extractors = [
 	comingsoonIt,
 	unaparolaalgiorno,
+	ultimouomo,
 ];
 
 /**
