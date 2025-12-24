@@ -36,12 +36,6 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 		}
 	};
 
-	if (!isOpen) return null;
-
-	const { summary, stats } = articles.length > 0
-		? generateArticleSummary(articles, period)
-		: { summary: '', stats: { total: 0, read: 0, reading: 0, unread: 0, favorites: 0, totalReadTime: 0, topDomains: [], topTags: [] } };
-
 	// Handle keyboard navigation
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,6 +49,12 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 			return () => window.removeEventListener('keydown', handleKeyDown);
 		}
 	}, [isOpen, onClose]);
+
+	if (!isOpen) return null;
+
+	const { summary, stats } = articles.length > 0
+		? generateArticleSummary(articles, period)
+		: { summary: '', stats: { total: 0, read: 0, reading: 0, unread: 0, favorites: 0, totalReadTime: 0, topDomains: [], topTags: [] } };
 
 	// Render markdown-like text
 	const renderSummary = (text: string) => {
