@@ -11,11 +11,19 @@ const comingsoonIt = require('./comingsoon.it.js');
 const unaparolaalgiorno = require('./unaparolaalgiorno.it.js');
 const ultimouomo = require('./ultimouomo.it.js');
 
+// Create aliases for other domains
+const ultimouomoCom = { ...ultimouomo, domain: 'ultimouomo.com' };
+const ultimouomoWwwCom = { ...ultimouomo, domain: 'www.ultimouomo.com' };
+const ultimouomoWwwIt = { ...ultimouomo, domain: 'www.ultimouomo.it' };
+
 // Array of all custom extractors
 const extractors = [
 	comingsoonIt,
 	unaparolaalgiorno,
 	ultimouomo,
+	ultimouomoCom,
+	ultimouomoWwwCom,
+	ultimouomoWwwIt,
 ];
 
 /**
