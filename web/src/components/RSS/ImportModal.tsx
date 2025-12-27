@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { importOPML } from '@/app/actions/rss';
 
 interface ImportModalProps {
@@ -9,6 +10,7 @@ interface ImportModalProps {
 }
 
 export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
+  const router = useRouter();
   const [isImporting, setIsImporting] = useState(false);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +38,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
         setResultMessage(`Error: ${result.error}`);
     } else {
         setResultMessage(result.message || 'Import successful!');
+        router.refresh(); // Refresh to show imported feeds and folders
         setTimeout(() => {
             onClose();
             setResultMessage(null); // Reset for next time
