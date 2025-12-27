@@ -3,8 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { fetchFeed, parseOPML, OpmlOutline, FeedData } from '@/lib/rssService';
-
-// ... existing imports ...
+import { syncRSSArticles } from '@/lib/api';
 
 /**
  * Creates a new folder for RSS feeds
@@ -200,11 +199,40 @@ export async function importOPML(formData: FormData) {
 
 /**
  * PROXY ACTION: Fetch feed content server-side to avoid CORS
+ * Also syncs articles to database for read tracking
  */
-export async function getFeedContent(url: string): Promise<{ feed?: FeedData; error?: string }> {
+export async function getFeedContent(url: string, feedId?: string): Promise<{ feed?: FeedData; error?: string; syncStats?: { added: number; existing: number } }> {
     try {
         const feed = await fetchFeed(url);
-        return { feed };
+
+        // If feedId is provided, sync articles to database for read tracking
+        let syncStats = undefined;
+        if (feedId) {
+            const supabase = await createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user && feed.items && feed.items.length > 0) {
+                // Prepare articles for syncing - filter out items without guid/link/title
+                const articles = feed.items
+                    .filter(item => item.guid || item.link || item.title)
+                    .map(item => ({
+                        guid: (item.guid || item.link || item.title)!,
+                        title: item.title || 'Untitled',
+                        link: item.link || '',
+                        pubDate: item.pubDate,
+                        author: item.creator || item.author,
+                        content: item.content,
+                        contentSnippet: item.contentSnippet
+                    }));
+
+                // Sync articles to database
+                if (articles.length > 0) {
+                    syncStats = await syncRSSArticles(user.id, feedId, articles);
+                }
+            }
+        }
+
+        return { feed, syncStats };
     } catch (err) {
         return { error: (err as Error).message };
     }

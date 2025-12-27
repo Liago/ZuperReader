@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { getRSSFeedsWithUnreadCounts } from '@/lib/api';
 import RSSLayout from '@/components/RSS/RSSLayout';
 
 interface Feed {
@@ -12,6 +13,7 @@ interface Feed {
   title: string | null;
   url: string;
   folder_id: string | null;
+  unread_count?: number;
 }
 
 interface Folder {
@@ -50,18 +52,14 @@ export default function RSSPage() {
           .eq('user_id', user.id)
           .order('name');
 
-        // Fetch Feeds
-        const { data: feedsData, error: feedsError } = await supabase
-          .from('rss_feeds')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('title');
-
-        if (foldersError || feedsError) {
-          console.error('Error fetching RSS data:', foldersError || feedsError);
+        if (foldersError) {
+          console.error('Error fetching RSS folders:', foldersError);
           setError('Error loading RSS feeds. Please try again.');
           return;
         }
+
+        // Fetch Feeds with unread counts
+        const feedsData = await getRSSFeedsWithUnreadCounts(user.id);
 
         setFolders(foldersData || []);
         setFeeds(feedsData || []);
