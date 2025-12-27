@@ -62,7 +62,7 @@ export async function fetchFeed(url: string): Promise<FeedData> {
         title: item.title,
         link: item.link,
         pubDate: item.pubDate,
-        author: item.creator || item.author,
+        author: item.creator || (item as any).author,
         content: item['content:encoded'] || item.content,
         contentSnippet: item.contentSnippet,
         isoDate: item.isoDate,
