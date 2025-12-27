@@ -4,8 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { addFeed, createFolder } from '@/app/actions/rss';
-import ImportModal from './ImportModal';
-import DiscoveryModal from './DiscoveryModal';
 
 interface Feed {
   id: string;
@@ -24,12 +22,12 @@ interface RSSSidebarProps {
   feeds: Feed[];
   selectedFeedId?: string;
   onSelectFeed: (feed: Feed | null) => void;
+  onOpenImportModal: () => void;
+  onOpenDiscoveryModal: () => void;
 }
 
-export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed }: RSSSidebarProps) {
+export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed, onOpenImportModal, onOpenDiscoveryModal }: RSSSidebarProps) {
   const router = useRouter();
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFeedMode, setNewFeedMode] = useState(false);
@@ -108,7 +106,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                 Folder
             </button>
             <button
-                onClick={() => setShowDiscoveryModal(true)}
+                onClick={onOpenDiscoveryModal}
                 className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-xl hover:from-purple-200 hover:to-pink-200 hover:shadow-md transition-all duration-200 font-medium"
                 title="Discover RSS Feeds"
             >
@@ -118,7 +116,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                 Discover
             </button>
              <button
-                onClick={() => setShowImportModal(true)}
+                onClick={onOpenImportModal}
                 className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-white/80 text-gray-700 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200 font-medium"
                 title="Import OPML"
             >
@@ -250,13 +248,6 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </div>
         )}
       </div>
-
-       <ImportModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
-       <DiscoveryModal
-         isOpen={showDiscoveryModal}
-         onClose={() => setShowDiscoveryModal(false)}
-         folders={folders}
-       />
     </div>
   );
 }
