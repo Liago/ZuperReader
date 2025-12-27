@@ -10,6 +10,7 @@ interface Feed {
   title: string | null;
   url: string;
   folder_id: string | null;
+  unread_count?: number;
 }
 
 interface Folder {
@@ -211,10 +212,15 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                         <div
                             key={feed.id}
                             onClick={() => onSelectFeed(feed)}
-                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 truncate transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
+                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
                         >
                             <img src={`https://www.google.com/s2/favicons?domain=${new URL(feed.url).hostname}`} className="w-4 h-4 flex-shrink-0" alt="" />
-                            <span className="truncate">{feed.title || feed.url}</span>
+                            <span className="truncate flex-1">{feed.title || feed.url}</span>
+                            {feed.unread_count !== undefined && feed.unread_count > 0 && (
+                                <span className="flex-shrink-0 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
+                                    {feed.unread_count > 99 ? '99+' : feed.unread_count}
+                                </span>
+                            )}
                         </div>
                     ))}
                     {(!feedsByFolder[folder.id] || feedsByFolder[folder.id].length === 0) && (
@@ -238,10 +244,15 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                         <div
                             key={feed.id}
                             onClick={() => onSelectFeed(feed)}
-                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 truncate transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
+                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
                         >
                              <img src={`https://www.google.com/s2/favicons?domain=${new URL(feed.url).hostname}`} className="w-4 h-4 flex-shrink-0" alt="" />
-                            <span className="truncate">{feed.title || feed.url}</span>
+                            <span className="truncate flex-1">{feed.title || feed.url}</span>
+                            {feed.unread_count !== undefined && feed.unread_count > 0 && (
+                                <span className="flex-shrink-0 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
+                                    {feed.unread_count > 99 ? '99+' : feed.unread_count}
+                                </span>
+                            )}
                         </div>
                     ))}
                 </div>

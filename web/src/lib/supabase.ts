@@ -118,3 +118,44 @@ export type UserPreferences = {
 	created_at: string;
 	updated_at: string;
 };
+
+// RSS Folder type
+export type RSSFolder = {
+	id: string;
+	user_id: string;
+	name: string;
+	created_at: string;
+	updated_at: string;
+};
+
+// RSS Feed type
+export type RSSFeed = {
+	id: string;
+	user_id: string;
+	folder_id: string | null;
+	title: string | null;
+	url: string;
+	site_url: string | null;
+	icon_url: string | null;
+	created_at: string;
+	updated_at: string;
+	unread_count?: number; // Populated from join or query
+};
+
+// RSS Article type (for tracking read status of RSS feed items)
+export type RSSArticle = {
+	id: string;
+	feed_id: string;
+	user_id: string;
+	guid: string;
+	title: string;
+	link: string;
+	pub_date: string | null;
+	author: string | null;
+	content: string | null;
+	content_snippet: string | null;
+	is_read: boolean;
+	read_at: string | null;
+	created_at: string;
+	updated_at: string;
+};

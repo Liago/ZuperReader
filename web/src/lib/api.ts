@@ -1,5 +1,5 @@
 import { createClient } from './supabase/client';
-import type { Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
+import type { Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences, RSSArticle, RSSFeed } from './supabase';
 
 // Create a singleton supabase client for this module
 const supabase = createClient();
@@ -869,6 +869,237 @@ export function generateArticleSummary(articles: Article[], days: 7 | 30): {
 	}
 
 	return { summary, stats };
+}
+
+// ==================== RSS ARTICLE TRACKING FUNCTIONS ====================
+
+/**
+ * Get RSS articles for a specific feed with read status
+ */
+export async function getRSSArticles(
+	userId: string,
+	feedId: string,
+	limit: number = 50,
+	includeRead: boolean = true
+): Promise<RSSArticle[]> {
+	let query = supabase
+		.from('rss_articles')
+		.select('*')
+		.eq('user_id', userId)
+		.eq('feed_id', feedId)
+		.order('pub_date', { ascending: false })
+		.limit(limit);
+
+	if (!includeRead) {
+		query = query.eq('is_read', false);
+	}
+
+	const { data, error } = await query;
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+/**
+ * Get all RSS articles for a user (across all feeds)
+ */
+export async function getAllRSSArticles(
+	userId: string,
+	limit: number = 100
+): Promise<RSSArticle[]> {
+	const { data, error } = await supabase
+		.from('rss_articles')
+		.select('*')
+		.eq('user_id', userId)
+		.order('pub_date', { ascending: false })
+		.limit(limit);
+
+	if (error) throw new Error(error.message);
+	return data || [];
+}
+
+/**
+ * Sync RSS articles - add new articles from feed
+ */
+export async function syncRSSArticles(
+	userId: string,
+	feedId: string,
+	articles: Array<{
+		guid: string;
+		title: string;
+		link: string;
+		pubDate?: string;
+		author?: string;
+		content?: string;
+		contentSnippet?: string;
+	}>
+): Promise<{ added: number; existing: number }> {
+	let added = 0;
+	let existing = 0;
+
+	for (const article of articles) {
+		try {
+			const { error } = await supabase
+				.from('rss_articles')
+				.insert([{
+					user_id: userId,
+					feed_id: feedId,
+					guid: article.guid,
+					title: article.title,
+					link: article.link,
+					pub_date: article.pubDate || null,
+					author: article.author || null,
+					content: article.content || null,
+					content_snippet: article.contentSnippet || null,
+					is_read: false
+				}]);
+
+			if (error) {
+				// Check if it's a duplicate key error (article already exists)
+				if (error.code === '23505') {
+					existing++;
+				} else {
+					console.error('Error syncing RSS article:', error);
+				}
+			} else {
+				added++;
+			}
+		} catch (err) {
+			console.error('Unexpected error syncing article:', err);
+		}
+	}
+
+	return { added, existing };
+}
+
+/**
+ * Mark an RSS article as read
+ */
+export async function markRSSArticleAsRead(articleId: string, userId: string): Promise<void> {
+	const { error } = await supabase
+		.from('rss_articles')
+		.update({
+			is_read: true,
+			read_at: new Date().toISOString()
+		})
+		.eq('id', articleId)
+		.eq('user_id', userId);
+
+	if (error) throw new Error(error.message);
+}
+
+/**
+ * Mark an RSS article as unread
+ */
+export async function markRSSArticleAsUnread(articleId: string, userId: string): Promise<void> {
+	const { error } = await supabase
+		.from('rss_articles')
+		.update({
+			is_read: false,
+			read_at: null
+		})
+		.eq('id', articleId)
+		.eq('user_id', userId);
+
+	if (error) throw new Error(error.message);
+}
+
+/**
+ * Mark multiple RSS articles as read
+ */
+export async function markMultipleRSSArticlesAsRead(articleIds: string[], userId: string): Promise<void> {
+	const { error } = await supabase
+		.from('rss_articles')
+		.update({
+			is_read: true,
+			read_at: new Date().toISOString()
+		})
+		.in('id', articleIds)
+		.eq('user_id', userId);
+
+	if (error) throw new Error(error.message);
+}
+
+/**
+ * Get unread count for a specific feed
+ */
+export async function getFeedUnreadCount(userId: string, feedId: string): Promise<number> {
+	const { count, error } = await supabase
+		.from('rss_articles')
+		.select('*', { count: 'exact', head: true })
+		.eq('user_id', userId)
+		.eq('feed_id', feedId)
+		.eq('is_read', false);
+
+	if (error) throw new Error(error.message);
+	return count || 0;
+}
+
+/**
+ * Get unread counts for all feeds
+ */
+export async function getAllFeedsUnreadCounts(userId: string): Promise<Map<string, number>> {
+	const { data, error } = await supabase
+		.from('rss_articles')
+		.select('feed_id')
+		.eq('user_id', userId)
+		.eq('is_read', false);
+
+	if (error) throw new Error(error.message);
+
+	const counts = new Map<string, number>();
+	(data || []).forEach(item => {
+		counts.set(item.feed_id, (counts.get(item.feed_id) || 0) + 1);
+	});
+
+	return counts;
+}
+
+/**
+ * Get RSS feeds with unread counts
+ */
+export async function getRSSFeedsWithUnreadCounts(userId: string): Promise<RSSFeed[]> {
+	// Get all feeds
+	const { data: feeds, error: feedsError } = await supabase
+		.from('rss_feeds')
+		.select('*')
+		.eq('user_id', userId)
+		.order('created_at', { ascending: false });
+
+	if (feedsError) throw new Error(feedsError.message);
+
+	// Get unread counts
+	const unreadCounts = await getAllFeedsUnreadCounts(userId);
+
+	// Merge unread counts with feeds
+	const feedsWithCounts: RSSFeed[] = (feeds || []).map(feed => ({
+		...feed,
+		unread_count: unreadCounts.get(feed.id) || 0
+	}));
+
+	return feedsWithCounts;
+}
+
+/**
+ * Delete old RSS articles (cleanup function)
+ */
+export async function deleteOldRSSArticles(
+	userId: string,
+	daysToKeep: number = 30
+): Promise<number> {
+	const cutoffDate = new Date();
+	cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+	const { data, error } = await supabase
+		.from('rss_articles')
+		.delete()
+		.eq('user_id', userId)
+		.eq('is_read', true)
+		.lt('pub_date', cutoffDate.toISOString())
+		.select('id');
+
+	if (error) throw new Error(error.message);
+	return data?.length || 0;
 }
 
 // ==================== USER PREFERENCES ====================

@@ -6,9 +6,11 @@ export interface FeedItem {
   link?: string;
   pubDate?: string;
   author?: string;
+  creator?: string; // RSS feeds sometimes use dc:creator instead of author
   content?: string;
   contentSnippet?: string;
   isoDate?: string;
+  guid?: string; // Unique identifier for the feed item
 }
 
 export interface FeedData {

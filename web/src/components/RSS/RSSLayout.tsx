@@ -11,6 +11,7 @@ interface Feed {
   title: string | null;
   url: string;
   folder_id: string | null;
+  unread_count?: number;
 }
 
 interface Folder {
@@ -62,6 +63,7 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId }: RSSL
           <div className="flex-1 flex flex-col h-full overflow-hidden">
               <FeedList
                   feedUrl={selectedFeed?.url || null}
+                  feedId={selectedFeed?.id || null}
                   userId={userId}
               />
           </div>

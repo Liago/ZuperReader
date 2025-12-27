@@ -1,22 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { FeedData, FeedItem } from '@/lib/rssService';
-import { parseArticle, saveArticle } from '@/lib/api';
+import { parseArticle, saveArticle, getRSSArticles, markRSSArticleAsRead } from '@/lib/api';
+import type { RSSArticle } from '@/lib/supabase';
 import ReaderModal from './ReaderModal';
 
 interface FeedListProps {
   feedUrl: string | null;
+  feedId: string | null;
   userId: string;
 }
 
-export default function FeedList({ feedUrl, userId }: FeedListProps) {
+export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [feedTitle, setFeedTitle] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  
+  const [rssArticles, setRssArticles] = useState<RSSArticle[]>([]);
+
   // Reader Modal State
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
@@ -25,6 +28,7 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
     if (!feedUrl) {
         setItems([]);
         setFeedTitle('Select a feed to read');
+        setRssArticles([]);
         return;
     }
 
@@ -33,12 +37,19 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
         setError(null);
         try {
             const { getFeedContent } = await import('@/app/actions/rss');
-            const data = await getFeedContent(feedUrl);
-            
+            // Pass feedId to sync articles to database
+            const data = await getFeedContent(feedUrl, feedId || undefined);
+
             if (data.error) throw new Error(data.error);
             if (data.feed) {
                 setFeedTitle(data.feed.title || 'Untitled Feed');
                 setItems(data.feed.items);
+            }
+
+            // Load tracked articles from database
+            if (feedId) {
+                const trackedArticles = await getRSSArticles(userId, feedId);
+                setRssArticles(trackedArticles);
             }
         } catch (err) {
             setError((err as Error).message);
@@ -48,7 +59,7 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
     };
 
     loadFeed();
-  }, [feedUrl]);
+  }, [feedUrl, feedId, userId]);
 
   const handleSaveToLibrary = async (item: FeedItem) => {
       if (!item.link) return;
@@ -76,11 +87,75 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
       }
   };
 
-  const handleRead = (link?: string) => {
-      if (!link) return;
-      setReaderUrl(link);
+  // Mark an article as read (extracted to reusable function)
+  const markArticleAsRead = useCallback(async (item: FeedItem) => {
+      if (!feedId) return;
+
+      const articleGuid = item.guid || item.link || item.title;
+      const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
+
+      if (trackedArticle && !trackedArticle.is_read) {
+          try {
+              await markRSSArticleAsRead(trackedArticle.id, userId);
+              // Update local state
+              setRssArticles(prev => prev.map(a =>
+                  a.id === trackedArticle.id ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
+              ));
+          } catch (err) {
+              console.error('Failed to mark article as read:', err);
+          }
+      }
+  }, [feedId, rssArticles, userId]);
+
+  const handleRead = async (item: FeedItem) => {
+      if (!item.link) return;
+      setReaderUrl(item.link);
       setIsReaderOpen(true);
+
+      // Also mark as read when opening in modal
+      await markArticleAsRead(item);
   };
+
+  // Helper function to check if an article is read
+  const isArticleRead = (item: FeedItem): boolean => {
+      if (!feedId || rssArticles.length === 0) return false;
+      const articleGuid = item.guid || item.link || item.title;
+      const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
+      return trackedArticle?.is_read || false;
+  };
+
+  // Intersection Observer to mark articles as read when scrolled past
+  useEffect(() => {
+      if (!feedId || items.length === 0) return;
+
+      const observerCallback: IntersectionObserverCallback = (entries) => {
+          entries.forEach((entry) => {
+              // Mark as read when article exits viewport from top (scrolling down)
+              if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+                  const articleIndex = parseInt(entry.target.getAttribute('data-article-index') || '-1');
+                  if (articleIndex >= 0 && articleIndex < items.length) {
+                      const item = items[articleIndex];
+                      // Debounce: only mark if article has been scrolled past completely
+                      markArticleAsRead(item);
+                  }
+              }
+          });
+      };
+
+      const observer = new IntersectionObserver(observerCallback, {
+          root: null, // viewport
+          rootMargin: '-80px 0px 0px 0px', // Trigger when article is 80px past top (after header)
+          threshold: 0
+      });
+
+      // Observe all article elements
+      const articleElements = document.querySelectorAll('[data-article-index]');
+      articleElements.forEach(el => observer.observe(el));
+
+      return () => {
+          observer.disconnect();
+      };
+  }, [items, feedId, markArticleAsRead]);
 
   if (loading) {
       return (
@@ -124,15 +199,28 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
     <div className="flex-1 overflow-y-auto p-4 sm:p-8">
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent border-b border-gray-200 pb-4">{feedTitle}</h1>
       <div className="space-y-4 max-w-4xl mx-auto">
-          {items.map((item, idx) => (
-              <div key={idx} className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200">
+          {items.map((item, idx) => {
+              const isRead = isArticleRead(item);
+              return (
+              <div
+                  key={idx}
+                  data-article-index={idx}
+                  className={`bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200 ${isRead ? 'opacity-60' : ''}`}
+              >
                   <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                          <div
-                              onClick={() => handleRead(item.link)}
-                              className="text-xl font-bold text-gray-900 hover:bg-gradient-to-r hover:from-orange-600 hover:to-pink-600 hover:bg-clip-text hover:text-transparent mb-2 block cursor-pointer transition-all"
-                          >
-                              {item.title}
+                          <div className="flex items-start gap-2 mb-2">
+                              <div
+                                  onClick={() => handleRead(item)}
+                                  className={`text-xl font-bold flex-1 hover:bg-gradient-to-r hover:from-orange-600 hover:to-pink-600 hover:bg-clip-text hover:text-transparent cursor-pointer transition-all ${isRead ? 'text-gray-500' : 'text-gray-900'}`}
+                              >
+                                  {item.title}
+                              </div>
+                              {isRead && (
+                                  <span className="flex-shrink-0 text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-medium">
+                                      Read
+                                  </span>
+                              )}
                           </div>
                           <div className="text-sm text-gray-500 mb-4 flex gap-3 items-center">
                               {item.author && (
@@ -160,7 +248,7 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
 
                   <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
                       <button
-                        onClick={() => handleRead(item.link)}
+                        onClick={() => handleRead(item)}
                         className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl hover:shadow-lg hover:scale-105 text-sm font-semibold transition-all"
                       >
                           Read Now
@@ -198,7 +286,8 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
                       </a>
                   </div>
               </div>
-          ))}
+          );
+          })}
       </div>
       
       <ReaderModal 
