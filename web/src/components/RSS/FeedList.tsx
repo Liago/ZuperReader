@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { FeedData, FeedItem } from '@/lib/rssService';
 import { parseArticle, saveArticle, getRSSArticles, markRSSArticleAsRead } from '@/lib/api';
 import type { RSSArticle } from '@/lib/supabase';
@@ -87,28 +87,33 @@ export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
       }
   };
 
+  // Mark an article as read (extracted to reusable function)
+  const markArticleAsRead = useCallback(async (item: FeedItem) => {
+      if (!feedId) return;
+
+      const articleGuid = item.guid || item.link || item.title;
+      const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
+
+      if (trackedArticle && !trackedArticle.is_read) {
+          try {
+              await markRSSArticleAsRead(trackedArticle.id, userId);
+              // Update local state
+              setRssArticles(prev => prev.map(a =>
+                  a.id === trackedArticle.id ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
+              ));
+          } catch (err) {
+              console.error('Failed to mark article as read:', err);
+          }
+      }
+  }, [feedId, rssArticles, userId]);
+
   const handleRead = async (item: FeedItem) => {
       if (!item.link) return;
       setReaderUrl(item.link);
       setIsReaderOpen(true);
 
-      // Mark article as read if it's tracked
-      if (feedId) {
-          const articleGuid = item.guid || item.link || item.title;
-          const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
-
-          if (trackedArticle && !trackedArticle.is_read) {
-              try {
-                  await markRSSArticleAsRead(trackedArticle.id, userId);
-                  // Update local state
-                  setRssArticles(prev => prev.map(a =>
-                      a.id === trackedArticle.id ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
-                  ));
-              } catch (err) {
-                  console.error('Failed to mark article as read:', err);
-              }
-          }
-      }
+      // Also mark as read when opening in modal
+      await markArticleAsRead(item);
   };
 
   // Helper function to check if an article is read
@@ -118,6 +123,39 @@ export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
       const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
       return trackedArticle?.is_read || false;
   };
+
+  // Intersection Observer to mark articles as read when scrolled past
+  useEffect(() => {
+      if (!feedId || items.length === 0) return;
+
+      const observerCallback: IntersectionObserverCallback = (entries) => {
+          entries.forEach((entry) => {
+              // Mark as read when article exits viewport from top (scrolling down)
+              if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+                  const articleIndex = parseInt(entry.target.getAttribute('data-article-index') || '-1');
+                  if (articleIndex >= 0 && articleIndex < items.length) {
+                      const item = items[articleIndex];
+                      // Debounce: only mark if article has been scrolled past completely
+                      markArticleAsRead(item);
+                  }
+              }
+          });
+      };
+
+      const observer = new IntersectionObserver(observerCallback, {
+          root: null, // viewport
+          rootMargin: '-80px 0px 0px 0px', // Trigger when article is 80px past top (after header)
+          threshold: 0
+      });
+
+      // Observe all article elements
+      const articleElements = document.querySelectorAll('[data-article-index]');
+      articleElements.forEach(el => observer.observe(el));
+
+      return () => {
+          observer.disconnect();
+      };
+  }, [items, feedId, markArticleAsRead]);
 
   if (loading) {
       return (
@@ -164,7 +202,11 @@ export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
           {items.map((item, idx) => {
               const isRead = isArticleRead(item);
               return (
-              <div key={idx} className={`bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200 ${isRead ? 'opacity-60' : ''}`}>
+              <div
+                  key={idx}
+                  data-article-index={idx}
+                  className={`bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200 ${isRead ? 'opacity-60' : ''}`}
+              >
                   <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
                           <div className="flex items-start gap-2 mb-2">
