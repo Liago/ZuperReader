@@ -202,6 +202,5 @@ export default function ReaderModal({ isOpen, onClose, url, userId }: ReaderModa
             </div>
         </div>
       </div>
-    </div>
   );
 }
