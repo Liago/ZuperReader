@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { addFeed, createFolder } from '@/app/actions/rss';
 import ImportModal from './ImportModal';
 
@@ -25,6 +26,7 @@ interface RSSSidebarProps {
 }
 
 export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed }: RSSSidebarProps) {
+  const router = useRouter();
   const [showImportModal, setShowImportModal] = useState(false);
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -43,18 +45,28 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
-    await createFolder(newFolderName);
+    const result = await createFolder(newFolderName);
+    if (result.error) {
+      alert(`Failed to create folder: ${result.error}`);
+      return;
+    }
     setNewFolderName('');
     setNewFolderMode(false);
+    router.refresh(); // Refresh to show the new folder
   };
 
   const handleAddFeed = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFeedUrl.trim()) return;
-    await addFeed(newFeedUrl, selectedFolderId); // Add to current selected folder context? Or root if null
+    const result = await addFeed(newFeedUrl, selectedFolderId);
+    if (result.error) {
+      alert(`Failed to add feed: ${result.error}`);
+      return;
+    }
     setNewFeedUrl('');
     setNewFeedMode(false);
     setSelectedFolderId(null);
+    router.refresh(); // Refresh to show the new feed
   };
 
   return (
