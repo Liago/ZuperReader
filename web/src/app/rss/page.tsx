@@ -37,6 +37,8 @@ export default function RSSPage() {
     if (!user) return;
 
     async function fetchRSSData() {
+      if (!user) return; // Guard against null user
+
       try {
         setIsLoadingData(true);
 
