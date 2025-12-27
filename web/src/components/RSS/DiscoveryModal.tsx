@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { discoverFeeds, addFeed, type DiscoveredFeed } from '@/app/actions/rss';
+import CustomSelect from './CustomSelect';
 
 interface DiscoveryModalProps {
   isOpen: boolean;
@@ -173,19 +174,18 @@ export default function DiscoveryModal({ isOpen, onClose, folders }: DiscoveryMo
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <select
+                          <CustomSelect
                             value={selectedFolders[feed.url] || ''}
-                            onChange={(e) => handleFolderChange(feed.url, e.target.value)}
-                            className="text-xs border-2 border-gray-200 rounded-lg shadow-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all"
+                            onChange={(value) => handleFolderChange(feed.url, value)}
+                            options={[
+                              { value: '', label: 'Uncategorized' },
+                              ...folders.map((folder) => ({
+                                value: folder.id,
+                                label: folder.name
+                              }))
+                            ]}
                             disabled={isAdded || isAdding}
-                          >
-                            <option value="">Uncategorized</option>
-                            {folders.map((folder) => (
-                              <option key={folder.id} value={folder.id}>
-                                {folder.name}
-                              </option>
-                            ))}
-                          </select>
+                          />
 
                           <button
                             type="button"
