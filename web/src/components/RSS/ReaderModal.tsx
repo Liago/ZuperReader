@@ -73,7 +73,7 @@ export default function ReaderModal({ isOpen, onClose, url, userId }: ReaderModa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       {/* Overlay */}
-      <div className="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
 
       {/* Modal Content */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col z-10">
