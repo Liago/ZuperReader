@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { addFeed, createFolder } from '@/app/actions/rss';
 import ImportModal from './ImportModal';
+import DiscoveryModal from './DiscoveryModal';
 
 interface Feed {
   id: string;
@@ -28,6 +29,7 @@ interface RSSSidebarProps {
 export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed }: RSSSidebarProps) {
   const router = useRouter();
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFeedMode, setNewFeedMode] = useState(false);
@@ -80,20 +82,27 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </svg>
             RSS Feeds
         </h2>
-        <div className="mt-4 flex gap-2">
-            <button 
+        <div className="mt-4 flex gap-2 flex-wrap">
+            <button
                 onClick={() => setNewFeedMode(true)}
                 className="flex-1 text-xs px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             >
                 + Feed
             </button>
-            <button 
+            <button
                 onClick={() => setNewFolderMode(true)}
                 className="flex-1 text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
             >
                 + Folder
             </button>
-             <button 
+            <button
+                onClick={() => setShowDiscoveryModal(true)}
+                className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 font-medium"
+                title="Discover RSS Feeds"
+            >
+                🔍 Discover
+            </button>
+             <button
                 onClick={() => setShowImportModal(true)}
                 className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                 title="Import OPML"
@@ -215,6 +224,11 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
       </div>
 
        <ImportModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
+       <DiscoveryModal
+         isOpen={showDiscoveryModal}
+         onClose={() => setShowDiscoveryModal(false)}
+         folders={folders}
+       />
     </div>
   );
 }

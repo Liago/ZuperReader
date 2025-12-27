@@ -209,3 +209,169 @@ export async function getFeedContent(url: string): Promise<{ feed?: FeedData; er
         return { error: (err as Error).message };
     }
 }
+
+/**
+ * Discovered feed result interface
+ */
+export interface DiscoveredFeed {
+    url: string;
+    title: string;
+    type: 'rss' | 'atom';
+    siteUrl?: string;
+}
+
+/**
+ * Normalizes a URL by adding protocol if missing
+ */
+function normalizeUrl(url: string): string {
+    url = url.trim();
+    if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+    }
+    return url;
+}
+
+/**
+ * Discovers RSS/Atom feeds from a given URL or domain
+ */
+export async function discoverFeeds(inputUrl: string): Promise<{ feeds?: DiscoveredFeed[]; error?: string }> {
+    try {
+        const normalizedUrl = normalizeUrl(inputUrl);
+        const discoveredFeeds: DiscoveredFeed[] = [];
+        const checkedUrls = new Set<string>();
+
+        // Parse the base URL
+        const baseUrl = new URL(normalizedUrl);
+        const origin = baseUrl.origin;
+
+        // 1. Fetch the HTML page to find <link> tags
+        try {
+            const response = await fetch(normalizedUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; SuperReader/1.0; +https://superreader.app)',
+                },
+                signal: AbortSignal.timeout(10000), // 10 second timeout
+            });
+
+            if (response.ok) {
+                const html = await response.text();
+
+                // Parse HTML to find <link rel="alternate"> tags
+                const linkRegex = /<link[^>]*rel=["']alternate["'][^>]*>/gi;
+                const matches = html.match(linkRegex);
+
+                if (matches) {
+                    for (const match of matches) {
+                        // Check if it's RSS or Atom
+                        const typeMatch = match.match(/type=["']([^"']+)["']/i);
+                        const hrefMatch = match.match(/href=["']([^"']+)["']/i);
+                        const titleMatch = match.match(/title=["']([^"']+)["']/i);
+
+                        if (typeMatch && hrefMatch) {
+                            const type = typeMatch[1].toLowerCase();
+                            if (type.includes('rss') || type.includes('atom')) {
+                                let feedUrl = hrefMatch[1];
+
+                                // Make absolute URL if relative
+                                if (feedUrl.startsWith('/')) {
+                                    feedUrl = origin + feedUrl;
+                                } else if (!feedUrl.startsWith('http')) {
+                                    feedUrl = origin + '/' + feedUrl;
+                                }
+
+                                if (!checkedUrls.has(feedUrl)) {
+                                    checkedUrls.add(feedUrl);
+                                    discoveredFeeds.push({
+                                        url: feedUrl,
+                                        title: titleMatch ? titleMatch[1] : 'Feed',
+                                        type: type.includes('atom') ? 'atom' : 'rss',
+                                        siteUrl: normalizedUrl,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            // Continue to check common paths even if HTML fetch fails
+            console.error('HTML fetch error:', err);
+        }
+
+        // 2. Check common feed URLs
+        const commonPaths = [
+            '/feed',
+            '/rss',
+            '/feed.xml',
+            '/rss.xml',
+            '/atom.xml',
+            '/feed/atom',
+            '/index.xml',
+            '/blog/feed',
+            '/blog/rss',
+            '/feeds/posts/default',
+        ];
+
+        for (const path of commonPaths) {
+            const testUrl = origin + path;
+
+            if (!checkedUrls.has(testUrl)) {
+                checkedUrls.add(testUrl);
+
+                try {
+                    // Try to validate the feed
+                    const feedData = await fetchFeed(testUrl);
+
+                    // If successful, add to discovered feeds
+                    const existingIndex = discoveredFeeds.findIndex(f => f.url === testUrl);
+                    if (existingIndex >= 0) {
+                        // Update existing entry with actual data
+                        discoveredFeeds[existingIndex] = {
+                            url: testUrl,
+                            title: feedData.title || discoveredFeeds[existingIndex].title,
+                            type: testUrl.includes('atom') ? 'atom' : 'rss',
+                            siteUrl: feedData.link || normalizedUrl,
+                        };
+                    } else {
+                        // Add new entry
+                        discoveredFeeds.push({
+                            url: testUrl,
+                            title: feedData.title || 'Feed',
+                            type: testUrl.includes('atom') ? 'atom' : 'rss',
+                            siteUrl: feedData.link || normalizedUrl,
+                        });
+                    }
+                } catch (err) {
+                    // Feed not valid, skip
+                    continue;
+                }
+            }
+        }
+
+        // 3. Validate all discovered feeds
+        const validatedFeeds: DiscoveredFeed[] = [];
+
+        for (const feed of discoveredFeeds) {
+            try {
+                const feedData = await fetchFeed(feed.url);
+                validatedFeeds.push({
+                    ...feed,
+                    title: feedData.title || feed.title,
+                    siteUrl: feedData.link || feed.siteUrl,
+                });
+            } catch (err) {
+                // Feed not valid, skip
+                continue;
+            }
+        }
+
+        if (validatedFeeds.length === 0) {
+            return { error: 'No RSS/Atom feeds found for this URL.' };
+        }
+
+        return { feeds: validatedFeeds };
+
+    } catch (err) {
+        return { error: `Discovery failed: ${(err as Error).message}` };
+    }
+}
