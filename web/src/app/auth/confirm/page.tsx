@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
+import { createClient } from '../../../lib/supabase/client';
 import { EmailOtpType } from '@supabase/supabase-js';
 
 function ConfirmContent() {
@@ -23,6 +23,7 @@ function ConfirmContent() {
 			}
 
 			try {
+				const supabase = createClient();
 				const { error } = await supabase.auth.verifyOtp({
 					token_hash,
 					type,

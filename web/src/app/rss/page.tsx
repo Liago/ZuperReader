@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import RSSLayout from '@/components/RSS/RSSLayout';
 
 interface Feed {
@@ -41,6 +41,7 @@ export default function RSSPage() {
 
       try {
         setIsLoadingData(true);
+        const supabase = createClient();
 
         // Fetch Folders
         const { data: foldersData, error: foldersError } = await supabase
