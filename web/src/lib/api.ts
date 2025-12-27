@@ -1,4 +1,8 @@
-import { supabase, Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
+import { createClient } from './supabase/client';
+import type { Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences } from './supabase';
+
+// Create a singleton supabase client for this module
+const supabase = createClient();
 
 const PARSE_FUNCTION_URL = process.env.NEXT_PUBLIC_PARSE_FUNCTION_URL || '/.netlify/functions/parse';
 
