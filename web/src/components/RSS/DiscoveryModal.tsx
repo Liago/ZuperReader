@@ -87,148 +87,182 @@ export default function DiscoveryModal({ isOpen, onClose, folders }: DiscoveryMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={handleClose}></div>
-
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
-          <div>
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
-              <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <div className="mt-3 text-center sm:mt-5">
-              <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">Discover RSS Feeds</h3>
-              <div className="mt-2 text-sm text-gray-500">
-                <p>Enter a website URL or domain to discover available RSS/Atom feeds.</p>
-              </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Discover RSS Feeds</h2>
+              <p className="text-sm text-gray-500">Find feeds from any website</p>
             </div>
           </div>
+          <button
+            onClick={handleClose}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-          <form onSubmit={handleSearch} className="mt-5 sm:mt-6">
-            <div className="mb-4">
+        {/* Content */}
+        <form onSubmit={handleSearch} className="p-5">
+          <div className="relative">
+            <label htmlFor="search-url" className="text-sm font-medium text-gray-700 mb-2 block">
+              Website URL or Domain
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+              </div>
               <input
+                id="search-url"
                 type="text"
                 value={searchUrl}
                 onChange={(e) => setSearchUrl(e.target.value)}
                 placeholder="e.g., example.com or https://example.com"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 border"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 text-gray-900 placeholder-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSearching}
               />
             </div>
+          </div>
 
-            {errorMessage && (
-              <div className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {errorMessage}
+          {errorMessage && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">{errorMessage}</p>
               </div>
-            )}
+            </div>
+          )}
 
-            {discoveredFeeds.length > 0 && (
-              <div className="mb-4 max-h-96 overflow-y-auto border border-gray-200 rounded-md">
-                <div className="divide-y divide-gray-200">
-                  {discoveredFeeds.map((feed) => {
-                    const isAdded = addedFeeds.has(feed.url);
-                    const isAdding = addingFeed[feed.url];
+          {discoveredFeeds.length > 0 && (
+            <div className="mt-4 max-h-96 overflow-y-auto border-2 border-gray-200 rounded-xl">
+              <div className="divide-y divide-gray-100">
+                {discoveredFeeds.map((feed) => {
+                  const isAdded = addedFeeds.has(feed.url);
+                  const isAdding = addingFeed[feed.url];
 
-                    return (
-                      <div key={feed.url} className="p-4 hover:bg-gray-50">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium text-gray-900 truncate">
-                              {feed.title}
-                            </h4>
-                            <p className="text-xs text-gray-500 truncate mt-1">
-                              {feed.url}
-                            </p>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-2">
-                              {feed.type.toUpperCase()}
-                            </span>
-                          </div>
+                  return (
+                    <div key={feed.url} className="p-4 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-pink-50/50 transition-all">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                            {feed.title}
+                          </h4>
+                          <p className="text-xs text-gray-500 truncate mt-1">
+                            {feed.url}
+                          </p>
+                          <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-gradient-to-r from-orange-100 to-pink-100 text-orange-800 mt-2">
+                            {feed.type.toUpperCase()}
+                          </span>
+                        </div>
 
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={selectedFolders[feed.url] || ''}
-                              onChange={(e) => handleFolderChange(feed.url, e.target.value)}
-                              className="text-xs border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                              disabled={isAdded || isAdding}
-                            >
-                              <option value="">Uncategorized</option>
-                              {folders.map((folder) => (
-                                <option key={folder.id} value={folder.id}>
-                                  {folder.name}
-                                </option>
-                              ))}
-                            </select>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={selectedFolders[feed.url] || ''}
+                            onChange={(e) => handleFolderChange(feed.url, e.target.value)}
+                            className="text-xs border-2 border-gray-200 rounded-lg shadow-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all"
+                            disabled={isAdded || isAdding}
+                          >
+                            <option value="">Uncategorized</option>
+                            {folders.map((folder) => (
+                              <option key={folder.id} value={folder.id}>
+                                {folder.name}
+                              </option>
+                            ))}
+                          </select>
 
-                            <button
-                              type="button"
-                              onClick={() => handleAddFeed(feed)}
-                              disabled={isAdded || isAdding}
-                              className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                                isAdded
-                                  ? 'bg-green-600 cursor-not-allowed'
-                                  : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                              } disabled:opacity-50`}
-                            >
-                              {isAdding ? (
-                                <>
-                                  <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Adding...
-                                </>
-                              ) : isAdded ? (
-                                <>
-                                  <svg className="-ml-0.5 mr-1.5 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                  Added
-                                </>
-                              ) : (
-                                'Add Feed'
-                              )}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAddFeed(feed)}
+                            disabled={isAdded || isAdding}
+                            className={`inline-flex items-center px-3 py-2 border border-transparent text-xs font-semibold rounded-xl shadow-sm text-white transition-all ${
+                              isAdded
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:shadow-lg hover:scale-105'
+                            } disabled:opacity-50`}
+                          >
+                            {isAdding ? (
+                              <>
+                                <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Adding...
+                              </>
+                            ) : isAdded ? (
+                              <>
+                                <svg className="-ml-0.5 mr-1.5 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                Added
+                              </>
+                            ) : (
+                              'Add Feed'
+                            )}
+                          </button>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-              >
-                Close
-              </button>
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
-              >
+          {/* Actions */}
+          <div className="mt-6 flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              disabled={isSearching || !searchUrl.trim()}
+              className="relative px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 overflow-hidden group"
+            >
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+              <span className="relative flex items-center justify-center gap-2">
                 {isSearching ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Searching...
                   </>
                 ) : (
-                  'Discover Feeds'
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Discover Feeds
+                  </>
                 )}
-              </button>
-            </div>
-          </form>
-        </div>
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

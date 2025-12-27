@@ -42,19 +42,19 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId }: RSSL
   // I didn't add router.refresh() in Sidebar. I should probably add it there.
   
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-50">
+    <div className="flex h-[calc(100vh-73px)] overflow-hidden">
         {/* Sidebar */}
-        <RSSSidebar 
-            folders={initialFolders} 
-            feeds={initialFeeds} 
+        <RSSSidebar
+            folders={initialFolders}
+            feeds={initialFeeds}
             selectedFeedId={selectedFeed?.id}
             onSelectFeed={setSelectedFeed}
         />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <FeedList 
-                feedUrl={selectedFeed?.url || null} 
+            <FeedList
+                feedUrl={selectedFeed?.url || null}
                 userId={userId}
             />
         </div>
