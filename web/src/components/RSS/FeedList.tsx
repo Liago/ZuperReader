@@ -83,55 +83,94 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
   };
 
   if (loading) {
-      return <div className="p-8 text-center text-gray-500">Loading feed...</div>;
+      return (
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+            <p className="text-orange-600 font-medium">Loading feed...</p>
+          </div>
+        </div>
+      );
   }
 
   if (error) {
-      return <div className="p-8 text-center text-red-500">Error: {error}</div>;
+      return (
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl shadow-lg text-center">
+            <p className="text-red-600 font-semibold">Error: {error}</p>
+          </div>
+        </div>
+      );
   }
 
   if (!feedUrl) {
-      return <div className="p-8 text-center text-gray-500 text-lg">Select a feed to start reading</div>;
+      return (
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center">
+              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" />
+                <path d="M5 9a1 1 0 000 2 4.002 4.002 0 014 4 1 1 0 102 0 6.002 6.002 0 00-6-6z" />
+                <path d="M5 15a1 1 0 100 2 1 1 0 000-2z" />
+              </svg>
+            </div>
+            <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">Select a feed to start reading</p>
+          </div>
+        </div>
+      );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white/50 p-4 sm:p-8">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">{feedTitle}</h1>
-      <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+      <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent border-b border-gray-200 pb-4">{feedTitle}</h1>
+      <div className="space-y-4 max-w-4xl mx-auto">
           {items.map((item, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+              <div key={idx} className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200">
                   <div className="flex justify-between items-start gap-4">
-                      <div>
-                          <div 
+                      <div className="flex-1">
+                          <div
                               onClick={() => handleRead(item.link)}
-                              className="text-xl font-semibold text-gray-900 hover:text-indigo-600 mb-2 block cursor-pointer"
+                              className="text-xl font-bold text-gray-900 hover:bg-gradient-to-r hover:from-orange-600 hover:to-pink-600 hover:bg-clip-text hover:text-transparent mb-2 block cursor-pointer transition-all"
                           >
                               {item.title}
                           </div>
-                          <div className="text-sm text-gray-500 mb-4 flex gap-3">
-                              {item.author && <span>{item.author}</span>}
-                              {item.pubDate && <span>{new Date(item.pubDate).toLocaleDateString()}</span>}
-                              {item.isoDate && <span>{new Date(item.isoDate).toLocaleDateString()}</span>}
+                          <div className="text-sm text-gray-500 mb-4 flex gap-3 items-center">
+                              {item.author && (
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  </svg>
+                                  {item.author}
+                                </span>
+                              )}
+                              {(item.pubDate || item.isoDate) && (
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  {new Date(item.pubDate || item.isoDate!).toLocaleDateString()}
+                                </span>
+                              )}
                           </div>
                           <div className="text-gray-600 leading-relaxed mb-4 line-clamp-3">
                               {item.contentSnippet || item.content?.replace(/<[^>]*>?/gm, '').substring(0, 300) + '...'}
                           </div>
                       </div>
                   </div>
-                  
-                  <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50">
-                      <button 
+
+                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+                      <button
                         onClick={() => handleRead(item.link)}
-                        className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-medium transition-colors"
+                        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl hover:shadow-lg hover:scale-105 text-sm font-semibold transition-all"
                       >
                           Read Now
                       </button>
-                      
+
                       {/* Shortcut to save without reading */}
-                      <button 
+                      <button
                         onClick={() => handleSaveToLibrary(item)}
                         disabled={savingId === item.link}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
+                        className="px-4 py-2 bg-white/80 border border-gray-200 text-gray-700 rounded-xl hover:bg-white hover:shadow-md text-sm font-medium transition-all disabled:opacity-70 flex items-center gap-2"
                       >
                           {savingId === item.link ? (
                               <>
@@ -145,12 +184,12 @@ export default function FeedList({ feedUrl, userId }: FeedListProps) {
                               </>
                           )}
                       </button>
-                      
-                      <a 
-                          href={item.link} 
-                          target="_blank" 
+
+                      <a
+                          href={item.link}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="px-4 py-2 text-gray-400 hover:text-gray-600 rounded-lg text-sm font-medium transition-colors ml-auto"
+                          className="px-4 py-2 text-gray-400 hover:text-gray-600 rounded-xl text-sm font-medium transition-colors ml-auto flex items-center gap-1"
                           title="Open original link"
                       >
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
