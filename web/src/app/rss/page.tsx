@@ -61,6 +61,11 @@ export default function RSSPage() {
         // Fetch Feeds with unread counts
         const feedsData = await getRSSFeedsWithUnreadCounts(user.id);
 
+        console.log('📊 Feeds loaded with unread counts:', feedsData.map(f => ({
+          title: f.title,
+          unread: f.unread_count
+        })));
+
         setFolders(foldersData || []);
         setFeeds(feedsData || []);
       } catch (err) {

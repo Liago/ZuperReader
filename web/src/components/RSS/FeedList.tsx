@@ -37,21 +37,36 @@ export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
         setError(null);
         try {
             const { getFeedContent } = await import('@/app/actions/rss');
+
+            console.log('🔄 Loading feed:', { feedUrl, feedId });
+
             // Pass feedId to sync articles to database
             const data = await getFeedContent(feedUrl, feedId || undefined);
+
+            console.log('📦 Feed data received:', {
+                hasError: !!data.error,
+                itemsCount: data.feed?.items?.length || 0,
+                syncStats: data.syncStats
+            });
 
             if (data.error) throw new Error(data.error);
             if (data.feed) {
                 setFeedTitle(data.feed.title || 'Untitled Feed');
                 setItems(data.feed.items);
+
+                if (data.syncStats) {
+                    console.log('✅ Synced to database:', data.syncStats);
+                }
             }
 
             // Load tracked articles from database
             if (feedId) {
                 const trackedArticles = await getRSSArticles(userId, feedId);
+                console.log('📊 Tracked articles loaded:', trackedArticles.length);
                 setRssArticles(trackedArticles);
             }
         } catch (err) {
+            console.error('❌ Error loading feed:', err);
             setError((err as Error).message);
         } finally {
             setLoading(false);
