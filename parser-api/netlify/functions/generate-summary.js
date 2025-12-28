@@ -6,7 +6,8 @@ const CORS_HEADERS = {
 
 // Cohere API configuration
 const COHERE_API_KEY = process.env.COHERE_API_KEY || 'O2pO7lIlFe6nfZqyX4WhxTFE3Zgr79TCHtlVA6Vq';
-const COHERE_API_URL = 'https://api.cohere.ai/v1/summarize';
+const COHERE_API_URL = 'https://api.cohere.ai/v1/chat';
+const COHERE_MODEL = 'command-r-08-2024'; // Recommended model for summarization
 
 /**
  * Strip HTML tags from content to get plain text
@@ -36,13 +37,25 @@ function stripHtml(html) {
 }
 
 /**
- * Generate AI summary using Cohere API
+ * Generate AI summary using Cohere Chat API
  */
 async function generateSummaryWithCohere(text, length = 'medium') {
 	try {
-		// Cohere has a limit of ~100k characters, but we'll use a more conservative limit
-		const maxLength = 50000;
+		// Command R models support 128k context length, but we'll use a conservative limit
+		const maxLength = 100000;
 		const truncatedText = text.length > maxLength ? text.substring(0, maxLength) : text;
+
+		// Map length to specific instructions
+		const lengthInstructions = {
+			short: 'in 2-3 concise sentences',
+			medium: 'in a single paragraph of 4-6 sentences',
+			long: 'in 2-3 detailed paragraphs',
+		};
+
+		const lengthInstruction = lengthInstructions[length] || lengthInstructions.medium;
+
+		// Create the summarization prompt
+		const prompt = `Please provide a clear and concise summary of the following text ${lengthInstruction}. Focus on the main points and key information:\n\n${truncatedText}`;
 
 		const response = await fetch(COHERE_API_URL, {
 			method: 'POST',
@@ -51,11 +64,10 @@ async function generateSummaryWithCohere(text, length = 'medium') {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				text: truncatedText,
-				length: length, // 'short', 'medium', or 'long'
-				format: 'paragraph',
-				extractiveness: 'medium',
+				model: COHERE_MODEL,
+				message: prompt,
 				temperature: 0.3,
+				max_tokens: 500, // Limit summary length
 			}),
 		});
 
@@ -65,7 +77,7 @@ async function generateSummaryWithCohere(text, length = 'medium') {
 		}
 
 		const data = await response.json();
-		return data.summary;
+		return data.text;
 	} catch (error) {
 		console.error('Error calling Cohere API:', error);
 		throw error;
