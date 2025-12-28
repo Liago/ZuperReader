@@ -196,101 +196,123 @@ export default function FeedList({ feedUrl, feedId, userId }: FeedListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-      <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent border-b border-gray-200 pb-4">{feedTitle}</h1>
-      <div className="space-y-4 max-w-4xl mx-auto">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent border-b border-gray-200 pb-3">{feedTitle}</h1>
+
+      {/* List View - Compact */}
+      <div className="max-w-5xl mx-auto">
           {items.map((item, idx) => {
               const isRead = isArticleRead(item);
               return (
               <div
                   key={idx}
                   data-article-index={idx}
-                  className={`bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 hover:border-orange-200 ${isRead ? 'opacity-60' : ''}`}
+                  className={`
+                    border-b border-gray-200 py-3 px-2
+                    hover:bg-orange-50/50 transition-colors cursor-pointer
+                    ${isRead ? 'bg-gray-50/50' : 'bg-white'}
+                  `}
+                  onClick={() => handleRead(item)}
               >
-                  <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                          <div className="flex items-start gap-2 mb-2">
-                              <div
-                                  onClick={() => handleRead(item)}
-                                  className={`text-xl font-bold flex-1 hover:bg-gradient-to-r hover:from-orange-600 hover:to-pink-600 hover:bg-clip-text hover:text-transparent cursor-pointer transition-all ${isRead ? 'text-gray-500' : 'text-gray-900'}`}
-                              >
-                                  {item.title}
-                              </div>
-                              {isRead && (
-                                  <span className="flex-shrink-0 text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-medium">
-                                      Read
-                                  </span>
-                              )}
+                  {/* Header Row: Title + Status */}
+                  <div className="flex items-start gap-3 mb-1">
+                      {/* Unread Indicator Dot */}
+                      {!isRead && (
+                          <div className="flex-shrink-0 mt-1.5">
+                              <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
                           </div>
-                          <div className="text-sm text-gray-500 mb-4 flex gap-3 items-center">
-                              {item.author && (
-                                <span className="flex items-center gap-1">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                  </svg>
-                                  {item.author}
-                                </span>
-                              )}
-                              {(item.pubDate || item.isoDate) && (
-                                <span className="flex items-center gap-1">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  {new Date(item.pubDate || item.isoDate!).toLocaleDateString()}
-                                </span>
-                              )}
+                      )}
+                      {isRead && (
+                          <div className="flex-shrink-0 mt-1.5">
+                              <div className="w-2 h-2 rounded-full bg-gray-300"></div>
                           </div>
-                          <div className="text-gray-600 leading-relaxed mb-4 line-clamp-3">
-                              {item.contentSnippet || item.content?.replace(/<[^>]*>?/gm, '').substring(0, 300) + '...'}
-                          </div>
+                      )}
+
+                      {/* Title */}
+                      <div className="flex-1 min-w-0">
+                          <h3 className={`
+                              text-base font-semibold leading-tight
+                              ${isRead ? 'text-gray-500' : 'text-gray-900'}
+                              hover:text-orange-600 transition-colors
+                          `}>
+                              {item.title}
+                          </h3>
                       </div>
+
+                      {/* Read Badge */}
+                      {isRead && (
+                          <span className="flex-shrink-0 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                              Read
+                          </span>
+                      )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-                      <button
-                        onClick={() => handleRead(item)}
-                        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl hover:shadow-lg hover:scale-105 text-sm font-semibold transition-all"
-                      >
-                          Read Now
-                      </button>
+                  {/* Metadata Row */}
+                  <div className="flex items-center gap-4 text-xs text-gray-500 ml-5">
+                      {item.author && (
+                          <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              {item.author}
+                          </span>
+                      )}
+                      {(item.pubDate || item.isoDate) && (
+                          <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {new Date(item.pubDate || item.isoDate!).toLocaleDateString('it-IT', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                              })}
+                          </span>
+                      )}
 
-                      {/* Shortcut to save without reading */}
-                      <button
-                        onClick={() => handleSaveToLibrary(item)}
-                        disabled={savingId === item.link}
-                        className="px-4 py-2 bg-white/80 border border-gray-200 text-gray-700 rounded-xl hover:bg-white hover:shadow-md text-sm font-medium transition-all disabled:opacity-70 flex items-center gap-2"
-                      >
-                          {savingId === item.link ? (
-                              <>
-                                <svg className="animate-spin h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                Saving...
-                              </>
-                          ) : (
-                              <>
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                                Save for Later
-                              </>
-                          )}
-                      </button>
+                      {/* Quick Actions */}
+                      <div className="ml-auto flex items-center gap-2">
+                          <button
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaveToLibrary(item);
+                              }}
+                              disabled={savingId === item.link}
+                              className="text-gray-400 hover:text-orange-600 transition-colors p-1"
+                              title="Save to Library"
+                          >
+                              {savingId === item.link ? (
+                                  <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                              ) : (
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                  </svg>
+                              )}
+                          </button>
 
-                      <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 text-gray-400 hover:text-gray-600 rounded-xl text-sm font-medium transition-colors ml-auto flex items-center gap-1"
-                          title="Open original link"
-                      >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                      </a>
+                          <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-gray-400 hover:text-orange-600 transition-colors p-1"
+                              title="Open original"
+                          >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                          </a>
+                      </div>
                   </div>
               </div>
           );
           })}
       </div>
-      
-      <ReaderModal 
+
+      <ReaderModal
           isOpen={isReaderOpen}
           onClose={() => setIsReaderOpen(false)}
           url={readerUrl}
