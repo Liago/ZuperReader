@@ -54,8 +54,8 @@ async function generateSummaryWithCohere(text, length = 'medium') {
 
 		const lengthInstruction = lengthInstructions[length] || lengthInstructions.medium;
 
-		// Create the summarization prompt
-		const prompt = `Please provide a clear and concise summary of the following text ${lengthInstruction}. Focus on the main points and key information:\n\n${truncatedText}`;
+		// Create the summarization prompt in Italian
+		const prompt = `Per favore fornisci un riassunto chiaro e conciso del seguente testo ${lengthInstruction}, in lingua italiana. Concentrati sui punti principali e sulle informazioni chiave:\n\n${truncatedText}`;
 
 		const response = await fetch(COHERE_API_URL, {
 			method: 'POST',
