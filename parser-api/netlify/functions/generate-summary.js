@@ -39,7 +39,7 @@ function stripHtml(html) {
 /**
  * Generate AI summary using Cohere Chat API
  */
-async function generateSummaryWithCohere(text, length = 'medium') {
+async function generateSummaryWithCohere(text, length = 'medium', format = 'summary') {
 	try {
 		// Command R models support 128k context length, but we'll use a conservative limit
 		const maxLength = 100000;
@@ -54,8 +54,29 @@ async function generateSummaryWithCohere(text, length = 'medium') {
 
 		const lengthInstruction = lengthInstructions[length] || lengthInstructions.medium;
 
-		// Create the summarization prompt in Italian
-		const prompt = `Per favore fornisci un riassunto chiaro e conciso del seguente testo ${lengthInstruction}, in lingua italiana. Concentrati sui punti principali e sulle informazioni chiave:\n\n${truncatedText}`;
+		// Create the summarization prompt based on format
+		let prompt;
+		if (format === 'bullet') {
+			// Bullet point format
+			prompt = `Riassumi questo articolo in stile punto elenco in lingua italiana. Utilizza il seguente formato:
+
+[Titolo dell'articolo]
+…………………………………
+
+- [Punto chiave 1]
+- [Punto chiave 2]
+- [Punto chiave 3]
+- [Punti aggiuntivi se necessario]
+
+Assicurati di catturare i punti principali e le informazioni essenziali ${lengthInstruction}. Ecco il testo:
+
+${truncatedText}`;
+		} else {
+			// Standard summary format (default)
+			prompt = `Leggi attentamente questo articolo e fornisci un riassunto dettagliato ${lengthInstruction} in lingua italiana, suddividendo le informazioni principali in sezioni. Evidenzia i punti chiave, gli argomenti essenziali e le conclusioni finali, mantenendo chiarezza e coerenza con il testo originale.
+
+${truncatedText}`;
+		}
 
 		const response = await fetch(COHERE_API_URL, {
 			method: 'POST',
@@ -104,7 +125,7 @@ exports.handler = async (event) => {
 
 	try {
 		const body = JSON.parse(event.body || '{}');
-		const { content, length = 'medium' } = body;
+		const { content, length = 'medium', format = 'summary' } = body;
 
 		if (!content) {
 			return {
@@ -125,10 +146,10 @@ exports.handler = async (event) => {
 			};
 		}
 
-		console.log(`Generating summary for content (${plainText.length} characters)...`);
+		console.log(`Generating ${format} summary for content (${plainText.length} characters)...`);
 
 		// Generate summary using Cohere
-		const summary = await generateSummaryWithCohere(plainText, length);
+		const summary = await generateSummaryWithCohere(plainText, length, format);
 
 		console.log('Summary generated successfully');
 
