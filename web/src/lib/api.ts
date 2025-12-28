@@ -1102,6 +1102,75 @@ export async function deleteOldRSSArticles(
 	return data?.length || 0;
 }
 
+// ==================== AI SUMMARY FUNCTIONS ====================
+
+const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL || '/.netlify/functions/generate-summary';
+
+/**
+ * Generate AI summary for article content
+ */
+export async function generateAISummary(
+	content: string,
+	length: 'short' | 'medium' | 'long' = 'medium'
+): Promise<string> {
+	const response = await fetch(SUMMARY_FUNCTION_URL, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ content, length }),
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || 'Failed to generate summary');
+	}
+
+	const data = await response.json();
+	return data.summary;
+}
+
+/**
+ * Generate and save AI summary for an article
+ */
+export async function generateAndSaveArticleSummary(
+	articleId: string,
+	content: string,
+	length: 'short' | 'medium' | 'long' = 'medium'
+): Promise<Article> {
+	// Generate summary
+	const summary = await generateAISummary(content, length);
+
+	// Save to database
+	const { data, error } = await supabase
+		.from('articles')
+		.update({
+			ai_summary: summary,
+			ai_summary_generated_at: new Date().toISOString()
+		})
+		.eq('id', articleId)
+		.select()
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+/**
+ * Regenerate AI summary for an article
+ */
+export async function regenerateArticleSummary(
+	articleId: string,
+	length: 'short' | 'medium' | 'long' = 'medium'
+): Promise<Article> {
+	// Get article content
+	const article = await getArticleById(articleId);
+	if (!article || !article.content) {
+		throw new Error('Article not found or has no content');
+	}
+
+	// Generate and save new summary
+	return generateAndSaveArticleSummary(articleId, article.content, length);
+}
+
 // ==================== USER PREFERENCES ====================
 
 /**

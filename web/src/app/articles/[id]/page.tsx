@@ -17,6 +17,7 @@ import { TagList } from '../../../components/TagBadge';
 import TagManagementModal from '../../../components/TagManagementModal';
 import ReadingProgressIndicator from '../../../components/ReadingProgressIndicator';
 import ImageGalleryModal from '../../../components/ImageGalleryModal';
+import AISummaryBox from '../../../components/AISummaryBox';
 import Link from 'next/link';
 
 export default function ArticleReaderPage() {
@@ -1056,6 +1057,14 @@ export default function ArticleReaderPage() {
 						</div>
 					</div>
 				</header>
+
+				{/* AI Summary Box */}
+				<div className="mb-8">
+					<AISummaryBox
+						article={article}
+						onSummaryUpdated={(updatedArticle) => setArticle(updatedArticle)}
+					/>
+				</div>
 
 				{/* Article Content */}
 				<div

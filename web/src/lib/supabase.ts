@@ -25,6 +25,8 @@ export type Article = {
 	reading_progress: number; // 0-100 percentage of article read
 	estimated_read_time: number | null;
 	is_public: boolean;
+	ai_summary: string | null; // AI-generated summary using Cohere
+	ai_summary_generated_at: string | null; // When the summary was generated
 	scraped_at: string;
 	created_at: string;
 	updated_at: string;
