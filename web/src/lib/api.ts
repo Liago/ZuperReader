@@ -1111,12 +1111,13 @@ const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL || '/.
  */
 export async function generateAISummary(
 	content: string,
-	length: 'short' | 'medium' | 'long' = 'medium'
+	length: 'short' | 'medium' | 'long' = 'medium',
+	format: 'summary' | 'bullet' = 'summary'
 ): Promise<string> {
 	const response = await fetch(SUMMARY_FUNCTION_URL, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ content, length }),
+		body: JSON.stringify({ content, length, format }),
 	});
 
 	if (!response.ok) {
@@ -1134,10 +1135,11 @@ export async function generateAISummary(
 export async function generateAndSaveArticleSummary(
 	articleId: string,
 	content: string,
-	length: 'short' | 'medium' | 'long' = 'medium'
+	length: 'short' | 'medium' | 'long' = 'medium',
+	format: 'summary' | 'bullet' = 'summary'
 ): Promise<Article> {
 	// Generate summary
-	const summary = await generateAISummary(content, length);
+	const summary = await generateAISummary(content, length, format);
 
 	// Save to database
 	const { data, error } = await supabase
@@ -1159,7 +1161,8 @@ export async function generateAndSaveArticleSummary(
  */
 export async function regenerateArticleSummary(
 	articleId: string,
-	length: 'short' | 'medium' | 'long' = 'medium'
+	length: 'short' | 'medium' | 'long' = 'medium',
+	format: 'summary' | 'bullet' = 'summary'
 ): Promise<Article> {
 	// Get article content
 	const article = await getArticleById(articleId);
@@ -1168,7 +1171,7 @@ export async function regenerateArticleSummary(
 	}
 
 	// Generate and save new summary
-	return generateAndSaveArticleSummary(articleId, article.content, length);
+	return generateAndSaveArticleSummary(articleId, article.content, length, format);
 }
 
 // ==================== USER PREFERENCES ====================
