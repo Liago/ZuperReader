@@ -934,10 +934,11 @@ export async function syncRSSArticles(
 		contentSnippet?: string;
 	}>,
 	supabaseClient?: any // Optional authenticated client
-): Promise<{ added: number; existing: number }> {
+): Promise<{ added: number; existing: number; errors: string[] }> {
 	const db = supabaseClient || supabase;
 	let added = 0;
 	let existing = 0;
+	const errors: string[] = [];
 
 	for (const article of articles) {
 		try {
@@ -962,16 +963,18 @@ export async function syncRSSArticles(
 					existing++;
 				} else {
 					console.error('Error syncing RSS article:', error);
+					errors.push(`Error for '${article.title}': ${error.message} (${error.code})`);
 				}
 			} else {
 				added++;
 			}
 		} catch (err) {
 			console.error('Unexpected error syncing article:', err);
+			errors.push(`Unexpected error for '${article.title}': ${(err as Error).message}`);
 		}
 	}
 
-	return { added, existing };
+	return { added, existing, errors };
 }
 
 /**
@@ -1025,8 +1028,9 @@ export async function markMultipleRSSArticlesAsRead(articleIds: string[], userId
 /**
  * Get unread count for a specific feed
  */
-export async function getFeedUnreadCount(userId: string, feedId: string): Promise<number> {
-	const { count, error } = await supabase
+export async function getFeedUnreadCount(userId: string, feedId: string, supabaseClient?: any): Promise<number> {
+	const db = supabaseClient || supabase;
+	const { count, error } = await db
 		.from('rss_articles')
 		.select('*', { count: 'exact', head: true })
 		.eq('user_id', userId)
@@ -1040,8 +1044,9 @@ export async function getFeedUnreadCount(userId: string, feedId: string): Promis
 /**
  * Get unread counts for all feeds
  */
-export async function getAllFeedsUnreadCounts(userId: string): Promise<Map<string, number>> {
-	const { data, error } = await supabase
+export async function getAllFeedsUnreadCounts(userId: string, supabaseClient?: any): Promise<Map<string, number>> {
+	const db = supabaseClient || supabase;
+	const { data, error } = await db
 		.from('rss_articles')
 		.select('feed_id')
 		.eq('user_id', userId)
@@ -1060,9 +1065,10 @@ export async function getAllFeedsUnreadCounts(userId: string): Promise<Map<strin
 /**
  * Get RSS feeds with unread counts
  */
-export async function getRSSFeedsWithUnreadCounts(userId: string): Promise<RSSFeed[]> {
+export async function getRSSFeedsWithUnreadCounts(userId: string, supabaseClient?: any): Promise<RSSFeed[]> {
+	const db = supabaseClient || supabase;
 	// Get all feeds
-	const { data: feeds, error: feedsError } = await supabase
+	const { data: feeds, error: feedsError } = await db
 		.from('rss_feeds')
 		.select('*')
 		.eq('user_id', userId)
@@ -1071,7 +1077,7 @@ export async function getRSSFeedsWithUnreadCounts(userId: string): Promise<RSSFe
 	if (feedsError) throw new Error(feedsError.message);
 
 	// Get unread counts
-	const unreadCounts = await getAllFeedsUnreadCounts(userId);
+	const unreadCounts = await getAllFeedsUnreadCounts(userId, db);
 
 	// Merge unread counts with feeds
 	const feedsWithCounts: RSSFeed[] = (feeds || []).map(feed => ({
