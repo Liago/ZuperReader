@@ -932,14 +932,16 @@ export async function syncRSSArticles(
 		author?: string;
 		content?: string;
 		contentSnippet?: string;
-	}>
+	}>,
+	supabaseClient?: any // Optional authenticated client
 ): Promise<{ added: number; existing: number }> {
+	const db = supabaseClient || supabase;
 	let added = 0;
 	let existing = 0;
 
 	for (const article of articles) {
 		try {
-			const { error } = await supabase
+			const { error } = await db
 				.from('rss_articles')
 				.insert([{
 					user_id: userId,
