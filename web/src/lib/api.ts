@@ -932,6 +932,7 @@ export async function syncRSSArticles(
 		author?: string;
 		content?: string;
 		contentSnippet?: string;
+		imageUrl?: string;
 	}>,
 	supabaseClient?: any // Optional authenticated client
 ): Promise<{ added: number; existing: number; errors: string[] }> {
@@ -954,6 +955,7 @@ export async function syncRSSArticles(
 					author: article.author || null,
 					content: article.content || null,
 					content_snippet: article.contentSnippet || null,
+					image_url: article.imageUrl || null,
 					is_read: false
 				}]);
 

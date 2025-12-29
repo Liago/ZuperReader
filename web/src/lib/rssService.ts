@@ -11,6 +11,7 @@ export interface FeedItem {
   contentSnippet?: string;
   isoDate?: string;
   guid?: string; // Unique identifier for the feed item
+  imageUrl?: string; // Extracted thumbnail/image URL
 }
 
 export interface FeedData {
@@ -41,9 +42,63 @@ const parser = new Parser({
     item: [
       ['content:encoded', 'contentEncoded'],
       ['media:content', 'mediaContent'],
+      ['media:thumbnail', 'mediaThumbnail'],
+      ['enclosure', 'enclosure'],
     ],
   },
 });
+
+/**
+ * Extracts image URL from various sources in RSS feed items
+ * Priority: media:thumbnail > media:content > enclosure > img in content
+ */
+function extractImageUrl(item: any): string | undefined {
+  // 1. Try media:thumbnail (most common for thumbnails)
+  if (item.mediaThumbnail) {
+    const thumbnail = Array.isArray(item.mediaThumbnail)
+      ? item.mediaThumbnail[0]
+      : item.mediaThumbnail;
+    if (thumbnail?.$ && thumbnail.$.url) {
+      return thumbnail.$.url;
+    }
+    if (typeof thumbnail === 'string') {
+      return thumbnail;
+    }
+  }
+
+  // 2. Try media:content
+  if (item.mediaContent) {
+    const media = Array.isArray(item.mediaContent)
+      ? item.mediaContent[0]
+      : item.mediaContent;
+    if (media?.$ && media.$.url) {
+      return media.$.url;
+    }
+  }
+
+  // 3. Try enclosure with image type
+  if (item.enclosure) {
+    const enclosure = Array.isArray(item.enclosure)
+      ? item.enclosure[0]
+      : item.enclosure;
+    if (enclosure?.$ && enclosure.$.type?.startsWith('image/')) {
+      return enclosure.$.url;
+    }
+    // Some feeds have enclosure as object directly
+    if (enclosure?.url && enclosure?.type?.startsWith('image/')) {
+      return enclosure.url;
+    }
+  }
+
+  // 4. Try to find first image in content
+  const content = item['content:encoded'] || item.content || '';
+  const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch && imgMatch[1]) {
+    return imgMatch[1];
+  }
+
+  return undefined;
+}
 
 /**
  * Fetches and parses an RSS feed from a URL
@@ -52,7 +107,7 @@ const parser = new Parser({
 export async function fetchFeed(url: string): Promise<FeedData> {
   try {
     const feed = await parser.parseURL(url);
-    
+
     // Transform to our interface if needed, or just return as is
     // rss-parser output is very similar to our FeedData interface
     return {
@@ -68,6 +123,7 @@ export async function fetchFeed(url: string): Promise<FeedData> {
         content: item['content:encoded'] || item.content,
         contentSnippet: item.contentSnippet,
         isoDate: item.isoDate,
+        imageUrl: extractImageUrl(item),
       })),
       image: feed.image,
     };

@@ -223,7 +223,8 @@ export async function getFeedContent(url: string, feedId?: string): Promise<{ fe
 						pubDate: item.pubDate,
 						author: item.creator || item.author,
 						content: item.content,
-						contentSnippet: item.contentSnippet
+						contentSnippet: item.contentSnippet,
+					imageUrl: item.imageUrl
 					}));
 
 				// Sync articles to database
