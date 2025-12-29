@@ -5,6 +5,7 @@ import { FeedData, FeedItem } from '@/lib/rssService';
 import { parseArticle, saveArticle, getRSSArticles, markRSSArticleAsRead } from '@/lib/api';
 import type { RSSArticle } from '@/lib/supabase';
 import ReaderModal from './ReaderModal';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface FeedListProps {
 	feedUrl: string | null;
@@ -234,7 +235,23 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
                   `}
 							onClick={() => handleRead(item)}
 						>
-							{/* Header Row: Title + Status */}
+							<div className="flex gap-3">
+								{/* Thumbnail Image */}
+								{item.imageUrl && (
+									<div className="flex-shrink-0">
+										<OptimizedImage
+											src={item.imageUrl}
+											alt={item.title || 'Article thumbnail'}
+											className="rounded-lg"
+											width={120}
+											height={80}
+										/>
+									</div>
+								)}
+
+								{/* Content Container */}
+								<div className="flex-1 min-w-0">
+											{/* Header Row: Title + Status */}
 							<div className="flex items-start gap-3 mb-1">
 								{/* Unread Indicator Dot */}
 								{!isRead && (
@@ -327,6 +344,8 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 									</a>
 								</div>
 							</div>
+							</div>
+						</div>
 						</div>
 					);
 				})}
