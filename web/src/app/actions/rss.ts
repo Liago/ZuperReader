@@ -256,8 +256,10 @@ export interface DiscoveredFeed {
  * NOTE: This is a lightweight scraper. It's fragile but avoids API keys.
  */
 async function searchForUrl(query: string): Promise<string | null> {
+	// 1. Web Scraping Search (DuckDuckGo)
 	try {
 		const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + ' rss feed')}`;
+		console.log(`🔍 Searching: ${searchUrl}`);
 		const response = await fetch(searchUrl, {
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -265,24 +267,45 @@ async function searchForUrl(query: string): Promise<string | null> {
 			signal: AbortSignal.timeout(5000)
 		});
 
-		if (!response.ok) return null;
+		if (response.ok) {
+			const html = await response.text();
+			const $ = cheerio.load(html);
+			const firstResult = $('.result__a').first().attr('href');
 
-		const html = await response.text();
-		const $ = cheerio.load(html);
-
-		// DDG HTML results have links in .result__a
-		const firstResult = $('.result__a').first().attr('href');
-
-		if (firstResult) {
-			// Sometimes DDG wraps URLs in their own redirect, but usually the text href is direct or we can decode it.
-			// Just in case, try to use it.
-			return firstResult;
+			if (firstResult) {
+				console.log(`✅ Search found: ${firstResult}`);
+				return firstResult;
+			}
 		}
-		return null;
 	} catch (e) {
 		console.error('Search failed:', e);
-		return null;
 	}
+
+	// 2. Fallback: Heuristic Domain Guessing
+	// e.g. "The Verge" -> "theverge.com"
+	try {
+		const cleanName = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+		if (cleanName.length > 2) {
+			const guessUrl = `https://${cleanName}.com`;
+			console.log(`🤔 Guessing URL: ${guessUrl}`);
+
+			// Quick check if this domain exists
+			const response = await fetch(guessUrl, {
+				method: 'HEAD',
+				headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SuperReader/1.0)' },
+				signal: AbortSignal.timeout(3000)
+			});
+
+			if (response.ok || response.status === 405) { // 405 Method Not Allowed often means server exists but hates HEAD
+				console.log(`✅ Guess validated: ${guessUrl}`);
+				return guessUrl;
+			}
+		}
+	} catch (e) {
+		console.log('Guessing failed:', e);
+	}
+
+	return null;
 }
 
 
