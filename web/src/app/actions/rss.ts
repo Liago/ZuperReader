@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { fetchFeed, parseOPML, OpmlOutline, FeedData } from '@/lib/rssService';
 import { syncRSSArticles } from '@/lib/api';
+import * as cheerio from 'cheerio';
 
 /**
  * Creates a new folder for RSS feeds
@@ -249,27 +250,79 @@ export interface DiscoveredFeed {
 }
 
 /**
- * Normalizes a URL by adding protocol if missing
+ * Fetches HTML from a DuckDuckGo search for "query rss" or just "query"
+ * Returns the first likely URL found in results.
+ * 
+ * NOTE: This is a lightweight scraper. It's fragile but avoids API keys.
  */
-function normalizeUrl(url: string): string {
-	url = url.trim();
-	if (!/^https?:\/\//i.test(url)) {
-		url = 'https://' + url;
+async function searchForUrl(query: string): Promise<string | null> {
+	try {
+		const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + ' rss feed')}`;
+		const response = await fetch(searchUrl, {
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+			},
+			signal: AbortSignal.timeout(5000)
+		});
+
+		if (!response.ok) return null;
+
+		const html = await response.text();
+		const $ = cheerio.load(html);
+
+		// DDG HTML results have links in .result__a
+		const firstResult = $('.result__a').first().attr('href');
+
+		if (firstResult) {
+			// Sometimes DDG wraps URLs in their own redirect, but usually the text href is direct or we can decode it.
+			// Just in case, try to use it.
+			return firstResult;
+		}
+		return null;
+	} catch (e) {
+		console.error('Search failed:', e);
+		return null;
 	}
-	return url;
 }
 
+
 /**
- * Discovers RSS/Atom feeds from a given URL or domain
+ * Discovers RSS/Atom feeds from a given URL or domain or query
  */
-export async function discoverFeeds(inputUrl: string): Promise<{ feeds?: DiscoveredFeed[]; error?: string }> {
+export async function discoverFeeds(input: string): Promise<{ feeds?: DiscoveredFeed[]; error?: string }> {
 	try {
-		const normalizedUrl = normalizeUrl(inputUrl);
+		let normalizedUrl = input.trim();
 		const discoveredFeeds: DiscoveredFeed[] = [];
 		const checkedUrls = new Set<string>();
 
+		// 1. Heuristic: Is it a URL?
+		const hasProtocol = /^https?:\/\//i.test(normalizedUrl);
+		const hasDomain = /\.[a-z]{2,}(\/|$)/i.test(normalizedUrl); // simplistic domain check
+
+		if (!hasProtocol && !hasDomain) {
+			// Case 1: Search Query (e.g. "The Verge")
+			// Try to search for it
+			const searchResult = await searchForUrl(normalizedUrl);
+			if (searchResult) {
+				normalizedUrl = searchResult;
+			} else {
+				return { error: `Could not find a website for "${input}". Please try a full URL.` };
+			}
+		} else if (!hasProtocol && hasDomain) {
+			// Case 2: Domain without protocol (e.g. "theverge.com")
+			normalizedUrl = 'https://' + normalizedUrl;
+		}
+
+		// At this point normalizedUrl should be a valid-ish URL
+
 		// Parse the base URL
-		const baseUrl = new URL(normalizedUrl);
+		let baseUrl: URL;
+		try {
+			baseUrl = new URL(normalizedUrl);
+		} catch (e) {
+			return { error: 'Invalid URL constructed.' };
+		}
+
 		const origin = baseUrl.origin;
 
 		// 1. Fetch the HTML page to find <link> tags
@@ -278,51 +331,67 @@ export async function discoverFeeds(inputUrl: string): Promise<{ feeds?: Discove
 				headers: {
 					'User-Agent': 'Mozilla/5.0 (compatible; SuperReader/1.0; +https://superreader.app)',
 				},
-				signal: AbortSignal.timeout(10000), // 10 second timeout
+				signal: AbortSignal.timeout(10000),
 			});
 
 			if (response.ok) {
-				const html = await response.text();
+				const contentType = response.headers.get('content-type') || '';
 
-				// Parse HTML to find <link rel="alternate"> tags
-				const linkRegex = /<link[^>]*rel=["']alternate["'][^>]*>/gi;
-				const matches = html.match(linkRegex);
-
-				if (matches) {
-					for (const match of matches) {
-						// Check if it's RSS or Atom
-						const typeMatch = match.match(/type=["']([^"']+)["']/i);
-						const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-						const titleMatch = match.match(/title=["']([^"']+)["']/i);
-
-						if (typeMatch && hrefMatch) {
-							const type = typeMatch[1].toLowerCase();
-							if (type.includes('rss') || type.includes('atom')) {
-								let feedUrl = hrefMatch[1];
-
-								// Make absolute URL if relative
-								if (feedUrl.startsWith('/')) {
-									feedUrl = origin + feedUrl;
-								} else if (!feedUrl.startsWith('http')) {
-									feedUrl = origin + '/' + feedUrl;
-								}
-
-								if (!checkedUrls.has(feedUrl)) {
-									checkedUrls.add(feedUrl);
-									discoveredFeeds.push({
-										url: feedUrl,
-										title: titleMatch ? titleMatch[1] : 'Feed',
-										type: type.includes('atom') ? 'atom' : 'rss',
-										siteUrl: normalizedUrl,
-									});
-								}
-							}
-						}
+				// If the URL itself IS the feed (XML/RSS/Atom)
+				if (contentType.includes('xml') || contentType.includes('rss') || contentType.includes('atom')) {
+					// Verify it works
+					try {
+						const feedData = await fetchFeed(normalizedUrl);
+						return {
+							feeds: [{
+								url: normalizedUrl,
+								title: feedData.title || 'Feed',
+								type: 'rss', // simplified
+								siteUrl: feedData.link || origin
+							}]
+						};
+					} catch (e) {
+						// not a valid feed
 					}
 				}
+
+				const html = await response.text();
+				const $ = cheerio.load(html);
+
+				// Parse HTML to find <link rel="alternate"> tags
+				$('link[rel="alternate"]').each((_, el) => {
+					const $el = $(el);
+					const type = $el.attr('type')?.toLowerCase() || '';
+					const href = $el.attr('href');
+					const title = $el.attr('title');
+
+					if (href && (type.includes('rss') || type.includes('atom'))) {
+						let feedUrl = href;
+						// Make absolute URL if relative
+						if (feedUrl.startsWith('/')) {
+							feedUrl = origin + feedUrl;
+						} else if (!feedUrl.startsWith('http')) {
+							// Handle protocol-relative //example.com/feed or path-relative
+							if (feedUrl.startsWith('//')) {
+								feedUrl = baseUrl.protocol + feedUrl;
+							} else {
+								feedUrl = new URL(feedUrl, normalizedUrl).href;
+							}
+						}
+
+						if (!checkedUrls.has(feedUrl)) {
+							checkedUrls.add(feedUrl);
+							discoveredFeeds.push({
+								url: feedUrl,
+								title: title || 'Feed',
+								type: type.includes('atom') ? 'atom' : 'rss',
+								siteUrl: normalizedUrl,
+							});
+						}
+					}
+				});
 			}
 		} catch (err) {
-			// Continue to check common paths even if HTML fetch fails
 			console.error('HTML fetch error:', err);
 		}
 
@@ -330,74 +399,77 @@ export async function discoverFeeds(inputUrl: string): Promise<{ feeds?: Discove
 		const commonPaths = [
 			'/feed',
 			'/rss',
-			'/feed.xml',
 			'/rss.xml',
+			'/feed.xml',
 			'/atom.xml',
-			'/feed/atom',
 			'/index.xml',
 			'/blog/feed',
 			'/blog/rss',
-			'/feeds/posts/default',
 		];
 
-		for (const path of commonPaths) {
-			const testUrl = origin + path;
+		const promises = commonPaths.map(async path => {
+			const testUrl = new URL(path, origin).href;
+			// Prevent duplicates
+			if (checkedUrls.has(testUrl)) return;
 
-			if (!checkedUrls.has(testUrl)) {
-				checkedUrls.add(testUrl);
+			checkedUrls.add(testUrl);
 
-				try {
-					// Try to validate the feed
-					const feedData = await fetchFeed(testUrl);
-
-					// If successful, add to discovered feeds
-					const existingIndex = discoveredFeeds.findIndex(f => f.url === testUrl);
-					if (existingIndex >= 0) {
-						// Update existing entry with actual data
-						discoveredFeeds[existingIndex] = {
-							url: testUrl,
-							title: feedData.title || discoveredFeeds[existingIndex].title,
-							type: testUrl.includes('atom') ? 'atom' : 'rss',
-							siteUrl: feedData.link || normalizedUrl,
-						};
-					} else {
-						// Add new entry
-						discoveredFeeds.push({
-							url: testUrl,
-							title: feedData.title || 'Feed',
-							type: testUrl.includes('atom') ? 'atom' : 'rss',
-							siteUrl: feedData.link || normalizedUrl,
-						});
-					}
-				} catch (err) {
-					// Feed not valid, skip
-					continue;
-				}
-			}
-		}
-
-		// 3. Validate all discovered feeds
-		const validatedFeeds: DiscoveredFeed[] = [];
-
-		for (const feed of discoveredFeeds) {
 			try {
-				const feedData = await fetchFeed(feed.url);
-				validatedFeeds.push({
-					...feed,
-					title: feedData.title || feed.title,
-					siteUrl: feedData.link || feed.siteUrl,
-				});
-			} catch (err) {
-				// Feed not valid, skip
-				continue;
+				const feedData = await fetchFeed(testUrl);
+				// Check if this feed is already in our list (by URL)
+				const existing = discoveredFeeds.find(f => f.url === testUrl);
+				if (!existing) {
+					discoveredFeeds.push({
+						url: testUrl,
+						title: feedData.title || 'Feed',
+						type: 'rss',
+						siteUrl: feedData.link || origin
+					});
+				}
+			} catch (e) {
+				// ignore invalid
 			}
+		});
+
+		await Promise.allSettled(promises);
+
+		// 3. Final Validation check (optional, but ensures we don't return 404s from scraped <links>)
+		// We actually trust scraped links usually, but let's do a quick head check? 
+		// No, let's blindly trust explicit link tags for speed, but validated common paths were already checked.
+		// Actually, let's try to fetch title for scraped links if we can, concurrently.
+
+		const finalFeeds: DiscoveredFeed[] = [];
+
+		await Promise.all(discoveredFeeds.map(async (feed) => {
+			// If we already have a nice title (and we know it works from common paths check), keep it.
+			// If it came from a link tag, we might want to verify it works.
+			try {
+				// If it was scraped from link tag, title might be "RSS", "Atom", or "Feed". 
+				// Let's try to get a better title if it's generic.
+				if (feed.title === 'RSS' || feed.title === 'Atom' || feed.title === 'Feed' || !feed.title) {
+					const data = await fetchFeed(feed.url);
+					feed.title = data.title || feed.title;
+					feed.siteUrl = data.link || feed.siteUrl;
+				}
+				finalFeeds.push(feed);
+			} catch (e) {
+				// scraped link was broken?
+				console.log(`Failed to verify feed: ${feed.url}`);
+			}
+		}));
+
+		if (finalFeeds.length === 0) {
+			return { error: 'No RSS/Atom feeds found.' };
 		}
 
-		if (validatedFeeds.length === 0) {
-			return { error: 'No RSS/Atom feeds found for this URL.' };
-		}
+		// Remove duplicates again just in case
+		const uniqueFeeds = finalFeeds.filter((feed, index, self) =>
+			index === self.findIndex((t) => (
+				t.url === feed.url
+			))
+		);
 
-		return { feeds: validatedFeeds };
+		return { feeds: uniqueFeeds };
 
 	} catch (err) {
 		return { error: `Discovery failed: ${(err as Error).message}` };

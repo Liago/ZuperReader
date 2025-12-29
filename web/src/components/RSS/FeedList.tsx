@@ -58,10 +58,6 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 					if (data.syncStats) {
 						console.log('✅ Synced to database:', data.syncStats);
 
-						if (data.syncStats.errors && data.syncStats.errors.length > 0) {
-							console.error('❌ Sync errors:', data.syncStats.errors);
-						}
-
 						if (data.syncStats.added > 0 && onFeedUpdated) {
 							onFeedUpdated();
 						}

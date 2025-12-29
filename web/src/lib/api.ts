@@ -1055,7 +1055,7 @@ export async function getAllFeedsUnreadCounts(userId: string, supabaseClient?: a
 	if (error) throw new Error(error.message);
 
 	const counts = new Map<string, number>();
-	(data || []).forEach(item => {
+	(data || []).forEach((item: { feed_id: string }) => {
 		counts.set(item.feed_id, (counts.get(item.feed_id) || 0) + 1);
 	});
 
@@ -1080,7 +1080,7 @@ export async function getRSSFeedsWithUnreadCounts(userId: string, supabaseClient
 	const unreadCounts = await getAllFeedsUnreadCounts(userId, db);
 
 	// Merge unread counts with feeds
-	const feedsWithCounts: RSSFeed[] = (feeds || []).map(feed => ({
+	const feedsWithCounts: RSSFeed[] = (feeds || []).map((feed: any) => ({
 		...feed,
 		unread_count: unreadCounts.get(feed.id) || 0
 	}));
