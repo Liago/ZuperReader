@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { addFeed, createFolder } from '@/app/actions/rss';
+import { addFeed, createFolder, deleteFeed } from '@/app/actions/rss';
 
 interface Feed {
   id: string;
@@ -68,6 +68,21 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
     setNewFeedMode(false);
     setSelectedFolderId(null);
     router.refresh(); // Refresh to show the new feed
+  };
+
+  const handleDeleteFeed = async (feedId: string, feedTitle: string | null, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the feed selection
+
+    const confirmed = window.confirm(`Are you sure you want to delete "${feedTitle || 'this feed'}"? This will also delete all articles from this feed.`);
+    if (!confirmed) return;
+
+    const result = await deleteFeed(feedId);
+    if (result.error) {
+      alert(`Failed to delete feed: ${result.error}`);
+      return;
+    }
+
+    router.refresh(); // Refresh to update the feed list
   };
 
   return (
@@ -212,7 +227,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                         <div
                             key={feed.id}
                             onClick={() => onSelectFeed(feed)}
-                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
+                            className={`group cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
                         >
                             <img src={`https://www.google.com/s2/favicons?domain=${new URL(feed.url).hostname}`} className="w-4 h-4 flex-shrink-0" alt="" />
                             <span className="truncate flex-1">{feed.title || feed.url}</span>
@@ -221,6 +236,15 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                                     {feed.unread_count > 99 ? '99+' : feed.unread_count}
                                 </span>
                             )}
+                            <button
+                                onClick={(e) => handleDeleteFeed(feed.id, feed.title, e)}
+                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 transition-all flex-shrink-0"
+                                title="Delete feed"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
                         </div>
                     ))}
                     {(!feedsByFolder[folder.id] || feedsByFolder[folder.id].length === 0) && (
@@ -244,7 +268,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                         <div
                             key={feed.id}
                             onClick={() => onSelectFeed(feed)}
-                            className={`cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
+                            className={`group cursor-pointer px-3 py-2 rounded-lg text-sm mb-1 ml-2 flex items-center gap-2 transition-all ${selectedFeedId === feed.id ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 font-semibold shadow-sm' : 'text-gray-600 hover:bg-white/80 hover:shadow-sm'}`}
                         >
                              <img src={`https://www.google.com/s2/favicons?domain=${new URL(feed.url).hostname}`} className="w-4 h-4 flex-shrink-0" alt="" />
                             <span className="truncate flex-1">{feed.title || feed.url}</span>
@@ -253,6 +277,15 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                                     {feed.unread_count > 99 ? '99+' : feed.unread_count}
                                 </span>
                             )}
+                            <button
+                                onClick={(e) => handleDeleteFeed(feed.id, feed.title, e)}
+                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 transition-all flex-shrink-0"
+                                title="Delete feed"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
                         </div>
                     ))}
                 </div>
