@@ -167,7 +167,37 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 					)}
 
 					{/* Summary content */}
-					{localArticle.ai_summary ? (
+					{isGenerating ? (
+						/* Skeleton placeholder during generation */
+						<div className="space-y-4 animate-pulse">
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-11/12"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-9/12"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-11/12"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
+							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-8/12"></div>
+
+							<div className="pt-4">
+								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
+								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12 mt-4"></div>
+								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-9/12 mt-4"></div>
+							</div>
+
+							{/* Loading indicator */}
+							<div className="flex items-center justify-center gap-3 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+								<svg className="w-5 h-5 animate-spin text-purple-600" fill="none" viewBox="0 0 24 24">
+									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								<span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+									Generazione del riassunto in corso...
+								</span>
+							</div>
+						</div>
+					) : localArticle.ai_summary ? (
 						<div className="prose prose-lg dark:prose-invert max-w-none">
 							<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
 								{localArticle.ai_summary}
