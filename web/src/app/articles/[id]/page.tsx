@@ -741,7 +741,11 @@ export default function ArticleReaderPage() {
 							{/* AI Summary button */}
 							<button
 								onClick={() => setShowAISummaryModal(true)}
-								className="p-2 rounded-full bg-white border border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition-all"
+								className={`p-2 rounded-full border transition-all ${
+									article.ai_summary
+										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
+										: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
+								}`}
 								title="Riassunto AI"
 							>
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1022,7 +1026,11 @@ export default function ArticleReaderPage() {
 							{/* AI Summary button */}
 							<button
 								onClick={() => setShowAISummaryModal(true)}
-								className="group p-2.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition-all"
+								className={`group p-2.5 rounded-full border transition-all ${
+									article.ai_summary
+										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
+										: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
+								}`}
 								title="Riassunto AI"
 							>
 								<svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
