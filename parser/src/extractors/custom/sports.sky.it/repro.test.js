@@ -8,7 +8,34 @@ describe('SportsSkyItRepro', () => {
     it('cleans garbage text and section divider', async () => {
         const html = fs.readFileSync('./fixtures/real-sky.html');
         // Check if article tag exists
-        if (html.includes('<article')) {
+        const cheerio = require('cheerio');
+
+        // Mimic the template unwrapping logic from parser-api/netlify/functions/parse.js
+        const $html = cheerio.load(html);
+        $html('template').each(function () {
+            const innerHtml = $html(this).html();
+            // Specialized Instagram handling: convert to iframe to boost Mercury score
+            if (innerHtml && innerHtml.includes('instagram-media')) {
+                const match = innerHtml.match(/data-instgrm-permalink="([^"]+)"/);
+                if (match) {
+                    let url = match[1];
+                    // Ensure it is an embed url clean of params
+                    url = url.split('?')[0];
+                    if (!url.endsWith('/')) url += '/';
+                    url += 'embed';
+                    $html(this).replaceWith(`<iframe src="${url}" class="instagram-media" width="100%" height="600" frameborder="0"></iframe>`);
+                    return;
+                }
+            }
+
+            // Generic fallback
+            if (innerHtml && (innerHtml.includes('<blockquote') || innerHtml.includes('<div') || innerHtml.includes('<img'))) {
+                $html(this).replaceWith(innerHtml);
+            }
+        });
+        const htmlWithTemplatesUnwrapped = $html.html();
+
+        if (htmlWithTemplatesUnwrapped.includes('<article')) {
             console.log('DEBUG: <article> tag FOUND in real HTML');
         } else {
             console.log('DEBUG: <article> tag NOT FOUND in real HTML');

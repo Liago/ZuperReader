@@ -118,6 +118,25 @@ exports.handler = async (event) => {
 			contentType: response.headers['content-type']
 		});
 
+		// Post-processing for Sky Sport: Append Instagram embed if missing
+		if (url.includes('sports.sky.it') && result.content) {
+			const cheerio = require('cheerio');
+			const $ = cheerio.load(htmlContent); // Load the Pre-processed HTML with iframes
+			const iframes = $('iframe.instagram-media');
+
+			iframes.each((i, el) => {
+				const iframeHtml = $.html(el);
+				// Check if this iframe is already in the content
+				// Simple check on src or id might be enough
+				const src = $(el).attr('src');
+				if (src && !result.content.includes(src)) {
+					console.log('Appending missing Instagram iframe to content');
+					result.content += `<div class="instagram-embed">${iframeHtml}</div>`;
+				}
+			});
+		}
+
+
 
 		// Decode HTML entities in all text fields after Mercury parsing
 		if (result) {

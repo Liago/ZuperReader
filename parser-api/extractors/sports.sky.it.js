@@ -34,8 +34,8 @@ const SportsSkyItExtractor = {
         selectors: [
             '.l-grid__main', // Specific to layout, cleaner than generic article
             'article',
-            '.c-article-abstract', // Fallback for short articles/video pages
             '.c-article-body',
+            '.c-article-abstract', // Fallback for short articles/video pages
         ],
 
         clean: [
