@@ -123,6 +123,31 @@ export async function deleteFeed(feedId: string) {
 }
 
 /**
+ * Updates the folder of a feed
+ */
+export async function updateFeedFolder(feedId: string, folderId: string | null) {
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+
+	if (!user) {
+		return { error: 'Unauthorized' };
+	}
+
+	const { error } = await supabase
+		.from('rss_feeds')
+		.update({ folder_id: folderId })
+		.eq('id', feedId)
+		.eq('user_id', user.id);
+
+	if (error) {
+		return { error: error.message };
+	}
+
+	revalidatePath('/rss');
+	return { success: true };
+}
+
+/**
  * Helper to recursively import OPML outlines
  */
 async function importOutlines(supabase: any, userId: string, outlines: OpmlOutline[], parentFolderId: string | null = null) {
