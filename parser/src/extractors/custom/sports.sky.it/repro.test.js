@@ -6,7 +6,13 @@ const fs = require('fs');
 
 describe('SportsSkyItRepro', () => {
     it('cleans garbage text and section divider', async () => {
-        const html = fs.readFileSync('./fixtures/sports.sky.it-repro.html');
+        const html = fs.readFileSync('./fixtures/real-sky.html');
+        // Check if article tag exists
+        if (html.includes('<article')) {
+            console.log('DEBUG: <article> tag FOUND in real HTML');
+        } else {
+            console.log('DEBUG: <article> tag NOT FOUND in real HTML');
+        }
         // Mocking the extractor load since we are testing the logic usage by Mercury
         // But we need to use the actual extractor logic.
         // We will load the extractor code from the file we are editing.

@@ -31,32 +31,27 @@ export const SportsSkyItExtractor = {
 
     content: {
         selectors: [
+            '.l-grid__main', // Specific to layout, cleaner than generic article
             'article',
+            '.c-article-abstract', // Fallback for short articles/video pages
             '.c-article-body',
-            '.l-grid__main',
         ],
 
         clean: [
-            '.c-hero__title-content',
             '.c-hero__author-name',
-            '.c-hero__date',
-            '.c-adv',
-            '.c-social',
-            '.c-section-title',
-            '.c-nav-utility',
-            '.c-global-nav',
-            '.c-local-nav',
-            '.c-footer',
-            'script',
-            'style',
-            '.c-banner-marketing',
-            '.c-paywall',
-            '.c-section-divider',
-            '.c-reading-progress-bar',
-            '.c-intro',
-            '.l-wrapper', // If checking inside l-grid__main, this might be needed if it's a wrapper for other things
-            '.c-personalization-widget', // For the team selection widget
-            '#autoPushNotifications', // For the push notification widget
+            '.c-intro', // Remove the header/hero section to avoid duplicate title/image
+            '.c-social-share',
+            '.j-social-share',
+            '.c-box-marketing',
+            '.c-banner-no-cookies',
+            '.video-playlist-inline',
+            '.s-native-sponsored',
+            '.s-social-connection', // "Segui tutti gli aggiornamenti..."
+            '.s-tag-section',
+            '.s-outbrain',
+            '.j-outbrain',
+            '.c-personalization-widget',
+            '#autoPushNotifications',
             'p:contains("selectBoxes")',
             'p:contains("SkySport")',
         ],

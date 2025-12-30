@@ -88,13 +88,33 @@ exports.handler = async (event) => {
 
 		const content = response.body;
 
+
 		// Log encoding information for debugging
 		console.log(`Content Type: ${response.headers['content-type']}`);
 		console.log('Content retrieved, length:', content.length);
 
+		// Pre-process HTML to unwrap templates (e.g. for lazy-loaded embeds on Sky Sport)
+		let htmlContent = content;
+		try {
+			const cheerio = require('cheerio');
+			const $ = cheerio.load(content);
+			$('template').each(function () {
+				const innerHtml = $(this).html();
+				// Check if innerHTML looks like content (not just scripts)
+				if (innerHtml && (innerHtml.includes('<blockquote') || innerHtml.includes('<div') || innerHtml.includes('<img'))) {
+					$(this).replaceWith(innerHtml);
+				}
+			});
+			htmlContent = $.html();
+			console.log('Unwrapped templates in HTML');
+		} catch (err) {
+			console.error('Failed to unwrap templates:', err);
+			// Continue with original content if cheerio fails
+		}
+
 		console.log('Parsing with Mercury...');
 		const result = await Mercury.parse(url, {
-			html: content,
+			html: htmlContent,
 			contentType: response.headers['content-type']
 		});
 
