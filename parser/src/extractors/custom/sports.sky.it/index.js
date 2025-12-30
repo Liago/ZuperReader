@@ -4,27 +4,28 @@ export const SportsSkyItExtractor = {
     title: {
         selectors: [
             'h1.c-hero__title-content',
-            ['meta[property="og:title"]', 'value'],
+            ['meta[name="og:title"]', 'content'],
         ],
     },
 
     author: {
         selectors: [
             '.c-hero__author-name',
-            ['meta[name="author"]', 'value'],
+            ['meta[name="author"]', 'content'],
         ],
     },
 
     date_published: {
         selectors: [
+            ['meta[name="article:published_time"]', 'content'],
             '.c-hero__date',
-            ['meta[property="article:published_time"]', 'value'],
         ],
     },
 
     lead_image_url: {
         selectors: [
-            ['meta[property="og:image"]', 'value'],
+            ['meta[name="og:image"]', 'content'],
+            ['.c-hero__media img', 'src'],
         ],
     },
 
@@ -34,7 +35,9 @@ export const SportsSkyItExtractor = {
         ],
 
         clean: [
-            '.c-hero',
+            '.c-hero__title-content',
+            '.c-hero__author-name',
+            '.c-hero__date',
             '.c-adv',
             '.c-social',
             '.c-section-title',
