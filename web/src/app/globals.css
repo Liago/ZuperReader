@@ -168,3 +168,49 @@ input[type="range"].slider::-moz-range-thumb:hover {
   transform: scale(1.2);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
+
+/* Custom styles for unaparolaalgiorno.it articles */
+.word-sillabe {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--app-text-primary);
+  opacity: 0.9;
+  letter-spacing: 0.05em;
+  font-family: var(--font-serif, Georgia, serif);
+}
+
+.word-significato {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--app-bg-secondary);
+  border-left: 4px solid var(--app-accent);
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+}
+
+.word-significato.with-label::before {
+  /* Content like 'Significato:' is usually in the text */
+}
+
+.word-etimo {
+  font-size: 0.95rem;
+  color: var(--app-text-secondary);
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-border);
+}
+
+#word-esempi, .word-esempi {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+#word-esempi li, .word-esempi li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
