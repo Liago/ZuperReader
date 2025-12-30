@@ -57,6 +57,8 @@ const SportsSkyItExtractor = {
             '.l-wrapper',
             '.c-personalization-widget',
             '#autoPushNotifications',
+            'p:contains("selectBoxes")',
+            'p:contains("SkySport")',
         ],
     },
 };

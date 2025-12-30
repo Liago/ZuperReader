@@ -57,6 +57,8 @@ export const SportsSkyItExtractor = {
             '.l-wrapper', // If checking inside l-grid__main, this might be needed if it's a wrapper for other things
             '.c-personalization-widget', // For the team selection widget
             '#autoPushNotifications', // For the push notification widget
+            'p:contains("selectBoxes")',
+            'p:contains("SkySport")',
         ],
     },
 };
