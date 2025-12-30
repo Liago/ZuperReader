@@ -47,8 +47,8 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 			
 			// Prepare content for the AI - List of titles and excerpts
 			const articlesContent = articles
-				.slice(0, 15) // Limit to top 15 to avoid context limits
-				.map(a => `TITOLO: ${a.title}\nESTRATTO: ${a.excerpt || 'Nessun estratto'}`)
+				.slice(0, 10) // Limit to top 10 to avoid timeouts
+				.map(a => `TITOLO: ${a.title}\nESTRATTO: ${(a.excerpt || 'Nessun estratto').substring(0, 150)}...`)
 				.join('\n\n');
 				
 			const summary = await generateAISummary(articlesContent, 'long', 'periodical');
