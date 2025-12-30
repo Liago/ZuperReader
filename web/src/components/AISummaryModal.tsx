@@ -199,7 +199,7 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 						</div>
 					) : localArticle.ai_summary ? (
 						<div className="prose prose-lg dark:prose-invert max-w-none">
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+							<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line font-lato">
 								{localArticle.ai_summary}
 							</p>
 						</div>

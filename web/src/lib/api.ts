@@ -1122,7 +1122,7 @@ const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL || '/.
 export async function generateAISummary(
 	content: string,
 	length: 'short' | 'medium' | 'long' = 'medium',
-	format: 'summary' | 'bullet' = 'summary'
+	format: 'summary' | 'bullet' | 'periodical' = 'summary'
 ): Promise<string> {
 	const response = await fetch(SUMMARY_FUNCTION_URL, {
 		method: 'POST',
@@ -1146,7 +1146,7 @@ export async function generateAndSaveArticleSummary(
 	articleId: string,
 	content: string,
 	length: 'short' | 'medium' | 'long' = 'medium',
-	format: 'summary' | 'bullet' = 'summary'
+	format: 'summary' | 'bullet' | 'periodical' = 'summary'
 ): Promise<Article> {
 	// Generate summary
 	const summary = await generateAISummary(content, length, format);
@@ -1172,7 +1172,7 @@ export async function generateAndSaveArticleSummary(
 export async function regenerateArticleSummary(
 	articleId: string,
 	length: 'short' | 'medium' | 'long' = 'medium',
-	format: 'summary' | 'bullet' = 'summary'
+	format: 'summary' | 'bullet' | 'periodical' = 'summary'
 ): Promise<Article> {
 	// Get article content
 	const article = await getArticleById(articleId);

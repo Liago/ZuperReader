@@ -71,6 +71,16 @@ async function generateSummaryWithCohere(text, length = 'medium', format = 'summ
 Assicurati di catturare i punti principali e le informazioni essenziali ${lengthInstruction}. Ecco il testo:
 
 ${truncatedText}`;
+		} else if (format === 'periodical') {
+			// Periodical/Narrative format for multiple articles
+			prompt = `Sei un assistente editoriale intelligente. Il tuo compito è creare un riassunto discorsivo e coinvolgente delle letture dell'utente basato sugli articoli che ha salvato/letto di recente.
+
+Ecco la lista degli articoli (Titolo e breve estratto):
+${truncatedText}
+
+Scrivi un racconto fluido e naturale che colleghi questi argomenti, iniziando con frasi come "In questi giorni ti sei interessato a..." oppure "Le tue letture recenti hanno spaziato da...".
+Non fare un semplice elenco. Cerca di trovare fili conduttori o contrasti tra gli argomenti se possibile. Usa un tono colloquiale ma curato.
+La lunghezza deve essere adeguata a una lettura piacevole (circa 2-3 paragrafi). Concludi con una breve frase di sintesi o riflessione.`;
 		} else {
 			// Standard summary format (default)
 			prompt = `Leggi attentamente questo articolo e fornisci un riassunto dettagliato ${lengthInstruction} in lingua italiana, suddividendo le informazioni principali in sezioni. Evidenzia i punti chiave, gli argomenti essenziali e le conclusioni finali, mantenendo chiarezza e coerenza con il testo originale.

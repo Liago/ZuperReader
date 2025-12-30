@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Article } from '../lib/supabase';
-import { getArticlesForSummary, generateArticleSummary } from '../lib/api';
+import { getArticlesForSummary, generateArticleSummary, generateAISummary } from '../lib/api';
 
 interface ArticleSummaryModalProps {
 	isOpen: boolean;
@@ -16,6 +16,8 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 	const [articles, setArticles] = useState<Article[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [narrativeSummary, setNarrativeSummary] = useState<string | null>(null);
+	const [isGeneratingNarrative, setIsGeneratingNarrative] = useState(false);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -29,10 +31,33 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 			setError(null);
 			const data = await getArticlesForSummary(userId, period);
 			setArticles(data);
+			setNarrativeSummary(null); // Reset when period changes
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Errore nel caricamento degli articoli');
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handleGenerateNarrative = async () => {
+		if (articles.length === 0) return;
+
+		try {
+			setIsGeneratingNarrative(true);
+			
+			// Prepare content for the AI - List of titles and excerpts
+			const articlesContent = articles
+				.slice(0, 15) // Limit to top 15 to avoid context limits
+				.map(a => `TITOLO: ${a.title}\nESTRATTO: ${a.excerpt || 'Nessun estratto'}`)
+				.join('\n\n');
+				
+			const summary = await generateAISummary(articlesContent, 'long', 'periodical');
+			setNarrativeSummary(summary);
+		} catch (err) {
+			console.error('Error generating narrative summary:', err);
+			// Silent error or show toast
+		} finally {
+			setIsGeneratingNarrative(false);
 		}
 	};
 
@@ -163,6 +188,57 @@ export default function ArticleSummaryModal({ isOpen, onClose, userId }: Article
 								<div className="text-gray-700 dark:text-gray-300 leading-relaxed">
 									{renderSummary(summary)}
 								</div>
+
+								{/* Narrative Summary Section */}
+								<div className="mt-8 pt-6 border-t border-purple-200 dark:border-gray-700">
+									<div className="flex items-center justify-between mb-4">
+										<div className="flex items-center gap-2">
+											<svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+											</svg>
+											<h3 className="text-lg font-bold text-gray-900 dark:text-white">Racconto del periodo</h3>
+										</div>
+										{!narrativeSummary && !isGeneratingNarrative && (
+											<button
+												onClick={handleGenerateNarrative}
+												className="px-4 py-2 text-sm font-medium bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-gray-600 transition-all flex items-center gap-2"
+											>
+												<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+												</svg>
+												Genera racconto AI
+											</button>
+										)}
+									</div>
+
+									{isGeneratingNarrative ? (
+										<div className="animate-pulse space-y-3">
+											<div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-full"></div>
+											<div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-11/12"></div>
+											<div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-full"></div>
+											<div className="flex items-center gap-2 text-sm text-purple-600 mt-2">
+												<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+													<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+													<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+												Scrivendo il racconto delle tue letture...
+											</div>
+										</div>
+									) : narrativeSummary ? (
+										<div className="prose prose-purple dark:prose-invert max-w-none">
+											<div className="p-4 bg-white/50 dark:bg-gray-900/30 rounded-lg italic text-gray-700 dark:text-gray-300 leading-relaxed border border-purple-100 dark:border-gray-700">
+												{narrativeSummary.split('\n\n').map((para, idx) => (
+													<p key={idx} className="mb-4 last:mb-0">{para}</p>
+												))}
+											</div>
+										</div>
+									) : (
+										<p className="text-sm text-gray-500 italic">
+											Genera un riassunto discorsivo che collega gli argomenti dei tuoi articoli recenti in una narrazione fluida.
+										</p>
+									)}
+								</div>
+
 							</div>
 
 							{/* Articles Grid */}
