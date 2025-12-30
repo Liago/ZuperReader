@@ -143,4 +143,5 @@ export * from './www.investmentexecutive.com';
 export * from './www.cbc.ca';
 export * from './www.lescienze.it';
 export * from './unaparolaalgiorno.it';
+export * from './sports.sky.it';
 export * from './www.comingsoon.it';
