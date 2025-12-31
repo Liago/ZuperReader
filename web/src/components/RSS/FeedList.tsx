@@ -377,7 +377,7 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 				})}
 
 				{/* Show Read Articles Button */}
-				{readCount > 0 && (
+				{readCount > 0 && filteredItems.length > 0 && (
 					<div className="py-6 flex justify-center">
 						<button
 							onClick={() => setShowReadArticles(!showReadArticles)}
