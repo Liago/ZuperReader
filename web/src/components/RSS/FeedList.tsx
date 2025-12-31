@@ -409,6 +409,24 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 				onClose={() => setIsReaderOpen(false)}
 				url={readerUrl}
 				userId={userId}
+				onNext={() => {
+					const currentIndex = filteredItems.findIndex(item => item.link === readerUrl);
+					if (currentIndex < filteredItems.length - 1) {
+						const nextItem = filteredItems[currentIndex + 1];
+						setReaderUrl(nextItem.link || null);
+						markArticleAsRead(nextItem);
+					}
+				}}
+				onPrevious={() => {
+					const currentIndex = filteredItems.findIndex(item => item.link === readerUrl);
+					if (currentIndex > 0) {
+						const prevItem = filteredItems[currentIndex - 1];
+						setReaderUrl(prevItem.link || null);
+						markArticleAsRead(prevItem);
+					}
+				}}
+				hasNext={!!readerUrl && filteredItems.findIndex(item => item.link === readerUrl) < filteredItems.length - 1}
+				hasPrevious={!!readerUrl && filteredItems.findIndex(item => item.link === readerUrl) > 0}
 			/>
 		</div>
 	);

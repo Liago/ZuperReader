@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { addFeed, createFolder, deleteFeed, updateFeedFolder } from '@/app/actions/rss';
+import ConfirmationModal from '../ConfirmationModal';
 
 interface Feed {
   id: string;
@@ -36,6 +37,10 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [movingFeedId, setMovingFeedId] = useState<string | null>(null);
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(folders.map(f => f.id)));
+  
+  // Confirmation Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [feedToDelete, setFeedToDelete] = useState<{ id: string; title: string | null } | null>(null);
 
   // Group feeds by folder
   const feedsByFolder = feeds.reduce((acc, feed) => {
@@ -80,19 +85,24 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
     router.refresh(); // Refresh to show the new feed
   };
 
-  const handleDeleteFeed = async (feedId: string, feedTitle: string | null, e: React.MouseEvent) => {
+  const handleDeleteFeed = (feedId: string, feedTitle: string | null, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the feed selection
+    setFeedToDelete({ id: feedId, title: feedTitle });
+    setDeleteModalOpen(true);
+  };
 
-    const confirmed = window.confirm(`Are you sure you want to delete "${feedTitle || 'this feed'}"? This will also delete all articles from this feed.`);
-    if (!confirmed) return;
+  const confirmDeleteFeed = async () => {
+    if (!feedToDelete) return;
 
-    const result = await deleteFeed(feedId);
+    const result = await deleteFeed(feedToDelete.id);
     if (result.error) {
       alert(`Failed to delete feed: ${result.error}`);
-      return;
+    } else {
+        router.refresh(); // Refresh to update the feed list
     }
-
-    router.refresh(); // Refresh to update the feed list
+    
+    setDeleteModalOpen(false);
+    setFeedToDelete(null);
   };
 
   const handleMoveFeed = async (feedId: string, newFolderId: string | null, e: React.MouseEvent) => {
@@ -425,6 +435,21 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </div>
         )}
       </div>
+    </div>
+      
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+            setDeleteModalOpen(false);
+            setFeedToDelete(null);
+        }}
+        onConfirm={confirmDeleteFeed}
+        title="Delete Feed"
+        message={`Are you sure you want to delete "${feedToDelete?.title || 'this feed'}"? This will also delete all articles from this feed.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { parseArticle, saveArticle } from '@/lib/api';
 
 interface ReaderModalProps {
@@ -8,14 +8,46 @@ interface ReaderModalProps {
   onClose: () => void;
   url: string | null;
   userId: string;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 }
 
-export default function ReaderModal({ isOpen, onClose, url, userId }: ReaderModalProps) {
+export default function ReaderModal({ 
+    isOpen, 
+    onClose, 
+    url, 
+    userId,
+    onNext,
+    onPrevious,
+    hasNext = false,
+    hasPrevious = false
+}: ReaderModalProps) {
   const [loading, setLoading] = useState(false);
   const [parsedContent, setParsedContent] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!isOpen) return;
+    
+    // Only navigate if not typing in an input
+    if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowRight' && hasNext && onNext) {
+        onNext();
+    } else if (e.key === 'ArrowLeft' && hasPrevious && onPrevious) {
+        onPrevious();
+    }
+  }, [isOpen, hasNext, hasPrevious, onNext, onPrevious]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (!isOpen || !url) {
@@ -76,39 +108,64 @@ export default function ReaderModal({ isOpen, onClose, url, userId }: ReaderModa
       <div className="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col z-10">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col z-10 transition-all">
             
             {/* Header / Actions */}
-            <div className="bg-gradient-to-r from-orange-50 to-pink-50 px-4 py-4 sm:px-6 flex justify-between items-center border-b border-gray-200">
+            <div className="bg-gradient-to-r from-orange-50 to-pink-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-gray-200">
                 <div className="flex items-center gap-3 overflow-hidden flex-1">
                     <button
                         onClick={onClose}
                         className="flex-shrink-0 p-1 rounded-full text-gray-500 hover:bg-white/60 hover:text-gray-900 transition-all"
                         title="Close"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
+                    
+                    {/* Navigation Buttons */}
+                    <div className="flex items-center gap-1 border-l border-gray-300 pl-3 ml-1">
+                        <button 
+                            onClick={onPrevious}
+                            disabled={!hasPrevious}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Previous Article (Left Arrow)"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button 
+                            onClick={onNext}
+                            disabled={!hasNext}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Next Article (Right Arrow)"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+
                     {url && (
                         <a
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-gray-600 truncate hover:text-orange-600 transition-colors flex items-center gap-1"
+                            className="hidden sm:flex text-sm text-gray-600 truncate hover:text-orange-600 transition-colors items-center gap-1 ml-2 border-l border-gray-300 pl-3"
                             title={url}
                         >
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
-                            <span className="truncate">{url}</span>
+                            <span className="truncate max-w-[200px]">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
                         </a>
                     )}
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {saveSuccess ? (
-                         <span className="flex items-center gap-2 text-green-600 font-semibold px-4 py-2 bg-green-50 rounded-xl">
+                         <span className="flex items-center gap-2 text-green-600 font-semibold px-4 py-2 bg-green-50 rounded-xl animate-scaleIn">
                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                              </svg>
