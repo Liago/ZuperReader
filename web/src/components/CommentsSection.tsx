@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { addComment, getComments, deleteComment, updateComment } from '@/lib/api';
 import type { Comment } from '@/lib/supabase';
 import UserAvatar from './UserAvatar';
+import ConfirmationModal from './ConfirmationModal';
 
 interface CommentsSectionProps {
 	articleId: string;
@@ -17,6 +18,10 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 	const [loading, setLoading] = useState(false);
 	const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 	const [editContent, setEditContent] = useState('');
+	
+	// Confirmation Modal State
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
 	useEffect(() => {
 		const loadComments = async () => {
@@ -41,21 +46,30 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 			setNewComment('');
 		} catch (error) {
 			console.error('Error adding comment:', error);
-			alert('Failed to add comment');
+			// Ideally we would show a toast here instead of alert
+			// alert('Failed to add comment');
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleDeleteComment = async (commentId: string) => {
-		if (!confirm('Are you sure you want to delete this comment?')) return;
+	const confirmDeleteComment = (commentId: string) => {
+		setCommentToDelete(commentId);
+		setIsDeleteModalOpen(true);
+	};
+
+	const handleDeleteComment = async () => {
+		if (!commentToDelete) return;
 
 		try {
-			await deleteComment(commentId, articleId);
-			setComments(comments.filter(c => c.id !== commentId));
+			await deleteComment(commentToDelete, articleId);
+			setComments(comments.filter(c => c.id !== commentToDelete));
 		} catch (error) {
 			console.error('Error deleting comment:', error);
-			alert('Failed to delete comment');
+			// alert('Failed to delete comment');
+		} finally {
+			setCommentToDelete(null);
+			setIsDeleteModalOpen(false);
 		}
 	};
 
@@ -69,7 +83,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 			setEditContent('');
 		} catch (error) {
 			console.error('Error updating comment:', error);
-			alert('Failed to update comment');
+			// alert('Failed to update comment');
 		}
 	};
 
@@ -148,7 +162,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 											Edit
 										</button>
 										<button
-											onClick={() => handleDeleteComment(comment.id)}
+											onClick={() => confirmDeleteComment(comment.id)}
 											className="text-red-600 hover:text-red-800 text-sm font-medium"
 										>
 											Delete
@@ -187,6 +201,17 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 					))
 				)}
 			</div>
+
+			<ConfirmationModal
+				isOpen={isDeleteModalOpen}
+				onClose={() => setIsDeleteModalOpen(false)}
+				onConfirm={handleDeleteComment}
+				title="Delete Comment"
+				message="Are you sure you want to delete this comment? This action cannot be undone."
+				confirmText="Delete"
+				cancelText="Cancel"
+				isDestructive={true}
+			/>
 		</div>
 	);
 }
