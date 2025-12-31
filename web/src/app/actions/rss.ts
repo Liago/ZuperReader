@@ -524,3 +524,72 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
 		return { error: `Discovery failed: ${(err as Error).message}` };
 	}
 }
+
+/**
+ * Refreshes all RSS feeds for the current user
+ * Fetches latest articles from all feeds and syncs them to the database
+ */
+export async function refreshAllFeeds(): Promise<{
+	success: boolean;
+	totalAdded: number;
+	totalExisting: number;
+	feedsRefreshed: number;
+	errors: string[];
+}> {
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+
+	if (!user) {
+		return { success: false, totalAdded: 0, totalExisting: 0, feedsRefreshed: 0, errors: ['Unauthorized'] };
+	}
+
+	// Get all feeds for the user
+	const { data: feeds, error: feedsError } = await supabase
+		.from('rss_feeds')
+		.select('id, url')
+		.eq('user_id', user.id);
+
+	if (feedsError) {
+		return {
+			success: false,
+			totalAdded: 0,
+			totalExisting: 0,
+			feedsRefreshed: 0,
+			errors: [`Failed to fetch feeds: ${feedsError.message}`]
+		};
+	}
+
+	if (!feeds || feeds.length === 0) {
+		return { success: true, totalAdded: 0, totalExisting: 0, feedsRefreshed: 0, errors: [] };
+	}
+
+	let totalAdded = 0;
+	let totalExisting = 0;
+	let feedsRefreshed = 0;
+	const errors: string[] = [];
+
+	// Refresh each feed
+	for (const feed of feeds) {
+		try {
+			const result = await getFeedContent(feed.url, feed.id);
+
+			if (result.error) {
+				errors.push(`${feed.url}: ${result.error}`);
+			} else if (result.syncStats) {
+				totalAdded += result.syncStats.added;
+				totalExisting += result.syncStats.existing;
+				feedsRefreshed++;
+			}
+		} catch (err) {
+			errors.push(`${feed.url}: ${(err as Error).message}`);
+		}
+	}
+
+	return {
+		success: true,
+		totalAdded,
+		totalExisting,
+		feedsRefreshed,
+		errors
+	};
+}

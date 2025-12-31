@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getRSSFeedsWithUnreadCounts } from '@/lib/api';
 import RSSLayout from '@/components/RSS/RSSLayout';
+import { refreshAllFeeds } from '@/app/actions/rss';
 
 interface Feed {
 	id: string;
@@ -28,6 +29,7 @@ export default function RSSPage() {
 	const [feeds, setFeeds] = useState<Feed[]>([]);
 	const [isLoadingData, setIsLoadingData] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [isRefreshing, setIsRefreshing] = useState(false);
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -36,7 +38,7 @@ export default function RSSPage() {
 	}, [user, loading, router]);
 
 	// Define fetch function
-	const fetchRSSData = async () => {
+	const fetchRSSData = useCallback(async () => {
 		if (!user) return;
 
 		try {
@@ -70,7 +72,7 @@ export default function RSSPage() {
 		} finally {
 			setIsLoadingData(false);
 		}
-	};
+	}, [user, feeds.length]);
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -81,7 +83,33 @@ export default function RSSPage() {
 	useEffect(() => {
 		if (!user) return;
 		fetchRSSData();
-	}, [user]);
+	}, [user, fetchRSSData]);
+
+	// Refresh all feeds on mount
+	useEffect(() => {
+		if (!user) return;
+
+		const refreshFeeds = async () => {
+			setIsRefreshing(true);
+			try {
+				const result = await refreshAllFeeds();
+				if (result.success) {
+					console.log(`Refreshed ${result.feedsRefreshed} feeds. Added ${result.totalAdded} new articles.`);
+					// Re-fetch data to update unread counts
+					fetchRSSData();
+				}
+				if (result.errors.length > 0) {
+					console.warn('Some feeds failed to refresh:', result.errors);
+				}
+			} catch (err) {
+				console.error('Error refreshing feeds:', err);
+			} finally {
+				setIsRefreshing(false);
+			}
+		};
+
+		refreshFeeds();
+	}, [user, fetchRSSData]);
 
 	if (loading || (isLoadingData && feeds.length === 0)) {
 		return (
@@ -128,6 +156,12 @@ export default function RSSPage() {
 						</Link>
 						<h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">RSS Reader</h1>
 					</div>
+					{isRefreshing && (
+						<div className="flex items-center gap-2 text-sm text-gray-600">
+							<div className="w-4 h-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+							<span className="hidden sm:inline">Refreshing feeds...</span>
+						</div>
+					)}
 				</div>
 			</header>
 
