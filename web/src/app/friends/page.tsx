@@ -23,10 +23,10 @@ export default function FriendsPage() {
 
 	if (authLoading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900">
 				<div className="flex flex-col items-center gap-4">
-					<div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-					<p className="text-purple-600 font-medium">Caricamento...</p>
+					<div className="w-12 h-12 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
+					<p className="text-purple-600 dark:text-purple-400 font-medium">Caricamento...</p>
 				</div>
 			</div>
 		);
@@ -37,22 +37,22 @@ export default function FriendsPage() {
 	const totalRequests = pendingRequests.length;
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<header className="mb-8">
 					<div className="flex items-center gap-4">
 						<Link
 							href="/"
-							className="p-2 hover:bg-white/80 rounded-lg transition-colors"
+							className="p-2 hover:bg-white/80 dark:hover:bg-slate-700/80 rounded-lg transition-colors"
 						>
-							<svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
 							</svg>
 						</Link>
 						<div>
-							<h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Amici</h1>
-							<p className="text-gray-500 text-sm mt-1">
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Amici</h1>
+							<p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
 								Gestisci i tuoi amici e cerca nuovi utenti
 							</p>
 						</div>
@@ -60,14 +60,14 @@ export default function FriendsPage() {
 				</header>
 
 				{/* Tabs */}
-				<div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-					<div className="flex border-b border-gray-200">
+				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
+					<div className="flex border-b border-gray-200 dark:border-slate-700">
 						<button
 							onClick={() => setActiveTab('friends')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${
 								activeTab === 'friends'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 							}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -86,8 +86,8 @@ export default function FriendsPage() {
 							onClick={() => setActiveTab('search')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${
 								activeTab === 'search'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 							}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -101,8 +101,8 @@ export default function FriendsPage() {
 							onClick={() => setActiveTab('requests')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors relative ${
 								activeTab === 'requests'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 							}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -125,7 +125,7 @@ export default function FriendsPage() {
 							<div>
 								{friendsLoading ? (
 									<div className="flex items-center justify-center py-12">
-										<div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+										<div className="w-10 h-10 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
 									</div>
 								) : (
 									<FriendsList friends={friends} />

@@ -78,10 +78,10 @@ export default function SharedPage() {
 
 	if (authLoading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900">
 				<div className="flex flex-col items-center gap-4">
-					<div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-					<p className="text-purple-600 font-medium">Caricamento...</p>
+					<div className="w-12 h-12 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
+					<p className="text-purple-600 dark:text-purple-400 font-medium">Caricamento...</p>
 				</div>
 			</div>
 		);
@@ -92,7 +92,7 @@ export default function SharedPage() {
 	const unreadCount = shares.filter(s => !s.is_read).length;
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<header className="mb-8">
@@ -100,21 +100,21 @@ export default function SharedPage() {
 						<div className="flex items-center gap-4">
 							<Link
 								href="/"
-								className="p-2 hover:bg-white/80 rounded-lg transition-colors"
+								className="p-2 hover:bg-white/80 dark:hover:bg-slate-700/80 rounded-lg transition-colors"
 							>
-								<svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
 								</svg>
 							</Link>
 							<div>
-								<h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Condivisi con me</h1>
-								<p className="text-gray-500 text-sm mt-1">
+								<h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Condivisi con me</h1>
+								<p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
 									Articoli che i tuoi amici hanno condiviso con te
 								</p>
 							</div>
 						</div>
 						{unreadCount > 0 && (
-							<span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-sm font-medium">
+							<span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 rounded-full text-sm font-medium">
 								{unreadCount} nuovi
 							</span>
 						)}
@@ -122,15 +122,15 @@ export default function SharedPage() {
 				</header>
 
 				{/* Content */}
-				<div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
 					{loading ? (
 						<div className="flex items-center justify-center py-16">
-							<div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+							<div className="w-10 h-10 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
 						</div>
 					) : shares.length === 0 ? (
 						<div className="text-center py-16">
 							<svg
-								className="w-20 h-20 mx-auto mb-4 text-gray-300"
+								className="w-20 h-20 mx-auto mb-4 text-gray-300 dark:text-gray-600"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -142,8 +142,8 @@ export default function SharedPage() {
 									d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
 								/>
 							</svg>
-							<h3 className="text-xl font-medium text-gray-700 mb-2">Nessun articolo condiviso</h3>
-							<p className="text-gray-500 max-w-sm mx-auto">
+							<h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Nessun articolo condiviso</h3>
+							<p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
 								Quando i tuoi amici condivideranno articoli con te, appariranno qui.
 							</p>
 							<Link
@@ -157,11 +157,11 @@ export default function SharedPage() {
 							</Link>
 						</div>
 					) : (
-						<ul className="divide-y divide-gray-100">
+						<ul className="divide-y divide-gray-100 dark:divide-slate-700">
 							{shares.map((share) => (
 								<li
 									key={share.id}
-									className={`p-6 transition-colors ${!share.is_read ? 'bg-purple-50/50' : 'hover:bg-gray-50'
+									className={`p-6 transition-colors ${!share.is_read ? 'bg-purple-50/50 dark:bg-purple-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
 										}`}
 								>
 									<div className="flex flex-col sm:flex-row gap-4">
@@ -185,36 +185,36 @@ export default function SharedPage() {
 														<div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
 															{share.sharer?.display_name?.charAt(0).toUpperCase() || '?'}
 														</div>
-														<span className="text-sm text-gray-600">
+														<span className="text-sm text-gray-600 dark:text-gray-300">
 															<span className="font-medium">{share.sharer?.display_name || 'Utente'}</span>
 															{' '}ha condiviso
 														</span>
-														<span className="text-xs text-gray-400">
+														<span className="text-xs text-gray-400 dark:text-gray-500">
 															{formatTimeAgo(share.created_at)}
 														</span>
 														{!share.is_read && (
-															<span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full font-medium">
+															<span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 text-xs rounded-full font-medium">
 																Nuovo
 															</span>
 														)}
 													</div>
 
 													{/* Article Title */}
-													<h3 className="font-semibold text-gray-800 mb-1 line-clamp-2">
+													<h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-1 line-clamp-2">
 														{share.article?.title || 'Articolo senza titolo'}
 													</h3>
 
 													{/* Article Excerpt */}
 													{share.article?.excerpt && (
-														<p className="text-sm text-gray-500 line-clamp-2 mb-2">
+														<p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
 															{share.article.excerpt}
 														</p>
 													)}
 
 													{/* Message */}
 													{share.message && (
-														<div className="bg-gray-100 rounded-lg p-3 mt-2">
-															<p className="text-sm text-gray-700 italic">
+														<div className="bg-gray-100 dark:bg-slate-700/50 rounded-lg p-3 mt-2">
+															<p className="text-sm text-gray-700 dark:text-gray-300 italic">
 																&quot;{share.message}&quot;
 															</p>
 														</div>
@@ -222,7 +222,7 @@ export default function SharedPage() {
 
 													{/* Domain */}
 													{share.article?.domain && (
-														<p className="text-xs text-gray-400 mt-2">
+														<p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
 															{share.article.domain}
 														</p>
 													)}
@@ -240,11 +240,11 @@ export default function SharedPage() {
 													<button
 														onClick={() => handleDelete(share.id)}
 														disabled={deletingId === share.id}
-														className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+														className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
 														title="Rimuovi"
 													>
 														{deletingId === share.id ? (
-															<div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin"></div>
+															<div className="w-5 h-5 border-2 border-red-200 dark:border-red-800 border-t-red-500 dark:border-t-red-400 rounded-full animate-spin"></div>
 														) : (
 															<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

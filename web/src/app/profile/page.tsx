@@ -104,10 +104,10 @@ export default function ProfilePage() {
 
 	if (authLoading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900">
 				<div className="flex flex-col items-center gap-4">
-					<div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-					<p className="text-purple-600 font-medium">Caricamento...</p>
+					<div className="w-12 h-12 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
+					<p className="text-purple-600 dark:text-purple-400 font-medium">Caricamento...</p>
 				</div>
 			</div>
 		);
@@ -118,7 +118,7 @@ export default function ProfilePage() {
 	const totalRequests = pendingRequests.length + sentRequests.length;
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<header className="mb-8">
@@ -126,17 +126,17 @@ export default function ProfilePage() {
 						<div className="flex items-center gap-4">
 							<Link
 								href="/"
-								className="p-2 hover:bg-white/80 rounded-lg transition-colors"
+								className="p-2 hover:bg-white/80 dark:hover:bg-slate-700/80 rounded-lg transition-colors"
 							>
-								<svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
 								</svg>
 							</Link>
-							<h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Il mio profilo</h1>
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Il mio profilo</h1>
 						</div>
 						<button
 							onClick={signOut}
-							className="px-4 py-2 text-sm bg-white/80 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white hover:shadow-md transition-all font-medium border border-gray-200"
+							className="px-4 py-2 text-sm bg-white/80 dark:bg-slate-700/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all font-medium border border-gray-200 dark:border-slate-600"
 						>
 							Esci
 						</button>
@@ -144,11 +144,11 @@ export default function ProfilePage() {
 				</header>
 
 				{/* Profile Card */}
-				<div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden mb-6">
 					<div className="bg-gradient-to-r from-purple-500 to-pink-500 h-24 sm:h-32"></div>
 					<div className="px-6 pb-6">
 						<div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-16">
-							<div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-4 border-white shadow-lg">
+							<div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-4 border-white dark:border-slate-800 shadow-lg">
 								{userProfile?.display_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
 							</div>
 							<div className="flex-1 sm:pb-2">
@@ -159,14 +159,14 @@ export default function ProfilePage() {
 											value={displayName}
 											onChange={(e) => setDisplayName(e.target.value)}
 											placeholder="Nome visualizzato"
-											className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+											className="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
 										/>
 										<textarea
 											value={bio}
 											onChange={(e) => setBio(e.target.value)}
 											placeholder="Bio (opzionale)"
 											rows={2}
-											className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+											className="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
 										/>
 										<div className="flex gap-2">
 											<button
@@ -182,7 +182,7 @@ export default function ProfilePage() {
 													setDisplayName(userProfile?.display_name || '');
 													setBio(userProfile?.bio || '');
 												}}
-												className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+												className="px-4 py-2 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
 											>
 												Annulla
 											</button>
@@ -191,21 +191,21 @@ export default function ProfilePage() {
 								) : (
 									<>
 										<div className="flex items-center gap-3">
-											<h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+											<h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
 												{userProfile?.display_name || user.email?.split('@')[0] || 'Utente'}
 											</h2>
 											<button
 												onClick={() => setIsEditing(true)}
-												className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+												className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
 											>
-												<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
 												</svg>
 											</button>
 										</div>
-										<p className="text-gray-500 text-sm mt-1">{user.email}</p>
+										<p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{user.email}</p>
 										{userProfile?.bio && (
-											<p className="text-gray-600 mt-2">{userProfile.bio}</p>
+											<p className="text-gray-600 dark:text-gray-300 mt-2">{userProfile.bio}</p>
 										)}
 									</>
 								)}
@@ -215,13 +215,13 @@ export default function ProfilePage() {
 				</div>
 
 				{/* Tabs */}
-				<div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-					<div className="flex border-b border-gray-200">
+				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
+					<div className="flex border-b border-gray-200 dark:border-slate-700">
 						<button
 							onClick={() => setActiveTab('stats')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${activeTab === 'stats'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 								}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -234,8 +234,8 @@ export default function ProfilePage() {
 						<button
 							onClick={() => setActiveTab('requests')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors relative ${activeTab === 'requests'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 								}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -253,8 +253,8 @@ export default function ProfilePage() {
 						<button
 							onClick={() => setActiveTab('settings')}
 							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${activeTab === 'settings'
-									? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 								}`}
 						>
 							<div className="flex items-center justify-center gap-2">
@@ -273,7 +273,7 @@ export default function ProfilePage() {
 							<div>
 								{loadingStats ? (
 									<div className="flex items-center justify-center py-12">
-										<div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+										<div className="w-10 h-10 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
 									</div>
 								) : statistics ? (
 									<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -359,7 +359,7 @@ export default function ProfilePage() {
 										/>
 									</div>
 								) : (
-									<p className="text-center text-gray-500 py-8">
+									<p className="text-center text-gray-500 dark:text-gray-400 py-8">
 										Impossibile caricare le statistiche
 									</p>
 								)}
@@ -377,12 +377,12 @@ export default function ProfilePage() {
 						{/* Settings Tab */}
 						{activeTab === 'settings' && (
 							<div className="space-y-6">
-								<div className="bg-gray-50 rounded-xl p-4">
-									<h3 className="font-semibold text-gray-800 mb-2">Account</h3>
-									<p className="text-sm text-gray-600 mb-4">
+								<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
+									<h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Account</h3>
+									<p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
 										Email: <span className="font-medium">{user.email}</span>
 									</p>
-									<p className="text-sm text-gray-500">
+									<p className="text-sm text-gray-500 dark:text-gray-400">
 										Membro dal {new Date(user.created_at || '').toLocaleDateString('it-IT', {
 											day: 'numeric',
 											month: 'long',
@@ -391,33 +391,33 @@ export default function ProfilePage() {
 									</p>
 								</div>
 
-								<div className="bg-gray-50 rounded-xl p-4">
-									<h3 className="font-semibold text-gray-800 mb-2">Link rapidi</h3>
+								<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
+									<h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Link rapidi</h3>
 									<div className="space-y-2">
 										<Link
 											href="/friends"
-											className="flex items-center gap-3 p-3 bg-white rounded-lg hover:bg-purple-50 transition-colors"
+											className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
 										>
-											<svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
 											</svg>
-											<span className="text-gray-700">Gestisci amici</span>
+											<span className="text-gray-700 dark:text-gray-200">Gestisci amici</span>
 										</Link>
 										<Link
 											href="/shared"
-											className="flex items-center gap-3 p-3 bg-white rounded-lg hover:bg-purple-50 transition-colors"
+											className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
 										>
-											<svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
 											</svg>
-											<span className="text-gray-700">Articoli condivisi con me</span>
+											<span className="text-gray-700 dark:text-gray-200">Articoli condivisi con me</span>
 										</Link>
 									</div>
 								</div>
 
-								<div className="bg-red-50 rounded-xl p-4">
-									<h3 className="font-semibold text-red-700 mb-2">Zona pericolosa</h3>
-									<p className="text-sm text-red-600 mb-4">
+								<div className="bg-red-50 dark:bg-red-900/30 rounded-xl p-4">
+									<h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">Zona pericolosa</h3>
+									<p className="text-sm text-red-600 dark:text-red-300 mb-4">
 										Queste azioni sono irreversibili.
 									</p>
 									<button
@@ -445,23 +445,23 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, color }: StatCardProps) {
 	const colorClasses: Record<string, string> = {
-		purple: 'bg-purple-100 text-purple-600',
-		green: 'bg-green-100 text-green-600',
-		yellow: 'bg-yellow-100 text-yellow-600',
-		red: 'bg-red-100 text-red-600',
-		blue: 'bg-blue-100 text-blue-600',
-		pink: 'bg-pink-100 text-pink-600',
-		indigo: 'bg-indigo-100 text-indigo-600',
-		teal: 'bg-teal-100 text-teal-600',
+		purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
+		green: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
+		yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400',
+		red: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400',
+		blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
+		pink: 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400',
+		indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
+		teal: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400',
 	};
 
 	return (
-		<div className="bg-gray-50 rounded-xl p-4">
+		<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
 			<div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center mb-3`}>
 				{icon}
 			</div>
-			<p className="text-2xl font-bold text-gray-800">{value}</p>
-			<p className="text-sm text-gray-500">{label}</p>
+			<p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+			<p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
 		</div>
 	);
 }

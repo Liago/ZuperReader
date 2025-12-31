@@ -134,8 +134,8 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
   };
 
   return (
-    <div className="w-full md:w-80 bg-white/60 backdrop-blur-sm border-r border-gray-100 h-full flex flex-col shadow-sm">
-      <div className="p-5 border-b border-gray-100">
+    <div className="w-full md:w-80 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-r border-gray-100 dark:border-slate-700 h-full flex flex-col shadow-sm">
+      <div className="p-5 border-b border-gray-100 dark:border-slate-700">
         <h2 className="text-2xl font-bold flex items-center gap-3 mb-1">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -148,7 +148,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
               RSS Reader
             </span>
         </h2>
-        <p className="text-sm text-gray-500 ml-13 mb-4">Manage your feeds</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 ml-13 mb-4">Manage your feeds</p>
 
         <div className="grid grid-cols-2 gap-2">
             <button
@@ -162,7 +162,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </button>
             <button
                 onClick={() => setNewFolderMode(true)}
-                className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-white/80 text-gray-700 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200 font-medium"
+                className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-white/80 dark:bg-slate-700/80 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-slate-600 font-medium"
             >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -181,7 +181,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </button>
              <button
                 onClick={onOpenImportModal}
-                className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-white/80 text-gray-700 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 border border-gray-200 font-medium"
+                className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 bg-white/80 dark:bg-slate-700/80 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-slate-600 font-medium"
                 title="Import OPML"
             >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,17 +195,17 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
       <div className="flex-1 overflow-y-auto p-3">
         {/* Create Folder Form */}
         {newFolderMode && (
-             <form onSubmit={handleCreateFolder} className="mb-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+             <form onSubmit={handleCreateFolder} className="mb-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border border-purple-100 dark:border-purple-800/50">
                  <input
                     type="text"
                     value={newFolderName}
                     onChange={e => setNewFolderName(e.target.value)}
                     placeholder="Folder Name"
-                    className="w-full text-sm border-2 border-purple-200 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                    className="w-full text-sm border-2 border-purple-200 dark:border-purple-700 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                     autoFocus
                  />
                  <div className="flex justify-end gap-2">
-                     <button type="button" onClick={() => setNewFolderMode(false)} className="text-xs px-3 py-1.5 text-gray-600 hover:text-gray-800 font-medium">Cancel</button>
+                     <button type="button" onClick={() => setNewFolderMode(false)} className="text-xs px-3 py-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 font-medium">Cancel</button>
                      <button type="submit" className="text-xs px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-md transition-all">Create</button>
                  </div>
              </form>
@@ -213,19 +213,19 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
 
         {/* Add Feed Form */}
         {newFeedMode && (
-             <form onSubmit={handleAddFeed} className="mb-3 p-3 bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl border border-orange-100">
+             <form onSubmit={handleAddFeed} className="mb-3 p-3 bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900/30 dark:to-pink-900/30 rounded-xl border border-orange-100 dark:border-orange-800/50">
                  <input
                     type="url"
                     value={newFeedUrl}
                     onChange={e => setNewFeedUrl(e.target.value)}
                     placeholder="Feed URL (https://...)"
-                    className="w-full text-sm border-2 border-orange-200 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                    className="w-full text-sm border-2 border-orange-200 dark:border-orange-700 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                     autoFocus
                  />
                   <select
                      value={selectedFolderId || ''}
                      onChange={e => setSelectedFolderId(e.target.value || null)}
-                     className="w-full text-sm border-2 border-orange-200 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                     className="w-full text-sm border-2 border-orange-200 dark:border-orange-700 rounded-lg mb-2 px-3 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                   >
                       <option value="">Uncategorized</option>
                       {folders.map(f => (
@@ -233,7 +233,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                       ))}
                   </select>
                  <div className="flex justify-end gap-2">
-                     <button type="button" onClick={() => setNewFeedMode(false)} className="text-xs px-3 py-1.5 text-gray-600 hover:text-gray-800 font-medium">Cancel</button>
+                     <button type="button" onClick={() => setNewFeedMode(false)} className="text-xs px-3 py-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 font-medium">Cancel</button>
                      <button type="submit" className="text-xs px-3 py-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-md transition-all">Add</button>
                  </div>
              </form>
