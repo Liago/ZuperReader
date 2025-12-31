@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getRSSFeedsWithUnreadCounts } from '@/lib/api';
 import RSSLayout from '@/components/RSS/RSSLayout';
+import RefreshProgress from '@/components/RSS/RefreshProgress';
+import { refreshFeedsParallel } from '@/app/actions/rss';
 
 interface Feed {
 	id: string;
@@ -28,6 +30,8 @@ export default function RSSPage() {
 	const [feeds, setFeeds] = useState<Feed[]>([]);
 	const [isLoadingData, setIsLoadingData] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [refreshProgress, setRefreshProgress] = useState({ current: 0, total: 0 });
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -36,7 +40,7 @@ export default function RSSPage() {
 	}, [user, loading, router]);
 
 	// Define fetch function
-	const fetchRSSData = async () => {
+	const fetchRSSData = useCallback(async () => {
 		if (!user) return;
 
 		try {
@@ -70,7 +74,7 @@ export default function RSSPage() {
 		} finally {
 			setIsLoadingData(false);
 		}
-	};
+	}, [user, feeds.length]);
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -81,7 +85,87 @@ export default function RSSPage() {
 	useEffect(() => {
 		if (!user) return;
 		fetchRSSData();
-	}, [user]);
+	}, [user, fetchRSSData]);
+
+	// Track if we've already started refreshing to prevent double refresh
+	const hasStartedRefresh = useRef(false);
+
+	// Optimized parallel feed refresh on mount
+	// Uses stale-while-revalidate pattern: show cached data immediately, refresh in background
+	useEffect(() => {
+		if (!user) return;
+		if (hasStartedRefresh.current) return; // Prevent double refresh on StrictMode
+		hasStartedRefresh.current = true;
+
+		const refreshFeeds = async () => {
+			setIsRefreshing(true);
+
+			try {
+				// Get all user feeds
+				const supabase = createClient();
+				const { data: userFeeds, error: feedsError } = await supabase
+					.from('rss_feeds')
+					.select('id, url, title')
+					.eq('user_id', user.id);
+
+				if (feedsError || !userFeeds || userFeeds.length === 0) {
+					console.warn('No feeds to refresh');
+					setIsRefreshing(false);
+					return;
+				}
+
+				const totalFeeds = userFeeds.length;
+				setRefreshProgress({ current: 0, total: totalFeeds });
+
+				// Use optimized parallel refresh with concurrency of 5
+				// This is much faster than sequential refresh
+				const CONCURRENCY = 5;
+				let completed = 0;
+
+				// Process feeds in parallel batches for better performance
+				for (let i = 0; i < userFeeds.length; i += CONCURRENCY) {
+					const batch = userFeeds.slice(i, i + CONCURRENCY);
+
+					// Refresh this batch in parallel
+					const batchResult = await refreshFeedsParallel(batch, CONCURRENCY);
+
+					// Update progress after each batch completes
+					completed += batch.length;
+					setRefreshProgress({ current: completed, total: totalFeeds });
+
+					// Log batch results
+					if (batchResult.totalAdded > 0) {
+						console.log(`Batch ${Math.floor(i / CONCURRENCY) + 1}: Added ${batchResult.totalAdded} new articles`);
+					}
+					if (batchResult.errorCount > 0) {
+						const errors = batchResult.results
+							.filter(r => !r.success)
+							.map(r => `${r.feedTitle}: ${r.error}`);
+						console.warn('Batch errors:', errors);
+					}
+
+					// Incrementally update unread counts after each batch
+					// This provides immediate feedback to the user
+					await fetchRSSData();
+				}
+
+				console.log(`Refresh complete: ${totalFeeds} feeds processed`);
+
+				// Brief completion display
+				await new Promise(resolve => setTimeout(resolve, 800));
+
+			} catch (err) {
+				console.error('Error refreshing feeds:', err);
+			} finally {
+				setIsRefreshing(false);
+				setRefreshProgress({ current: 0, total: 0 });
+			}
+		};
+
+		// Start refresh in background - don't block initial render
+		// The cached data is already displayed, refresh happens asynchronously
+		refreshFeeds();
+	}, [user, fetchRSSData]);
 
 	if (loading || (isLoadingData && feeds.length === 0)) {
 		return (
@@ -116,6 +200,13 @@ export default function RSSPage() {
 
 	return (
 		<div className="min-h-screen flex flex-col app-bg-gradient">
+			{/* Progress Indicator */}
+			<RefreshProgress
+				current={refreshProgress.current}
+				total={refreshProgress.total}
+				isVisible={isRefreshing}
+			/>
+
 			{/* Header */}
 			<header className="bg-white/60 backdrop-blur-sm shadow-sm z-10 sticky top-0 border-b border-gray-100">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">

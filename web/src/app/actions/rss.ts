@@ -524,3 +524,180 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
 		return { error: `Discovery failed: ${(err as Error).message}` };
 	}
 }
+
+/**
+ * Refreshes all RSS feeds for the current user
+ * Fetches latest articles from all feeds and syncs them to the database
+ */
+export async function refreshAllFeeds(): Promise<{
+	success: boolean;
+	totalAdded: number;
+	totalExisting: number;
+	feedsRefreshed: number;
+	errors: string[];
+}> {
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+
+	if (!user) {
+		return { success: false, totalAdded: 0, totalExisting: 0, feedsRefreshed: 0, errors: ['Unauthorized'] };
+	}
+
+	// Get all feeds for the user
+	const { data: feeds, error: feedsError } = await supabase
+		.from('rss_feeds')
+		.select('id, url')
+		.eq('user_id', user.id);
+
+	if (feedsError) {
+		return {
+			success: false,
+			totalAdded: 0,
+			totalExisting: 0,
+			feedsRefreshed: 0,
+			errors: [`Failed to fetch feeds: ${feedsError.message}`]
+		};
+	}
+
+	if (!feeds || feeds.length === 0) {
+		return { success: true, totalAdded: 0, totalExisting: 0, feedsRefreshed: 0, errors: [] };
+	}
+
+	let totalAdded = 0;
+	let totalExisting = 0;
+	let feedsRefreshed = 0;
+	const errors: string[] = [];
+
+	// Refresh each feed
+	for (const feed of feeds) {
+		try {
+			const result = await getFeedContent(feed.url, feed.id);
+
+			if (result.error) {
+				errors.push(`${feed.url}: ${result.error}`);
+			} else if (result.syncStats) {
+				totalAdded += result.syncStats.added;
+				totalExisting += result.syncStats.existing;
+				feedsRefreshed++;
+			}
+		} catch (err) {
+			errors.push(`${feed.url}: ${(err as Error).message}`);
+		}
+	}
+
+	return {
+		success: true,
+		totalAdded,
+		totalExisting,
+		feedsRefreshed,
+		errors
+	};
+}
+
+/**
+ * Result of refreshing a single feed
+ */
+export interface FeedRefreshResult {
+	feedId: string;
+	feedTitle: string;
+	success: boolean;
+	added: number;
+	existing: number;
+	error?: string;
+}
+
+/**
+ * Refreshes a single feed - optimized for parallel execution
+ */
+export async function refreshSingleFeed(feedId: string, feedUrl: string, feedTitle: string): Promise<FeedRefreshResult> {
+	try {
+		const result = await getFeedContent(feedUrl, feedId);
+
+		if (result.error) {
+			return {
+				feedId,
+				feedTitle,
+				success: false,
+				added: 0,
+				existing: 0,
+				error: result.error
+			};
+		}
+
+		return {
+			feedId,
+			feedTitle,
+			success: true,
+			added: result.syncStats?.added || 0,
+			existing: result.syncStats?.existing || 0
+		};
+	} catch (err) {
+		return {
+			feedId,
+			feedTitle,
+			success: false,
+			added: 0,
+			existing: 0,
+			error: (err as Error).message
+		};
+	}
+}
+
+/**
+ * Refreshes multiple feeds in parallel with concurrency limit
+ * This is the optimized version for better performance
+ * @param feeds Array of feeds to refresh
+ * @param concurrency Maximum number of concurrent refreshes (default: 5)
+ */
+export async function refreshFeedsParallel(
+	feeds: Array<{ id: string; url: string; title: string | null }>,
+	concurrency: number = 5
+): Promise<{
+	results: FeedRefreshResult[];
+	totalAdded: number;
+	totalExisting: number;
+	successCount: number;
+	errorCount: number;
+}> {
+	if (feeds.length === 0) {
+		return { results: [], totalAdded: 0, totalExisting: 0, successCount: 0, errorCount: 0 };
+	}
+
+	const results: FeedRefreshResult[] = [];
+	let totalAdded = 0;
+	let totalExisting = 0;
+	let successCount = 0;
+	let errorCount = 0;
+
+	// Process feeds in batches for controlled concurrency
+	for (let i = 0; i < feeds.length; i += concurrency) {
+		const batch = feeds.slice(i, i + concurrency);
+
+		// Refresh all feeds in this batch in parallel
+		const batchPromises = batch.map(feed =>
+			refreshSingleFeed(feed.id, feed.url, feed.title || feed.url)
+		);
+
+		const batchResults = await Promise.all(batchPromises);
+
+		// Aggregate results
+		for (const result of batchResults) {
+			results.push(result);
+			totalAdded += result.added;
+			totalExisting += result.existing;
+			if (result.success) {
+				successCount++;
+			} else {
+				errorCount++;
+			}
+		}
+	}
+
+	return {
+		results,
+		totalAdded,
+		totalExisting,
+		successCount,
+		errorCount
+	};
+}

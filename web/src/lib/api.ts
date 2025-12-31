@@ -299,7 +299,7 @@ export async function addComment(articleId: string, userId: string, content: str
 		.insert([{ article_id: articleId, user_id: userId, content }])
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
@@ -328,7 +328,7 @@ export async function getComments(articleId: string): Promise<Comment[]> {
 		.from('comments')
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
@@ -371,7 +371,7 @@ export async function updateComment(commentId: string, content: string): Promise
 		.eq('id', commentId)
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
@@ -919,7 +919,8 @@ export async function getAllRSSArticles(
 }
 
 /**
- * Sync RSS articles - add new articles from feed
+ * Sync RSS articles - add new articles from feed using batch upsert
+ * Optimized: Uses batch insert with onConflict ignore for much faster syncing
  */
 export async function syncRSSArticles(
 	userId: string,
@@ -937,46 +938,61 @@ export async function syncRSSArticles(
 	supabaseClient?: any // Optional authenticated client
 ): Promise<{ added: number; existing: number; errors: string[] }> {
 	const db = supabaseClient || supabase;
-	let added = 0;
-	let existing = 0;
 	const errors: string[] = [];
 
-	for (const article of articles) {
-		try {
-			const { error } = await db
-				.from('rss_articles')
-				.insert([{
-					user_id: userId,
-					feed_id: feedId,
-					guid: article.guid,
-					title: article.title,
-					link: article.link,
-					pub_date: article.pubDate || null,
-					author: article.author || null,
-					content: article.content || null,
-					content_snippet: article.contentSnippet || null,
-					image_url: article.imageUrl || null,
-					is_read: false
-				}]);
-
-			if (error) {
-				// Check if it's a duplicate key error (article already exists)
-				if (error.code === '23505') {
-					existing++;
-				} else {
-					console.error('Error syncing RSS article:', error);
-					errors.push(`Error for '${article.title}': ${error.message} (${error.code})`);
-				}
-			} else {
-				added++;
-			}
-		} catch (err) {
-			console.error('Unexpected error syncing article:', err);
-			errors.push(`Unexpected error for '${article.title}': ${(err as Error).message}`);
-		}
+	if (articles.length === 0) {
+		return { added: 0, existing: 0, errors: [] };
 	}
 
-	return { added, existing, errors };
+	// Prepare all articles for batch insert
+	const articlesToInsert = articles.map(article => ({
+		user_id: userId,
+		feed_id: feedId,
+		guid: article.guid,
+		title: article.title,
+		link: article.link,
+		pub_date: article.pubDate || null,
+		author: article.author || null,
+		content: article.content || null,
+		content_snippet: article.contentSnippet || null,
+		image_url: article.imageUrl || null,
+		is_read: false
+	}));
+
+	try {
+		// Get count of existing articles before insert
+		const guids = articles.map(a => a.guid);
+		const { count: existingBefore } = await db
+			.from('rss_articles')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', userId)
+			.eq('feed_id', feedId)
+			.in('guid', guids);
+
+		// Batch insert with onConflict ignore - much faster than individual inserts
+		const { error } = await db
+			.from('rss_articles')
+			.upsert(articlesToInsert, {
+				onConflict: 'user_id,feed_id,guid',
+				ignoreDuplicates: true
+			});
+
+		if (error) {
+			console.error('Error batch syncing RSS articles:', error);
+			errors.push(`Batch sync error: ${error.message}`);
+			return { added: 0, existing: articles.length, errors };
+		}
+
+		// Calculate how many were actually added vs already existing
+		const existing = existingBefore || 0;
+		const added = articles.length - existing;
+
+		return { added: Math.max(0, added), existing, errors };
+	} catch (err) {
+		console.error('Unexpected error in batch sync:', err);
+		errors.push(`Unexpected error: ${(err as Error).message}`);
+		return { added: 0, existing: 0, errors };
+	}
 }
 
 /**
@@ -1114,7 +1130,10 @@ export async function deleteOldRSSArticles(
 
 // ==================== AI SUMMARY FUNCTIONS ====================
 
-const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL || '/.netlify/functions/generate-summary';
+// Derive the summary function URL from the parse function URL to avoid configuration duplication
+// If NEXT_PUBLIC_SUMMARY_FUNCTION_URL is set, use it; otherwise, derive from PARSE_FUNCTION_URL
+const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL ||
+	PARSE_FUNCTION_URL.replace('/parse', '/generate-summary');
 
 /**
  * Generate AI summary for article content
@@ -1124,19 +1143,49 @@ export async function generateAISummary(
 	length: 'short' | 'medium' | 'long' = 'medium',
 	format: 'summary' | 'bullet' | 'periodical' = 'summary'
 ): Promise<string> {
-	const response = await fetch(SUMMARY_FUNCTION_URL, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ content, length, format }),
-	});
+	console.log('Calling AI summary function at:', SUMMARY_FUNCTION_URL);
 
-	if (!response.ok) {
-		const error = await response.json();
-		throw new Error(error.error || 'Failed to generate summary');
+	try {
+		const response = await fetch(SUMMARY_FUNCTION_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ content, length, format }),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			let errorMessage = 'Failed to generate summary';
+
+			try {
+				const errorJson = JSON.parse(errorText);
+				errorMessage = errorJson.error || errorMessage;
+			} catch {
+				errorMessage = `HTTP ${response.status}: ${errorText || response.statusText}`;
+			}
+
+			console.error('AI Summary API error:', {
+				url: SUMMARY_FUNCTION_URL,
+				status: response.status,
+				statusText: response.statusText,
+				error: errorMessage
+			});
+
+			throw new Error(errorMessage);
+		}
+
+		const data = await response.json();
+		console.log('AI summary generated successfully');
+		return data.summary;
+	} catch (error) {
+		console.error('Error generating AI summary:', error);
+
+		// Provide a more helpful error message if it's a network error
+		if (error instanceof TypeError && error.message.includes('fetch')) {
+			throw new Error(`Impossibile raggiungere il servizio AI. Verifica che NEXT_PUBLIC_PARSE_FUNCTION_URL sia configurato correttamente. URL chiamato: ${SUMMARY_FUNCTION_URL}`);
+		}
+
+		throw error;
 	}
-
-	const data = await response.json();
-	return data.summary;
 }
 
 /**
