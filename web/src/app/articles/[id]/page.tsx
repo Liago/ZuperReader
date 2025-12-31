@@ -748,7 +748,7 @@ export default function ArticleReaderPage() {
 	}
 
 	return (
-		<div className={`min-h-screen py-4 sm:py-8 px-4 sm:px-6 lg:px-8 ${uiTheme.pageBg}`}>
+		<div className={`min-h-screen py-4 sm:py-8 px-4 sm:px-6 lg:px-8 ${uiTheme.pageBg} dark:bg-slate-900`}>
 			{/* Reading Progress Indicator */}
 			<ReadingProgressIndicator
 				contentRef={articleContentRef}
@@ -1199,20 +1199,20 @@ export default function ArticleReaderPage() {
 				{/* Article Content */}
 				<div
 					ref={articleContentRef}
-					className={`${colorTheme.bg} ${colorTheme.text} p-8 rounded-2xl prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
-								prose-headings:font-bold ${colorTheme.proseHeadings}
+					className={`${colorTheme.bg} ${colorTheme.text} dark:bg-slate-800 dark:text-slate-100 p-8 rounded-2xl prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+								prose-headings:font-bold ${colorTheme.proseHeadings} dark:prose-headings:text-slate-100
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
 								prose-h3:text-xl prose-h3:mb-3 prose-h3:mt-4
-								${colorTheme.proseParagraphs} prose-p:mb-4
-								${colorTheme.proseLinks} prose-a:no-underline hover:prose-a:underline prose-a:cursor-pointer
-								${colorTheme.proseStrong} prose-strong:font-bold
+								${colorTheme.proseParagraphs} dark:prose-p:text-slate-300 prose-p:mb-4
+								${colorTheme.proseLinks} dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline prose-a:cursor-pointer
+								${colorTheme.proseStrong} dark:prose-strong:text-slate-100 prose-strong:font-bold
 								prose-ul:my-4 prose-ol:my-4
-								${colorTheme.proseLi} prose-li:my-2
+								${colorTheme.proseLi} dark:prose-li:text-slate-300 prose-li:my-2
 								prose-img:rounded-xl prose-img:shadow-lg prose-img:my-6
-								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-								${preferences.colorTheme === 'dark' ? 'prose-pre:bg-slate-900 prose-pre:text-slate-100' : 'prose-pre:bg-gray-900 prose-pre:text-gray-100'} prose-pre:rounded-xl prose-pre:shadow-lg`}
+								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} dark:prose-blockquote:border-blue-500 dark:prose-blockquote:bg-slate-700 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
+								${colorTheme.proseCode} dark:prose-code:text-blue-300 dark:prose-code:bg-slate-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+								${preferences.colorTheme === 'dark' ? 'prose-pre:bg-slate-900 prose-pre:text-slate-100' : 'prose-pre:bg-gray-900 prose-pre:text-gray-100'} dark:prose-pre:bg-slate-900 dark:prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
 					style={{ fontSize: `${preferences.fontSize}px` }}
 					dangerouslySetInnerHTML={{ __html: article.content || '' }}
 				/>
