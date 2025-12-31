@@ -435,7 +435,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
             </div>
         )}
       </div>
-    </div>
+
       
       <ConfirmationModal
         isOpen={deleteModalOpen}
