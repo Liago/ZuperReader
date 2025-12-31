@@ -61,9 +61,14 @@ export default function RefreshProgress({ current, total, isVisible }: RefreshPr
 
 				{/* Status message */}
 				{!isComplete && (
-					<p className="text-xs text-gray-400 mt-3 text-center">
-						Recupero degli ultimi articoli in corso...
-					</p>
+					<div className="mt-3 text-center">
+						<p className="text-xs text-gray-500">
+							Recupero degli ultimi articoli in corso...
+						</p>
+						<p className="text-xs text-green-600 mt-1 font-medium">
+							Puoi continuare a leggere mentre aggiorniamo
+						</p>
+					</div>
 				)}
 			</div>
 		</div>

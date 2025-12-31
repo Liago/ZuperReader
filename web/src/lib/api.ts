@@ -919,7 +919,8 @@ export async function getAllRSSArticles(
 }
 
 /**
- * Sync RSS articles - add new articles from feed
+ * Sync RSS articles - add new articles from feed using batch upsert
+ * Optimized: Uses batch insert with onConflict ignore for much faster syncing
  */
 export async function syncRSSArticles(
 	userId: string,
@@ -937,46 +938,61 @@ export async function syncRSSArticles(
 	supabaseClient?: any // Optional authenticated client
 ): Promise<{ added: number; existing: number; errors: string[] }> {
 	const db = supabaseClient || supabase;
-	let added = 0;
-	let existing = 0;
 	const errors: string[] = [];
 
-	for (const article of articles) {
-		try {
-			const { error } = await db
-				.from('rss_articles')
-				.insert([{
-					user_id: userId,
-					feed_id: feedId,
-					guid: article.guid,
-					title: article.title,
-					link: article.link,
-					pub_date: article.pubDate || null,
-					author: article.author || null,
-					content: article.content || null,
-					content_snippet: article.contentSnippet || null,
-					image_url: article.imageUrl || null,
-					is_read: false
-				}]);
-
-			if (error) {
-				// Check if it's a duplicate key error (article already exists)
-				if (error.code === '23505') {
-					existing++;
-				} else {
-					console.error('Error syncing RSS article:', error);
-					errors.push(`Error for '${article.title}': ${error.message} (${error.code})`);
-				}
-			} else {
-				added++;
-			}
-		} catch (err) {
-			console.error('Unexpected error syncing article:', err);
-			errors.push(`Unexpected error for '${article.title}': ${(err as Error).message}`);
-		}
+	if (articles.length === 0) {
+		return { added: 0, existing: 0, errors: [] };
 	}
 
-	return { added, existing, errors };
+	// Prepare all articles for batch insert
+	const articlesToInsert = articles.map(article => ({
+		user_id: userId,
+		feed_id: feedId,
+		guid: article.guid,
+		title: article.title,
+		link: article.link,
+		pub_date: article.pubDate || null,
+		author: article.author || null,
+		content: article.content || null,
+		content_snippet: article.contentSnippet || null,
+		image_url: article.imageUrl || null,
+		is_read: false
+	}));
+
+	try {
+		// Get count of existing articles before insert
+		const guids = articles.map(a => a.guid);
+		const { count: existingBefore } = await db
+			.from('rss_articles')
+			.select('*', { count: 'exact', head: true })
+			.eq('user_id', userId)
+			.eq('feed_id', feedId)
+			.in('guid', guids);
+
+		// Batch insert with onConflict ignore - much faster than individual inserts
+		const { error } = await db
+			.from('rss_articles')
+			.upsert(articlesToInsert, {
+				onConflict: 'user_id,feed_id,guid',
+				ignoreDuplicates: true
+			});
+
+		if (error) {
+			console.error('Error batch syncing RSS articles:', error);
+			errors.push(`Batch sync error: ${error.message}`);
+			return { added: 0, existing: articles.length, errors };
+		}
+
+		// Calculate how many were actually added vs already existing
+		const existing = existingBefore || 0;
+		const added = articles.length - existing;
+
+		return { added: Math.max(0, added), existing, errors };
+	} catch (err) {
+		console.error('Unexpected error in batch sync:', err);
+		errors.push(`Unexpected error: ${(err as Error).message}`);
+		return { added: 0, existing: 0, errors };
+	}
 }
 
 /**
