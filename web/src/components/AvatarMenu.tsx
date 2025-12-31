@@ -34,41 +34,41 @@ export default function AvatarMenu({ userEmail, onSignOut }: AvatarMenuProps) {
 			</button>
 
 			{isOpen && (
-				<div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-10 ring-1 ring-black ring-opacity-5">
-					<div className="px-4 py-3 border-b border-gray-100">
-						<p className="text-sm text-gray-500">Signed in as</p>
-						<p className="text-sm font-medium text-gray-900 truncate">{userEmail}</p>
+				<div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-10 ring-1 ring-black ring-opacity-5 dark:ring-slate-700">
+					<div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+						<p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+						<p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{userEmail}</p>
 					</div>
 
 					<div className="py-1">
 						<a
 							href="/profile"
-							className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+							className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
 							role="menuitem"
 						>
 							Your Profile
 						</a>
 						<a
 							href="/friends"
-							className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+							className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
 							role="menuitem"
 						>
 							Friends
 						</a>
 						<button
-							className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex justify-between items-center"
+							className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 flex justify-between items-center"
 							role="menuitem"
 							onClick={() => alert('Theme toggling not implemented yet')}
 						>
 							<span>Theme</span>
-							<span className="text-xs text-gray-400">Light</span>
+							<span className="text-xs text-gray-400 dark:text-gray-500">Light</span>
 						</button>
 					</div>
 
-					<div className="py-1 border-t border-gray-100">
+					<div className="py-1 border-t border-gray-100 dark:border-slate-700">
 						<button
 							onClick={onSignOut}
-							className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+							className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
 							role="menuitem"
 						>
 							Sign Out

@@ -119,7 +119,7 @@ export default function TagManagementModal({
 			{/* Modal */}
 			<div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
 				<div
-					className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
+					className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
 					onClick={(e) => e.stopPropagation()}
 				>
 					{/* Header */}
@@ -145,8 +145,8 @@ export default function TagManagementModal({
 					<div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
 						{/* Current Tags */}
 						<div className="mb-6">
-							<h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-								<svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+								<svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
 								</svg>
 								Current Tags ({selectedTags.length})
@@ -164,19 +164,19 @@ export default function TagManagementModal({
 									))}
 								</div>
 							) : (
-								<p className="text-gray-500 text-sm italic">No tags added yet</p>
+								<p className="text-gray-500 dark:text-gray-400 text-sm italic">No tags added yet</p>
 							)}
 						</div>
 
 						{/* AI Suggested Tags */}
 						<div className="mb-6">
-							<h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-								<svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+								<svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
 								</svg>
 								AI Suggested Tags
 								{isAnalyzing && (
-									<span className="text-xs text-purple-500 font-normal ml-2 flex items-center gap-1">
+									<span className="text-xs text-purple-500 dark:text-purple-400 font-normal ml-2 flex items-center gap-1">
 										<svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
 											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -190,7 +190,7 @@ export default function TagManagementModal({
 									{[1, 2, 3, 4].map(i => (
 										<div
 											key={i}
-											className="h-7 w-20 bg-gray-200 rounded-full animate-pulse"
+											className="h-7 w-20 bg-gray-200 dark:bg-slate-700 rounded-full animate-pulse"
 										/>
 									))}
 								</div>
@@ -210,14 +210,14 @@ export default function TagManagementModal({
 									))}
 								</div>
 							) : (
-								<p className="text-gray-500 text-sm italic">All suggested tags have been added</p>
+								<p className="text-gray-500 dark:text-gray-400 text-sm italic">All suggested tags have been added</p>
 							)}
 						</div>
 
 						{/* Search & Add Tags */}
 						<div className="mb-6">
-							<h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-								<svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+								<svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 								</svg>
 								Search or Add Tag
@@ -234,15 +234,15 @@ export default function TagManagementModal({
 										}}
 										onKeyPress={handleKeyPress}
 										placeholder="Search existing or type new tag..."
-										className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+										className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all"
 									/>
 									{searchResults.length > 0 && (
-										<div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-10 max-h-48 overflow-y-auto">
+										<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 rounded-xl shadow-lg border border-gray-100 dark:border-slate-600 z-10 max-h-48 overflow-y-auto">
 											{searchResults.map(tag => (
 												<button
 													key={tag}
 													onClick={() => handleAddTag(tag)}
-													className="w-full px-4 py-2 text-left hover:bg-purple-50 flex items-center gap-2 transition-colors"
+													className="w-full px-4 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/30 flex items-center gap-2 transition-colors"
 												>
 													<TagBadge tag={tag} size="sm" />
 												</button>
@@ -262,16 +262,16 @@ export default function TagManagementModal({
 
 						{/* Predefined Tags */}
 						<div>
-							<h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
+							<h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center justify-between">
 								<span className="flex items-center gap-2">
-									<svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
 									</svg>
 									Available Tags
 								</span>
 								<button
 									onClick={() => setShowAllPredefined(!showAllPredefined)}
-									className="text-purple-600 hover:text-pink-600 text-xs font-medium transition-colors"
+									className="text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 text-xs font-medium transition-colors"
 								>
 									{showAllPredefined ? 'Show Less' : `Show All (${allPredefinedTags.length})`}
 								</button>
@@ -294,15 +294,15 @@ export default function TagManagementModal({
 					</div>
 
 					{/* Footer */}
-					<div className="border-t border-gray-200 p-4 flex justify-between items-center bg-gray-50/50">
-						<p className="text-sm text-gray-500">
+					<div className="border-t border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center bg-gray-50/50 dark:bg-slate-900/50">
+						<p className="text-sm text-gray-500 dark:text-gray-400">
 							{selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
 						</p>
 						<div className="flex gap-3">
 							<button
 								onClick={onClose}
 								disabled={isSaving}
-								className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+								className="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
 							>
 								Cancel
 							</button>

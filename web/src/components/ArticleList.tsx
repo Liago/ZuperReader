@@ -18,12 +18,12 @@ interface ArticleListProps {
 // Skeleton Loader per Grid View
 function GridSkeleton() {
 	return (
-		<div className="bg-white/60 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-			<div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse bg-[length:200%_100%]"></div>
+		<div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700">
+			<div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 animate-pulse bg-[length:200%_100%]"></div>
 			<div className="p-5 space-y-3">
-				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse bg-[length:200%_100%]"></div>
-				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
-				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
 			</div>
 		</div>
 	);
@@ -32,12 +32,12 @@ function GridSkeleton() {
 // Skeleton Loader per List View
 function ListSkeleton() {
 	return (
-		<div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 flex gap-4 shadow-sm border border-gray-100">
-			<div className="w-24 h-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-xl animate-pulse bg-[length:200%_100%] flex-shrink-0"></div>
+		<div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl p-4 flex gap-4 shadow-sm border border-gray-100 dark:border-slate-700">
+			<div className="w-24 h-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded-xl animate-pulse bg-[length:200%_100%] flex-shrink-0"></div>
 			<div className="flex-1 space-y-3">
-				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse bg-[length:200%_100%]"></div>
-				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
-				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded w-3/4 animate-pulse bg-[length:200%_100%]"></div>
+				<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 rounded w-1/2 animate-pulse bg-[length:200%_100%]"></div>
 			</div>
 		</div>
 	);
@@ -321,20 +321,20 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	return (
 		<div className="mt-4">
 			{/* Combined Toolbar: Title, Search, Filters, View Mode */}
-			<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+			<div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 mb-6">
 				{/* Top row: Title, Search, View Mode */}
 				<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
 					{/* Title */}
-					<h2 className="text-xl sm:text-2xl font-bold text-gray-800 whitespace-nowrap">
+					<h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">
 						My Articles
-						<span className="ml-2 text-sm font-normal text-gray-500">({articles.length}{!hasMore ? '' : '+'})</span>
+						<span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">({articles.length}{!hasMore ? '' : '+'})</span>
 					</h2>
 
 					{/* Search Bar */}
 					<div className="flex-1 w-full sm:w-auto">
 						<div className="relative">
 							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-								<svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 								</svg>
 							</div>
@@ -343,12 +343,12 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								placeholder="Search articles..."
-								className="block w-full pl-9 pr-9 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900 placeholder-gray-400"
+								className="block w-full pl-9 pr-9 py-2 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500"
 							/>
 							{searchQuery && (
 								<button
 									onClick={() => setSearchQuery('')}
-									className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+									className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
 								>
 									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -360,12 +360,12 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 					{/* View Mode Toggle */}
 					<div className="flex items-center gap-2">
-						<div className="bg-gray-100 rounded-xl p-1 flex">
+						<div className="bg-gray-100 dark:bg-slate-700 rounded-xl p-1 flex">
 							<button
 								onClick={() => updatePreferences({ viewMode: 'grid' })}
 								className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid'
 									? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-									: 'text-gray-400 hover:text-gray-600'
+									: 'text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200'
 									}`}
 								title="Grid View"
 							>
@@ -377,7 +377,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								onClick={() => updatePreferences({ viewMode: 'list' })}
 								className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
 									? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-									: 'text-gray-400 hover:text-gray-600'
+									: 'text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200'
 									}`}
 								title="List View"
 							>
@@ -392,14 +392,14 @@ export default function ArticleList({ userId }: ArticleListProps) {
 				{/* Second row: Quick Filters */}
 				<div className="mt-4 flex flex-wrap items-center gap-2">
 					{/* Reading Status Pills */}
-					<div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+					<div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
 						{(['all', 'unread', 'reading', 'completed'] as const).map((status) => (
 							<button
 								key={status}
 								onClick={() => setReadingStatus(status)}
 								className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${readingStatus === status
-									? 'bg-white text-purple-600 shadow-sm'
-									: 'text-gray-500 hover:text-gray-700'
+									? 'bg-white dark:bg-slate-600 text-purple-600 dark:text-purple-400 shadow-sm'
+									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 									}`}
 							>
 								{status === 'all' && 'All'}
@@ -414,8 +414,8 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					<button
 						onClick={() => setIsFavorite(isFavorite === true ? undefined : true)}
 						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isFavorite === true
-							? 'bg-pink-100 text-pink-600 border border-pink-200'
-							: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+							? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-800'
+							: 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 							}`}
 					>
 						<svg className={`w-4 h-4 ${isFavorite === true ? 'fill-current' : ''}`} fill={isFavorite === true ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
@@ -429,7 +429,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						<select
 							value={sortField}
 							onChange={(e) => setSortField(e.target.value as ArticleSortField)}
-							className="px-3 py-1.5 bg-gray-100 border-0 rounded-xl text-xs font-medium text-gray-600 focus:ring-2 focus:ring-purple-500 cursor-pointer"
+							className="px-3 py-1.5 bg-gray-100 dark:bg-slate-700 border-0 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-300 focus:ring-2 focus:ring-purple-500 cursor-pointer"
 						>
 							<option value="created_at">Date Added</option>
 							<option value="published_date">Published</option>
@@ -438,7 +438,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						</select>
 						<button
 							onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-							className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+							className="p-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
 							title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
 						>
 							<svg className={`w-4 h-4 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -451,8 +451,8 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					<button
 						onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
 						className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${showAdvancedFilters || selectedTags.length > 0 || selectedDomain
-							? 'bg-purple-100 text-purple-600 border border-purple-200'
-							: 'bg-gray-100 text-gray-500 hover:text-gray-700'
+							? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+							: 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 							}`}
 					>
 						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -470,7 +470,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					{hasActiveFilters && (
 						<button
 							onClick={clearFilters}
-							className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-600 transition-colors"
+							className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
 						>
 							<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -482,11 +482,11 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 				{/* Advanced Filters Panel */}
 				{showAdvancedFilters && (
-					<div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+					<div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 space-y-4">
 						{/* Tags Filter */}
 						{availableTags.length > 0 && (
 							<div>
-								<label className="block text-xs font-medium text-gray-600 mb-2">Tags</label>
+								<label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Tags</label>
 								<div className="flex flex-wrap gap-2">
 									{availableTags.map((tag) => (
 										<button
@@ -494,7 +494,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 											onClick={() => toggleTag(tag)}
 											className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${selectedTags.includes(tag)
 												? 'bg-purple-600 text-white'
-												: 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+												: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
 												}`}
 										>
 											{tag}
@@ -507,11 +507,11 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						{/* Domain Filter */}
 						{availableDomains.length > 0 && (
 							<div>
-								<label className="block text-xs font-medium text-gray-600 mb-2">Domain</label>
+								<label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Domain</label>
 								<select
 									value={selectedDomain}
 									onChange={(e) => setSelectedDomain(e.target.value)}
-									className="block w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+									className="block w-full sm:w-auto px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
 								>
 									<option value="">All domains</option>
 									{availableDomains.map((domain) => (
@@ -529,13 +529,13 @@ export default function ArticleList({ userId }: ArticleListProps) {
 			{/* Empty State */}
 			{articles.length === 0 && (
 				<div className="text-center py-16 px-4">
-					<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 mb-4">
-						<svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 mb-4">
+						<svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
 						</svg>
 					</div>
-					<p className="text-gray-600 text-lg font-medium">No articles found</p>
-					<p className="text-gray-500 text-sm mt-2">
+					<p className="text-gray-600 dark:text-gray-300 text-lg font-medium">No articles found</p>
+					<p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
 						{hasActiveFilters ? 'Try adjusting your filters' : 'Add your first article to get started!'}
 					</p>
 				</div>
@@ -548,7 +548,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						<article
 							key={article.id}
 							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1 cursor-pointer relative"
+							className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-700 hover:-translate-y-1 cursor-pointer relative"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
@@ -557,7 +557,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							<div className="absolute top-3 right-3 z-20 flex gap-2">
 								<button
 									onClick={(e) => handleToggleFavorite(e, article)}
-									className="p-2 bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+									className="p-2 bg-white/90 dark:bg-slate-700/90 hover:bg-white dark:hover:bg-slate-600 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
 									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
 								>
 									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -648,13 +648,13 @@ export default function ArticleList({ userId }: ArticleListProps) {
 										)}
 									</div>
 								)}
-								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
+								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
 									{article.title}
 								</h3>
-								<p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+								<p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
 
 								{/* Meta info */}
-								<div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+								<div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
 									<span className="flex items-center gap-1">
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -672,7 +672,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								</div>
 
 								{/* Engagement stats */}
-								<div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+								<div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
 									<span className="flex items-center gap-1">
 										<svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
 											<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -700,7 +700,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 									) : null}
 									<button
 										onClick={(e) => handleTagClick(e, article)}
-										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 hover:text-pink-600 hover:bg-purple-50 rounded-full transition-colors border border-transparent hover:border-purple-200"
+										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-full transition-colors border border-transparent hover:border-purple-200 dark:hover:border-purple-700"
 										title="Manage tags"
 									>
 										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -716,7 +716,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 									target="_blank"
 									rel="noopener noreferrer"
 									onClick={handleExternalLinkClick}
-									className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-pink-600 font-medium transition-colors"
+									className="inline-flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 font-medium transition-colors"
 								>
 									View Original
 									<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -736,7 +736,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 						<article
 							key={article.id}
 							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 cursor-pointer relative"
+							className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-700 cursor-pointer relative"
 							style={{
 								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
 							}}
@@ -808,10 +808,10 @@ export default function ArticleList({ userId }: ArticleListProps) {
 										)}
 									</div>
 								)}
-								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
+								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
 									{article.title}
 								</h3>
-								<p className="text-gray-600 text-sm mb-2 line-clamp-2 flex-1">{article.excerpt}</p>
+								<p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2 flex-1">{article.excerpt}</p>
 
 								{/* Tags in List View */}
 								<div className="mb-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -824,7 +824,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 									)}
 									<button
 										onClick={(e) => handleTagClick(e, article)}
-										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 hover:text-pink-600 hover:bg-purple-50 rounded-full transition-colors"
+										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-full transition-colors"
 										title="Manage tags"
 									>
 										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -835,7 +835,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								</div>
 
 								{/* Meta info */}
-								<div className="flex flex-wrap gap-3 items-center text-xs text-gray-500">
+								<div className="flex flex-wrap gap-3 items-center text-xs text-gray-500 dark:text-gray-400">
 									<span className="flex items-center gap-1">
 										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -868,7 +868,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 										target="_blank"
 										rel="noopener noreferrer"
 										onClick={handleExternalLinkClick}
-										className="ml-auto text-purple-600 hover:text-pink-600 font-medium inline-flex items-center gap-1"
+										className="ml-auto text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 font-medium inline-flex items-center gap-1"
 									>
 										View Original
 										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -882,7 +882,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							<div className="flex flex-col gap-2 self-start opacity-0 group-hover:opacity-100 transition-opacity">
 								<button
 									onClick={(e) => handleToggleFavorite(e, article)}
-									className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+									className="p-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"
 									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
 								>
 									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -891,7 +891,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								</button>
 								<button
 									onClick={(e) => handleDeleteClick(e, article)}
-									className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors"
+									className="p-2 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
 									title="Delete article"
 								>
 									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -908,8 +908,8 @@ export default function ArticleList({ userId }: ArticleListProps) {
 			{loadingMore && (
 				<div className="flex justify-center items-center py-8">
 					<div className="flex flex-col items-center gap-3">
-						<div className="w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-						<p className="text-purple-600 text-sm font-medium">Loading more articles...</p>
+						<div className="w-8 h-8 border-3 border-purple-200 dark:border-purple-900 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
+						<p className="text-purple-600 dark:text-purple-400 text-sm font-medium">Loading more articles...</p>
 					</div>
 				</div>
 			)}
@@ -920,33 +920,33 @@ export default function ArticleList({ userId }: ArticleListProps) {
 			{/* Messaggio fine lista */}
 			{!hasMore && articles.length > 0 && (
 				<div className="text-center py-8">
-					<p className="text-gray-500 text-sm">You&apos;ve reached the end of your articles</p>
+					<p className="text-gray-500 dark:text-gray-400 text-sm">You&apos;ve reached the end of your articles</p>
 				</div>
 			)}
 
 			{/* Delete Confirmation Modal */}
 			{showDeleteConfirm && articleToDelete && (
 				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-					<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+					<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
 						<div className="flex items-center gap-4 mb-4">
-							<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-								<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<div className="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+								<svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 								</svg>
 							</div>
 							<div>
-								<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
-								<p className="text-sm text-gray-600">This action cannot be undone</p>
+								<h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delete Article</h3>
+								<p className="text-sm text-gray-600 dark:text-gray-400">This action cannot be undone</p>
 							</div>
 						</div>
-						<p className="text-gray-700 mb-6">
+						<p className="text-gray-700 dark:text-gray-300 mb-6">
 							Are you sure you want to delete &quot;{articleToDelete.title}&quot;? This will permanently remove the article from your library.
 						</p>
 						<div className="flex gap-3 justify-end">
 							<button
 								onClick={handleDeleteCancel}
 								disabled={isDeleting}
-								className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+								className="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
 							>
 								Cancel
 							</button>
