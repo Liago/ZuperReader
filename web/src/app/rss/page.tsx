@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getRSSFeedsWithUnreadCounts } from '@/lib/api';
 import RSSLayout from '@/components/RSS/RSSLayout';
-import { refreshAllFeeds } from '@/app/actions/rss';
+import RefreshProgress from '@/components/RSS/RefreshProgress';
+import { getFeedContent } from '@/app/actions/rss';
 
 interface Feed {
 	id: string;
@@ -30,6 +31,7 @@ export default function RSSPage() {
 	const [isLoadingData, setIsLoadingData] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [refreshProgress, setRefreshProgress] = useState({ current: 0, total: 0 });
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -85,26 +87,73 @@ export default function RSSPage() {
 		fetchRSSData();
 	}, [user, fetchRSSData]);
 
-	// Refresh all feeds on mount
+	// Refresh all feeds on mount with progress tracking
 	useEffect(() => {
 		if (!user) return;
 
 		const refreshFeeds = async () => {
 			setIsRefreshing(true);
+
 			try {
-				const result = await refreshAllFeeds();
-				if (result.success) {
-					console.log(`Refreshed ${result.feedsRefreshed} feeds. Added ${result.totalAdded} new articles.`);
-					// Re-fetch data to update unread counts
-					fetchRSSData();
+				// Get all user feeds
+				const supabase = createClient();
+				const { data: userFeeds, error: feedsError } = await supabase
+					.from('rss_feeds')
+					.select('id, url, title')
+					.eq('user_id', user.id);
+
+				if (feedsError || !userFeeds || userFeeds.length === 0) {
+					console.warn('No feeds to refresh');
+					setIsRefreshing(false);
+					return;
 				}
-				if (result.errors.length > 0) {
-					console.warn('Some feeds failed to refresh:', result.errors);
+
+				const totalFeeds = userFeeds.length;
+				setRefreshProgress({ current: 0, total: totalFeeds });
+
+				let totalAdded = 0;
+				let successCount = 0;
+				const errors: string[] = [];
+
+				// Process feeds one by one to show progress
+				for (let i = 0; i < userFeeds.length; i++) {
+					const feed = userFeeds[i];
+					try {
+						const result = await getFeedContent(feed.url, feed.id);
+
+						if (result.error) {
+							errors.push(`${feed.title || feed.url}: ${result.error}`);
+						} else if (result.syncStats) {
+							totalAdded += result.syncStats.added;
+							successCount++;
+						}
+					} catch (err) {
+						errors.push(`${feed.title || feed.url}: ${(err as Error).message}`);
+					}
+
+					// Update progress after each feed
+					setRefreshProgress({ current: i + 1, total: totalFeeds });
+
+					// Small delay to show progress animation
+					await new Promise(resolve => setTimeout(resolve, 100));
 				}
+
+				console.log(`Refreshed ${successCount} feeds. Added ${totalAdded} new articles.`);
+				if (errors.length > 0) {
+					console.warn('Some feeds failed to refresh:', errors);
+				}
+
+				// Re-fetch data to update unread counts
+				await fetchRSSData();
+
+				// Keep progress visible for a moment after completion
+				await new Promise(resolve => setTimeout(resolve, 1500));
+
 			} catch (err) {
 				console.error('Error refreshing feeds:', err);
 			} finally {
 				setIsRefreshing(false);
+				setRefreshProgress({ current: 0, total: 0 });
 			}
 		};
 
@@ -144,6 +193,13 @@ export default function RSSPage() {
 
 	return (
 		<div className="min-h-screen flex flex-col app-bg-gradient">
+			{/* Progress Indicator */}
+			<RefreshProgress
+				current={refreshProgress.current}
+				total={refreshProgress.total}
+				isVisible={isRefreshing}
+			/>
+
 			{/* Header */}
 			<header className="bg-white/60 backdrop-blur-sm shadow-sm z-10 sticky top-0 border-b border-gray-100">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -156,12 +212,6 @@ export default function RSSPage() {
 						</Link>
 						<h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">RSS Reader</h1>
 					</div>
-					{isRefreshing && (
-						<div className="flex items-center gap-2 text-sm text-gray-600">
-							<div className="w-4 h-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
-							<span className="hidden sm:inline">Refreshing feeds...</span>
-						</div>
-					)}
 				</div>
 			</header>
 
