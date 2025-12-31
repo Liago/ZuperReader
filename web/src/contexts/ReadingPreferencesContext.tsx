@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getUserPreferences, saveUserPreferences } from '../lib/api';
 import { useAuth } from './AuthContext';
+import { useTheme } from './ThemeContext';
 
 export type FontFamily = 'sans' | 'serif' | 'mono' | 'roboto' | 'lato' | 'openSans' | 'ubuntu';
 export type FontSize = number; // Font size in pixels (12-50)
@@ -39,8 +40,10 @@ const ReadingPreferencesContext = createContext<ReadingPreferencesContextType | 
 
 export function ReadingPreferencesProvider({ children }: { children: ReactNode }) {
 	const { user } = useAuth();
+	const { theme: globalTheme } = useTheme();
 	const [preferences, setPreferences] = useState<ReadingPreferences>(defaultPreferences);
 	const [isLoaded, setIsLoaded] = useState(false);
+	const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
 	// Load preferences on mount (database first, then localStorage as fallback)
 	useEffect(() => {
@@ -82,11 +85,27 @@ export function ReadingPreferencesProvider({ children }: { children: ReactNode }
 				console.error('Failed to load reading preferences:', error);
 			} finally {
 				setIsLoaded(true);
+				setHasInitiallyLoaded(true);
 			}
 		};
 
 		loadPreferences();
 	}, [user]);
+
+	// Sync colorTheme with global theme when it changes
+	// This ensures the article reader respects the app-wide dark mode setting
+	useEffect(() => {
+		if (hasInitiallyLoaded && globalTheme) {
+			// Only sync if the global theme is a valid color theme
+			const validColorThemes: ColorTheme[] = ['light', 'dark', 'ocean', 'forest', 'sunset'];
+			if (validColorThemes.includes(globalTheme as ColorTheme)) {
+				setPreferences((prev) => ({
+					...prev,
+					colorTheme: globalTheme as ColorTheme,
+				}));
+			}
+		}
+	}, [globalTheme, hasInitiallyLoaded]);
 
 	// Save preferences to both database and localStorage whenever they change
 	useEffect(() => {
