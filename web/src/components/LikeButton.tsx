@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toggleLike, checkIfUserLiked } from '@/lib/api';
+import { useReadingPreferences } from '@/contexts/ReadingPreferencesContext';
 
 interface LikeButtonProps {
 	articleId: string;
@@ -10,6 +11,7 @@ interface LikeButtonProps {
 }
 
 export default function LikeButton({ articleId, userId, initialLikeCount }: LikeButtonProps) {
+	const { preferences } = useReadingPreferences();
 	const [liked, setLiked] = useState(false);
 	const [likeCount, setLikeCount] = useState(initialLikeCount);
 	const [loading, setLoading] = useState(false);
@@ -42,6 +44,8 @@ export default function LikeButton({ articleId, userId, initialLikeCount }: Like
 		}
 	};
 
+	const isDark = preferences.colorTheme === 'dark';
+
 	return (
 		<button
 			onClick={handleLike}
@@ -49,7 +53,9 @@ export default function LikeButton({ articleId, userId, initialLikeCount }: Like
 			className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
 				liked
 					? 'bg-red-500 text-white hover:bg-red-600'
-					: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+					: isDark
+						? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+						: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
 			} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
 		>
 			<svg

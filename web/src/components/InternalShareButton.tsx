@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { shareArticleWithFriend } from '@/lib/api';
 import { useFriends } from '@/contexts/FriendsContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useReadingPreferences } from '@/contexts/ReadingPreferencesContext';
 
 interface InternalShareButtonProps {
 	articleId: string;
@@ -14,6 +15,7 @@ interface InternalShareButtonProps {
 export default function InternalShareButton({ articleId, articleTitle }: InternalShareButtonProps) {
 	const { user } = useAuth();
 	const { friends } = useFriends();
+	const { preferences } = useReadingPreferences();
 	const [showModal, setShowModal] = useState(false);
 	const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
 	const [message, setMessage] = useState('');
@@ -102,23 +104,37 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 					/>
 
 					{/* Modal Content */}
-					<div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
+					<div className={`relative rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden ${
+						preferences.colorTheme === 'dark' ? 'bg-slate-800' : 'bg-white'
+					}`}>
 						{/* Header */}
-						<div className="p-6 border-b border-gray-100">
+						<div className={`p-6 border-b ${
+							preferences.colorTheme === 'dark' ? 'border-slate-700' : 'border-gray-100'
+						}`}>
 							<div className="flex items-center justify-between">
-								<h3 className="text-xl font-bold text-gray-800">
+								<h3 className={`text-xl font-bold ${
+									preferences.colorTheme === 'dark' ? 'text-slate-100' : 'text-gray-800'
+								}`}>
 									Condividi con amici
 								</h3>
 								<button
 									onClick={handleClose}
-									className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+									className={`p-2 rounded-full transition-colors ${
+										preferences.colorTheme === 'dark'
+											? 'hover:bg-slate-700'
+											: 'hover:bg-gray-100'
+									}`}
 								>
-									<svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg className={`w-5 h-5 ${
+										preferences.colorTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+									}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 									</svg>
 								</button>
 							</div>
-							<p className="text-sm text-gray-500 mt-1 line-clamp-1">
+							<p className={`text-sm mt-1 line-clamp-1 ${
+								preferences.colorTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+							}`}>
 								{articleTitle}
 							</p>
 						</div>
@@ -131,15 +147,21 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 									</svg>
 								</div>
-								<h4 className="text-lg font-semibold text-gray-800">Condivisione completata!</h4>
-								<p className="text-gray-500 mt-1">L&apos;articolo è stato condiviso con i tuoi amici.</p>
+								<h4 className={`text-lg font-semibold ${
+									preferences.colorTheme === 'dark' ? 'text-slate-100' : 'text-gray-800'
+								}`}>Condivisione completata!</h4>
+								<p className={`mt-1 ${
+									preferences.colorTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+								}`}>L&apos;articolo è stato condiviso con i tuoi amici.</p>
 							</div>
 						) : (
 							<>
 								{/* Friends List */}
 								<div className="max-h-64 overflow-y-auto p-4">
 									{friends.length === 0 ? (
-										<p className="text-center text-gray-500 py-4">
+										<p className={`text-center py-4 ${
+											preferences.colorTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+										}`}>
 											Non hai ancora amici. Aggiungine alcuni per condividere!
 										</p>
 									) : (
@@ -150,15 +172,21 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 													<li
 														key={friend.friendship_id}
 														onClick={() => toggleFriend(friend.user.id)}
-														className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected
-															? 'bg-purple-100 border-2 border-purple-400'
-															: 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+														className={`p-3 rounded-xl cursor-pointer transition-all ${
+															isSelected
+																? 'bg-purple-100 border-2 border-purple-400'
+																: preferences.colorTheme === 'dark'
+																	? 'bg-slate-700 border-2 border-transparent hover:bg-slate-600'
+																	: 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
 															}`}
 													>
 														<div className="flex items-center gap-3">
-															<div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected
-																? 'border-purple-600 bg-purple-600'
-																: 'border-gray-300'
+															<div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+																isSelected
+																	? 'border-purple-600 bg-purple-600'
+																	: preferences.colorTheme === 'dark'
+																		? 'border-slate-500'
+																		: 'border-gray-300'
 																}`}>
 																{isSelected && (
 																	<svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -169,7 +197,9 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 															<div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
 																{friend.user.display_name?.charAt(0).toUpperCase() || '?'}
 															</div>
-															<span className="font-medium text-gray-800">
+															<span className={`font-medium ${
+																preferences.colorTheme === 'dark' ? 'text-slate-200' : 'text-gray-800'
+															}`}>
 																{friend.user.display_name || 'Utente'}
 															</span>
 														</div>
@@ -186,7 +216,11 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 										value={message}
 										onChange={(e) => setMessage(e.target.value)}
 										placeholder="Aggiungi un messaggio (opzionale)..."
-										className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+										className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${
+											preferences.colorTheme === 'dark'
+												? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400'
+												: 'bg-gray-50 border-gray-200'
+										}`}
 										rows={2}
 									/>
 								</div>
@@ -201,9 +235,15 @@ export default function InternalShareButton({ articleId, articleTitle }: Interna
 								)}
 
 								{/* Footer */}
-								<div className="p-4 border-t border-gray-100 bg-gray-50">
+								<div className={`p-4 border-t ${
+									preferences.colorTheme === 'dark'
+										? 'border-slate-700 bg-slate-900/50'
+										: 'border-gray-100 bg-gray-50'
+								}`}>
 									<div className="flex items-center justify-between">
-										<span className="text-sm text-gray-500">
+										<span className={`text-sm ${
+											preferences.colorTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+										}`}>
 											{selectedFriends.length} {selectedFriends.length === 1 ? 'amico selezionato' : 'amici selezionati'}
 										</span>
 										<button

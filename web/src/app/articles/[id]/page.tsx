@@ -170,6 +170,44 @@ export default function ArticleReaderPage() {
 
 	const colorTheme = getColorThemeClasses();
 
+	// Helper function to get UI element colors based on theme
+	const getUIThemeClasses = () => {
+		const isDark = preferences.colorTheme === 'dark';
+
+		return {
+			// Page backgrounds
+			pageBg: isDark ? 'bg-slate-900' : 'bg-white',
+			// Toolbar/header backgrounds
+			toolbarBg: isDark ? 'bg-slate-800/95' : 'bg-white/95',
+			toolbarBorder: isDark ? 'border-slate-700' : 'border-gray-200',
+			// Card backgrounds
+			cardBg: isDark ? 'bg-slate-800' : 'bg-white',
+			cardBorder: isDark ? 'border-slate-700' : 'border-gray-200',
+			// Text colors
+			textPrimary: isDark ? 'text-slate-100' : 'text-gray-900',
+			textSecondary: isDark ? 'text-slate-400' : 'text-gray-500',
+			textTertiary: isDark ? 'text-slate-500' : 'text-gray-400',
+			// Button backgrounds
+			buttonBg: isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-100 hover:bg-gray-200',
+			buttonBorder: isDark ? 'border-slate-600' : 'border-gray-200',
+			buttonText: isDark ? 'text-slate-200' : 'text-gray-700',
+			// Divider
+			divider: isDark ? 'bg-slate-700' : 'bg-gray-200',
+			// Dropdown menu
+			dropdownBg: isDark ? 'bg-slate-800' : 'bg-white',
+			dropdownBorder: isDark ? 'border-slate-700' : 'border-gray-200',
+			dropdownHover: isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50',
+			// Modal backgrounds
+			modalBg: isDark ? 'bg-slate-800' : 'bg-white',
+			modalBackdrop: 'bg-black/50',
+			// Loading spinner
+			spinnerBg: isDark ? 'border-slate-700' : 'border-purple-200',
+			spinnerFg: isDark ? 'border-slate-400' : 'border-purple-600',
+		};
+	};
+
+	const uiTheme = getUIThemeClasses();
+
 	// Save reading progress with debouncing (save after 2 seconds of no scroll)
 	const handleProgressChange = useCallback((progress: number) => {
 		if (!article) return;
@@ -668,16 +706,17 @@ export default function ArticleReaderPage() {
 	};
 
 	if (authLoading || loading) {
+		const isDark = preferences.colorTheme === 'dark';
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+			<div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50'}`}>
 				<div className="flex flex-col items-center gap-4">
-					<div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+					<div className={`w-16 h-16 border-4 rounded-full animate-spin ${isDark ? 'border-slate-700 border-t-slate-400' : 'border-purple-200 border-t-purple-600'}`}></div>
 					<div className="space-y-2 text-center">
-						<p className="text-purple-600 font-medium text-lg">Loading article...</p>
+						<p className={`font-medium text-lg ${isDark ? 'text-slate-300' : 'text-purple-600'}`}>Loading article...</p>
 						<div className="flex gap-1 justify-center">
-							<div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-							<div className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+							<div className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-slate-500' : 'bg-purple-600'}`} style={{ animationDelay: '0ms' }}></div>
+							<div className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-slate-400' : 'bg-pink-600'}`} style={{ animationDelay: '150ms' }}></div>
+							<div className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-slate-500' : 'bg-blue-600'}`} style={{ animationDelay: '300ms' }}></div>
 						</div>
 					</div>
 				</div>
@@ -686,16 +725,17 @@ export default function ArticleReaderPage() {
 	}
 
 	if (error || !article) {
+		const isDark = preferences.colorTheme === 'dark';
 		return (
-			<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 p-4">
-				<div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-gray-200 text-center max-w-md w-full">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-						<svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<div className={`min-h-screen flex flex-col items-center justify-center p-4 ${isDark ? 'bg-slate-900' : 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50'}`}>
+				<div className={`p-8 rounded-2xl shadow-xl border text-center max-w-md w-full ${isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white/80 border-gray-200'} backdrop-blur-sm`}>
+					<div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${isDark ? 'bg-red-900/30' : 'bg-red-100'}`}>
+						<svg className={`w-8 h-8 ${isDark ? 'text-red-400' : 'text-red-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 						</svg>
 					</div>
-					<h1 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h1>
-					<p className="text-gray-600 mb-6">{error || 'Article not found'}</p>
+					<h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-slate-100' : 'text-gray-900'}`}>Oops!</h1>
+					<p className={`mb-6 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{error || 'Article not found'}</p>
 					<Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
 						<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -708,7 +748,7 @@ export default function ArticleReaderPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-white py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+		<div className={`min-h-screen py-4 sm:py-8 px-4 sm:px-6 lg:px-8 ${uiTheme.pageBg}`}>
 			{/* Reading Progress Indicator */}
 			<ReadingProgressIndicator
 				contentRef={articleContentRef}
@@ -718,7 +758,7 @@ export default function ArticleReaderPage() {
 
 			{/* Sticky Toolbar */}
 			<div
-				className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200 z-40 transition-all duration-300 ${
+				className={`fixed top-0 left-0 right-0 backdrop-blur-md shadow-lg border-b z-40 transition-all duration-300 ${uiTheme.toolbarBg} ${uiTheme.toolbarBorder} ${
 					showStickyToolbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
 				}`}
 			>
@@ -729,7 +769,7 @@ export default function ArticleReaderPage() {
 							{/* Back Button */}
 							<Link
 								href="/"
-								className="flex-shrink-0 p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+								className={`flex-shrink-0 p-1 rounded-full transition-colors ${uiTheme.textSecondary} ${preferences.colorTheme === 'dark' ? 'hover:bg-slate-700 hover:text-slate-100' : 'hover:bg-gray-100 hover:text-gray-900'}`}
 								title="Go back"
 							>
 								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -746,7 +786,7 @@ export default function ArticleReaderPage() {
 								/>
 							</div>
 							{/* Article title (truncated) */}
-							<h2 className="text-sm font-semibold text-gray-900 truncate">
+							<h2 className={`text-sm font-semibold truncate ${uiTheme.textPrimary}`}>
 								{article.title}
 							</h2>
 						</div>
@@ -759,7 +799,9 @@ export default function ArticleReaderPage() {
 								className={`p-2 rounded-full border transition-all ${
 									article.ai_summary
 										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
-										: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
+										: preferences.colorTheme === 'dark'
+											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-400 hover:bg-slate-600'
+											: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
 								}`}
 								title="Riassunto AI"
 							>
@@ -790,11 +832,15 @@ export default function ArticleReaderPage() {
 									</svg>
 								</button>
 								{/* Dropdown menu */}
-								<div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+								<div className={`absolute right-0 mt-2 w-40 rounded-xl shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 ${uiTheme.dropdownBg} ${uiTheme.dropdownBorder}`}>
 									<button
 										onClick={() => handleReadingStatusChange('unread')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 rounded-t-xl ${
-											article.reading_status === 'unread' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${
+											article.reading_status === 'unread'
+												? 'bg-blue-50 text-blue-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-blue-50'
 										}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -804,8 +850,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('reading')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors flex items-center gap-2 ${
-											article.reading_status === 'reading' ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${
+											article.reading_status === 'reading'
+												? 'bg-amber-50 text-amber-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-amber-50'
 										}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -815,8 +865,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('completed')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors flex items-center gap-2 rounded-b-xl ${
-											article.reading_status === 'completed' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${
+											article.reading_status === 'completed'
+												? 'bg-green-50 text-green-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-green-50'
 										}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -833,7 +887,9 @@ export default function ArticleReaderPage() {
 								className={`p-2 rounded-full border transition-all ${
 									article.is_favorite
 										? 'bg-red-50 border-red-200 text-red-600'
-										: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+										: preferences.colorTheme === 'dark'
+											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+											: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
 								}`}
 								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
 							>
@@ -866,7 +922,11 @@ export default function ArticleReaderPage() {
 							{/* Tags button */}
 							<button
 								onClick={() => setShowTagModal(true)}
-								className="p-2 rounded-full bg-white border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-all"
+								className={`p-2 rounded-full border transition-all ${
+									preferences.colorTheme === 'dark'
+										? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+										: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+								}`}
 								title="Manage tags"
 							>
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -884,7 +944,7 @@ export default function ArticleReaderPage() {
 					<div className="flex justify-between items-center mb-6">
 						<Link
 							href="/"
-							className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium"
+							className={`inline-flex items-center gap-2 transition-colors font-medium ${uiTheme.textSecondary} ${preferences.colorTheme === 'dark' ? 'hover:text-slate-100' : 'hover:text-gray-900'}`}
 						>
 							<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -894,7 +954,11 @@ export default function ArticleReaderPage() {
 
 						<button
 							onClick={() => setShowDeleteConfirm(true)}
-							className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
+							className={`transition-colors p-2 rounded-full ${
+								preferences.colorTheme === 'dark'
+									? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30'
+									: 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+							}`}
 							title="Delete Article"
 						>
 							<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -904,24 +968,24 @@ export default function ArticleReaderPage() {
 					</div>
 
 					{/* Title */}
-					<h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 leading-tight text-gray-900 tracking-tight">
+					<h1 className={`text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 leading-tight tracking-tight ${uiTheme.textPrimary}`}>
 						{article.title}
 					</h1>
 
 					{/* Metadata Row */}
-					<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 mb-8 border-b border-gray-100 pb-8">
+					<div className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-8 border-b pb-8 ${uiTheme.textSecondary} ${uiTheme.divider}`}>
 						{article.author && (
 							<div className="flex items-center gap-2">
-								<div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs ring-2 ring-white shadow-sm">
+								<div className={`w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs ring-2 shadow-sm ${preferences.colorTheme === 'dark' ? 'ring-slate-800' : 'ring-white'}`}>
 									{article.author.charAt(0).toUpperCase()}
 								</div>
-								<span className="font-medium text-gray-900">{article.author}</span>
+								<span className={`font-medium ${uiTheme.textPrimary}`}>{article.author}</span>
 							</div>
 						)}
 
 						{article.domain && (
 							<div className="flex items-center gap-2">
-								<svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<svg className={`w-4 h-4 ${uiTheme.textTertiary}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
 								</svg>
 								<span>{article.domain}</span>
@@ -930,14 +994,14 @@ export default function ArticleReaderPage() {
 
 						{article.published_date && (
 							<div className="flex items-center gap-2">
-								<span className="w-1 h-1 rounded-full bg-gray-300"></span>
+								<span className={`w-1 h-1 rounded-full ${preferences.colorTheme === 'dark' ? 'bg-slate-600' : 'bg-gray-300'}`}></span>
 								<span>{new Date(article.published_date).toLocaleDateString()}</span>
 							</div>
 						)}
 
 						{article.estimated_read_time && (
 							<div className="flex items-center gap-2">
-								<span className="w-1 h-1 rounded-full bg-gray-300"></span>
+								<span className={`w-1 h-1 rounded-full ${preferences.colorTheme === 'dark' ? 'bg-slate-600' : 'bg-gray-300'}`}></span>
 								<span>{article.estimated_read_time} min read</span>
 							</div>
 						)}
@@ -951,7 +1015,11 @@ export default function ArticleReaderPage() {
 									href={article.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium rounded-full hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95"
+									className={`inline-flex items-center gap-2 px-5 py-2.5 font-medium rounded-full hover:shadow-lg transition-all active:scale-95 ${
+										preferences.colorTheme === 'dark'
+											? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+											: 'bg-gray-900 text-white hover:bg-gray-800'
+									}`}
 								>
 									Read Original
 									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -960,7 +1028,7 @@ export default function ArticleReaderPage() {
 								</a>
 							)}
 
-							<div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+							<div className={`h-8 w-px mx-2 hidden sm:block ${uiTheme.divider}`}></div>
 
 							{/* Reading Status Dropdown */}
 							<div className="relative group">
@@ -1002,10 +1070,15 @@ export default function ArticleReaderPage() {
 									</svg>
 								</button>
 								{/* Dropdown menu */}
-								<div className="absolute left-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+								<div className={`absolute left-0 mt-2 w-40 rounded-xl shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30 ${uiTheme.dropdownBg} ${uiTheme.dropdownBorder}`}>
 									<button
 										onClick={() => handleReadingStatusChange('unread')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 rounded-t-xl ${article.reading_status === 'unread' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${
+											article.reading_status === 'unread'
+												? 'bg-blue-50 text-blue-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-blue-50'
 											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1015,7 +1088,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('reading')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors flex items-center gap-2 ${article.reading_status === 'reading' ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${
+											article.reading_status === 'reading'
+												? 'bg-amber-50 text-amber-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-amber-50'
 											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1025,7 +1103,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('completed')}
-										className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors flex items-center gap-2 rounded-b-xl ${article.reading_status === 'completed' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${
+											article.reading_status === 'completed'
+												? 'bg-green-50 text-green-700 font-medium'
+												: preferences.colorTheme === 'dark'
+													? 'text-slate-300 hover:bg-slate-700'
+													: 'text-gray-700 hover:bg-green-50'
 											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1036,7 +1119,7 @@ export default function ArticleReaderPage() {
 								</div>
 							</div>
 
-							<div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+							<div className={`h-8 w-px mx-2 hidden sm:block ${uiTheme.divider}`}></div>
 
 							{/* AI Summary button */}
 							<button
@@ -1044,7 +1127,9 @@ export default function ArticleReaderPage() {
 								className={`group p-2.5 rounded-full border transition-all ${
 									article.ai_summary
 										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
-										: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
+										: preferences.colorTheme === 'dark'
+											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-400 hover:bg-slate-600'
+											: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
 								}`}
 								title="Riassunto AI"
 							>
@@ -1055,9 +1140,12 @@ export default function ArticleReaderPage() {
 
 							<button
 								onClick={handleToggleFavorite}
-								className={`group p-2.5 rounded-full border transition-all ${article.is_favorite
-									? 'bg-red-50 border-red-200 text-red-600'
-									: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+								className={`group p-2.5 rounded-full border transition-all ${
+									article.is_favorite
+										? 'bg-red-50 border-red-200 text-red-600'
+										: preferences.colorTheme === 'dark'
+											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+											: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
 									}`}
 								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
 							>
@@ -1096,7 +1184,11 @@ export default function ArticleReaderPage() {
 							)}
 							<button
 								onClick={() => setShowTagModal(true)}
-								className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors px-2 py-1 hover:bg-purple-50 rounded-lg"
+								className={`text-xs font-medium transition-colors px-2 py-1 rounded-lg ${
+									preferences.colorTheme === 'dark'
+										? 'text-slate-400 hover:text-purple-400 hover:bg-purple-900/30'
+										: 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
+								}`}
 							>
 								{article.tags && article.tags.length > 0 ? 'Edit' : '+ Add Tags'}
 							</button>
@@ -1147,7 +1239,11 @@ export default function ArticleReaderPage() {
 
 			{/* Footer con azioni */}
 			<div className="mt-6 flex justify-center">
-				<Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-medium rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-200">
+				<Link href="/" className={`inline-flex items-center gap-2 px-6 py-3 font-medium rounded-xl hover:shadow-lg transition-all duration-200 border backdrop-blur-sm ${
+					preferences.colorTheme === 'dark'
+						? 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700'
+						: 'bg-white/80 text-gray-700 border-gray-200 hover:bg-white'
+				}`}>
 					<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 					</svg>
@@ -1203,26 +1299,34 @@ export default function ArticleReaderPage() {
 			{
 				showDeleteConfirm && (
 					<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-						<div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+						<div className={`rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all ${uiTheme.modalBg}`}>
 							<div className="flex items-center gap-4 mb-4">
-								<div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-									<svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+									preferences.colorTheme === 'dark'
+										? 'bg-red-900/30'
+										: 'bg-red-100'
+								}`}>
+									<svg className={`w-6 h-6 ${preferences.colorTheme === 'dark' ? 'text-red-400' : 'text-red-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 									</svg>
 								</div>
 								<div>
-									<h3 className="text-lg font-bold text-gray-900">Delete Article</h3>
-									<p className="text-sm text-gray-600">This action cannot be undone</p>
+									<h3 className={`text-lg font-bold ${uiTheme.textPrimary}`}>Delete Article</h3>
+									<p className={`text-sm ${uiTheme.textSecondary}`}>This action cannot be undone</p>
 								</div>
 							</div>
-							<p className="text-gray-700 mb-6">
+							<p className={`mb-6 ${uiTheme.textSecondary}`}>
 								Are you sure you want to delete &quot;{article?.title}&quot;? This will permanently remove the article from your library.
 							</p>
 							<div className="flex gap-3 justify-end">
 								<button
 									onClick={() => setShowDeleteConfirm(false)}
 									disabled={isDeleting}
-									className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+									className={`px-4 py-2 font-medium rounded-xl transition-colors disabled:opacity-50 ${
+										preferences.colorTheme === 'dark'
+											? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+											: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+									}`}
 								>
 									Cancel
 								</button>

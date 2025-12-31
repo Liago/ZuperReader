@@ -1,3 +1,7 @@
+'use client';
+
+import { useReadingPreferences } from '@/contexts/ReadingPreferencesContext';
+
 interface RefreshProgressProps {
 	current: number;
 	total: number;
@@ -5,14 +9,21 @@ interface RefreshProgressProps {
 }
 
 export default function RefreshProgress({ current, total, isVisible }: RefreshProgressProps) {
+	const { preferences } = useReadingPreferences();
+
 	if (!isVisible || total === 0) return null;
 
 	const percentage = Math.round((current / total) * 100);
 	const isComplete = current === total;
+	const isDark = preferences.colorTheme === 'dark';
 
 	return (
 		<div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-			<div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-orange-100 p-6 min-w-[320px] max-w-md">
+			<div className={`backdrop-blur-md rounded-2xl shadow-2xl border p-6 min-w-[320px] max-w-md ${
+				isDark
+					? 'bg-slate-800/95 border-slate-700'
+					: 'bg-white/95 border-orange-100'
+			}`}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
 					<div className="flex items-center gap-3">
@@ -30,10 +41,10 @@ export default function RefreshProgress({ current, total, isVisible }: RefreshPr
 							)}
 						</div>
 						<div>
-							<h3 className="font-semibold text-gray-900">
+							<h3 className={`font-semibold ${isDark ? 'text-slate-100' : 'text-gray-900'}`}>
 								{isComplete ? 'Aggiornamento completato!' : 'Aggiornamento feed RSS'}
 							</h3>
-							<p className="text-sm text-gray-500">
+							<p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
 								{current} di {total} feed processati
 							</p>
 						</div>
@@ -44,7 +55,9 @@ export default function RefreshProgress({ current, total, isVisible }: RefreshPr
 				</div>
 
 				{/* Progress Bar */}
-				<div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+				<div className={`relative h-3 rounded-full overflow-hidden ${
+					isDark ? 'bg-slate-700' : 'bg-gray-100'
+				}`}>
 					{/* Progress fill */}
 					<div
 						className={`h-full rounded-full transition-all duration-500 ease-out ${
@@ -62,7 +75,7 @@ export default function RefreshProgress({ current, total, isVisible }: RefreshPr
 				{/* Status message */}
 				{!isComplete && (
 					<div className="mt-3 text-center">
-						<p className="text-xs text-gray-500">
+						<p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
 							Recupero degli ultimi articoli in corso...
 						</p>
 						<p className="text-xs text-green-600 mt-1 font-medium">
