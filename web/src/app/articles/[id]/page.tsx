@@ -388,9 +388,24 @@ export default function ArticleReaderPage() {
 			// Handle reading status
 			if (article.reading_status === 'completed' || !contentElement) return;
 
-			const scrollPosition = window.scrollY + window.innerHeight;
-			const contentBottom = contentElement.offsetTop + contentElement.offsetHeight;
-			const scrollPercentage = (scrollPosition / contentBottom) * 100;
+			// Calculate scroll percentage correctly (aligned with ReadingProgressIndicator)
+			const contentTop = contentElement.offsetTop;
+			const contentBottom = contentTop + contentElement.offsetHeight;
+			const windowHeight = window.innerHeight;
+			const viewportTop = window.scrollY;
+
+			const scrollStart = contentTop;
+			const scrollEnd = contentBottom - windowHeight;
+			const scrollRange = scrollEnd - scrollStart;
+
+			let scrollPercentage = 0;
+			if (scrollRange <= 0) {
+				// Content is smaller than viewport
+				scrollPercentage = viewportTop >= contentTop ? 100 : 0;
+			} else {
+				const scrollProgress = viewportTop - scrollStart;
+				scrollPercentage = Math.max(0, Math.min(100, (scrollProgress / scrollRange) * 100));
+			}
 
 			// Mark as completed when user scrolls to 85% of the content
 			if (scrollPercentage >= 85 && article.reading_status === 'reading') {
