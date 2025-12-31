@@ -403,6 +403,37 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 					</div>
 				)}
 			</div>
+			
+			{/* Empty State */}
+			{filteredItems.length === 0 && (
+				<div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+					<div className="mb-6 relative w-48 h-48">
+						<OptimizedImage
+							src="/no-articles.png"
+							alt="No articles found"
+							className="object-contain"
+							width={192}
+							height={192}
+						/>
+					</div>
+					<h3 className="text-xl font-semibold text-gray-900 mb-2">
+						No new articles
+					</h3>
+					<p className="text-gray-500 max-w-sm">
+						{showReadArticles 
+							? "You've read everything in this feed." 
+							: "There are no unread articles in this feed."}
+					</p>
+					{!showReadArticles && readCount > 0 && (
+						<button
+							onClick={() => setShowReadArticles(true)}
+							className="mt-6 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-orange-600 transition-colors shadow-sm"
+						>
+							Show {readCount} read articles
+						</button>
+					)}
+				</div>
+			)}
 
 			<ReaderModal
 				isOpen={isReaderOpen}
