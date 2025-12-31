@@ -1199,7 +1199,7 @@ export default function ArticleReaderPage() {
 				{/* Article Content */}
 				<div
 					ref={articleContentRef}
-					className={`prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
+					className={`${colorTheme.bg} ${colorTheme.text} p-8 rounded-2xl prose ${getFontSizeStyle()} prose-slate max-w-none ${getFontFamilyClass()} ${getLineHeightClass()}
 								prose-headings:font-bold ${colorTheme.proseHeadings}
 								prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
 								prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-6
@@ -1212,7 +1212,7 @@ export default function ArticleReaderPage() {
 								prose-img:rounded-xl prose-img:shadow-lg prose-img:my-6
 								prose-blockquote:border-l-4 ${colorTheme.proseBlockquote} prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
 								${colorTheme.proseCode} prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-								prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
+								${preferences.colorTheme === 'dark' ? 'prose-pre:bg-slate-900 prose-pre:text-slate-100' : 'prose-pre:bg-gray-900 prose-pre:text-gray-100'} prose-pre:rounded-xl prose-pre:shadow-lg`}
 					style={{ fontSize: `${preferences.fontSize}px` }}
 					dangerouslySetInnerHTML={{ __html: article.content || '' }}
 				/>
