@@ -1130,7 +1130,10 @@ export async function deleteOldRSSArticles(
 
 // ==================== AI SUMMARY FUNCTIONS ====================
 
-const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL || '/.netlify/functions/generate-summary';
+// Derive the summary function URL from the parse function URL to avoid configuration duplication
+// If NEXT_PUBLIC_SUMMARY_FUNCTION_URL is set, use it; otherwise, derive from PARSE_FUNCTION_URL
+const SUMMARY_FUNCTION_URL = process.env.NEXT_PUBLIC_SUMMARY_FUNCTION_URL ||
+	PARSE_FUNCTION_URL.replace('/parse', '/generate-summary');
 
 /**
  * Generate AI summary for article content
@@ -1140,19 +1143,49 @@ export async function generateAISummary(
 	length: 'short' | 'medium' | 'long' = 'medium',
 	format: 'summary' | 'bullet' | 'periodical' = 'summary'
 ): Promise<string> {
-	const response = await fetch(SUMMARY_FUNCTION_URL, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ content, length, format }),
-	});
+	console.log('Calling AI summary function at:', SUMMARY_FUNCTION_URL);
 
-	if (!response.ok) {
-		const error = await response.json();
-		throw new Error(error.error || 'Failed to generate summary');
+	try {
+		const response = await fetch(SUMMARY_FUNCTION_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ content, length, format }),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			let errorMessage = 'Failed to generate summary';
+
+			try {
+				const errorJson = JSON.parse(errorText);
+				errorMessage = errorJson.error || errorMessage;
+			} catch {
+				errorMessage = `HTTP ${response.status}: ${errorText || response.statusText}`;
+			}
+
+			console.error('AI Summary API error:', {
+				url: SUMMARY_FUNCTION_URL,
+				status: response.status,
+				statusText: response.statusText,
+				error: errorMessage
+			});
+
+			throw new Error(errorMessage);
+		}
+
+		const data = await response.json();
+		console.log('AI summary generated successfully');
+		return data.summary;
+	} catch (error) {
+		console.error('Error generating AI summary:', error);
+
+		// Provide a more helpful error message if it's a network error
+		if (error instanceof TypeError && error.message.includes('fetch')) {
+			throw new Error(`Impossibile raggiungere il servizio AI. Verifica che NEXT_PUBLIC_PARSE_FUNCTION_URL sia configurato correttamente. URL chiamato: ${SUMMARY_FUNCTION_URL}`);
+		}
+
+		throw error;
 	}
-
-	const data = await response.json();
-	return data.summary;
 }
 
 /**

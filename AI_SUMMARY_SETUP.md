@@ -42,11 +42,22 @@ Go to your Netlify dashboard:
    - Key: `COHERE_API_KEY`
    - Value: `O2pO7lIlFe6nfZqyX4WhxTFE3Zgr79TCHtlVA6Vq`
 
-#### For Web App (Optional)
-If you want to customize the summary function URL:
+#### For Web App
+
+**IMPORTANT**: If your web app is deployed on Vercel (or any platform other than Netlify), you MUST configure the full Netlify function URL:
+
 ```bash
-NEXT_PUBLIC_SUMMARY_FUNCTION_URL=/.netlify/functions/generate-summary
+# In Vercel dashboard > Project Settings > Environment Variables
+NEXT_PUBLIC_PARSE_FUNCTION_URL=https://your-site.netlify.app/.netlify/functions/parse
 ```
+
+The summary function URL will be automatically derived from `NEXT_PUBLIC_PARSE_FUNCTION_URL`. However, if you want to customize it:
+
+```bash
+NEXT_PUBLIC_SUMMARY_FUNCTION_URL=https://your-site.netlify.app/.netlify/functions/generate-summary
+```
+
+**Note**: For local development with `netlify dev`, you can use relative URLs like `/.netlify/functions/parse`.
 
 ### 3. Deploy Netlify Functions
 
@@ -144,7 +155,17 @@ For production use, consider upgrading to a paid Cohere plan.
 
 ## Troubleshooting
 
-### Summary generation fails
+### Summary generation fails with "Load failed" error
+**Most common cause**: The frontend can't reach the Netlify function
+
+**Solution**:
+1. Check that `NEXT_PUBLIC_PARSE_FUNCTION_URL` is set with the **full URL** in your Vercel environment variables
+   - Example: `https://your-site.netlify.app/.netlify/functions/parse`
+   - NOT: `/.netlify/functions/parse` (this only works for local development)
+2. Redeploy your Vercel app after setting the environment variable
+3. Check browser console (F12) for network errors to see the actual URL being called
+
+### Summary generation fails with API errors
 - Check that COHERE_API_KEY is set correctly in Netlify
 - Verify the API key is valid at https://dashboard.cohere.ai
 - Check Netlify function logs for errors
