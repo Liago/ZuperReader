@@ -299,7 +299,7 @@ export async function addComment(articleId: string, userId: string, content: str
 		.insert([{ article_id: articleId, user_id: userId, content }])
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
@@ -328,7 +328,7 @@ export async function getComments(articleId: string): Promise<Comment[]> {
 		.from('comments')
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
@@ -371,7 +371,7 @@ export async function updateComment(commentId: string, content: string): Promise
 		.eq('id', commentId)
 		.select(`
 			*,
-			user_profiles!comments_user_id_fkey (
+			user_profiles (
 				display_name,
 				avatar_url
 			)
