@@ -98,8 +98,8 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 	};
 
 	return (
-		<div className="mt-8 border-t pt-8">
-			<h2 className="text-2xl font-bold mb-6">
+		<div className="mt-8 border-t border-gray-200 dark:border-slate-700 pt-8">
+			<h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
 				Comments ({comments.length})
 			</h2>
 
@@ -109,7 +109,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 					value={newComment}
 					onChange={(e) => setNewComment(e.target.value)}
 					placeholder="Write a comment..."
-					className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
+					className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-800 placeholder-gray-400 dark:placeholder-gray-500"
 					rows={3}
 					disabled={loading}
 				/>
@@ -127,10 +127,10 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 			{/* Comments List */}
 			<div className="space-y-4">
 				{comments.length === 0 ? (
-					<p className="text-gray-500 text-center py-8">No comments yet. Be the first to comment!</p>
+					<p className="text-gray-500 dark:text-gray-400 text-center py-8">No comments yet. Be the first to comment!</p>
 				) : (
 					comments.map((comment) => (
-						<div key={comment.id} className="bg-gray-50 rounded-lg p-4">
+						<div key={comment.id} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
 							<div className="flex items-start justify-between mb-2">
 								<div className="flex-1">
 									<div className="flex items-center gap-2 mb-1">
@@ -139,11 +139,11 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 											displayName={comment.author_display_name}
 											size="xs"
 										/>
-										<span className="font-medium text-gray-900">
+										<span className="font-medium text-gray-900 dark:text-gray-100">
 											{comment.author_display_name || 'Anonymous'}
 										</span>
 									</div>
-									<p className="text-sm text-gray-500">
+									<p className="text-sm text-gray-500 dark:text-gray-400">
 										{new Date(comment.created_at).toLocaleDateString('en-US', {
 											year: 'numeric',
 											month: 'long',
@@ -157,13 +157,13 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 									<div className="flex gap-2">
 										<button
 											onClick={() => startEditing(comment)}
-											className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+											className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
 										>
 											Edit
 										</button>
 										<button
 											onClick={() => confirmDeleteComment(comment.id)}
-											className="text-red-600 hover:text-red-800 text-sm font-medium"
+											className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
 										>
 											Delete
 										</button>
@@ -176,7 +176,7 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 									<textarea
 										value={editContent}
 										onChange={(e) => setEditContent(e.target.value)}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
+										className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700"
 										rows={3}
 									/>
 									<div className="mt-2 flex gap-2">
@@ -188,14 +188,14 @@ export default function CommentsSection({ articleId, userId }: CommentsSectionPr
 										</button>
 										<button
 											onClick={cancelEditing}
-											className="px-4 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+											className="px-4 py-1 bg-gray-300 dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-slate-500 text-sm"
 										>
 											Cancel
 										</button>
 									</div>
 								</div>
 							) : (
-								<p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+								<p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{comment.content}</p>
 							)}
 						</div>
 					))

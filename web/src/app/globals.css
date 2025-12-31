@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Configure Tailwind to use .dark class selector for dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================
    THEME VARIABLES
    ============================================ */

@@ -55,7 +55,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 			{/* Modal */}
 			<div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
 				<div
-					className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto pointer-events-auto border border-gray-200"
+					className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto pointer-events-auto border border-gray-200 dark:border-slate-700"
 					onClick={(e) => e.stopPropagation()}
 				>
 					{/* Header */}
@@ -81,7 +81,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 					<div className="p-6 space-y-8">
 						{/* Font Family */}
 						<div>
-							<label className="block text-sm font-semibold text-gray-700 mb-3">
+							<label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
 								Font Family
 							</label>
 							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -90,8 +90,8 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 										key={option.value}
 										onClick={() => updatePreferences({ fontFamily: option.value })}
 										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.fontFamily === option.value
-												? 'border-purple-500 bg-purple-50 shadow-md text-purple-900'
-												: 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 text-gray-900'
+												? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 shadow-md text-purple-900 dark:text-purple-200'
+												: 'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 text-gray-900 dark:text-gray-100'
 											}`}
 									>
 										<span className={`block text-base font-medium ${option.preview}`}>
@@ -104,7 +104,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 
 						{/* Font Size */}
 						<div>
-							<label className="block text-sm font-semibold text-gray-700 mb-3">
+							<label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
 								Font Size: {preferences.fontSize}px
 							</label>
 							<div className="space-y-4">
@@ -119,12 +119,12 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 										background: `linear-gradient(to right, #fbcfe8 0%, #ec4899 ${((preferences.fontSize - 12) / (50 - 12)) * 100}%, #fce7f3 ${((preferences.fontSize - 12) / (50 - 12)) * 100}%, #fce7f3 100%)`
 									}}
 								/>
-								<div className="flex justify-between text-xs text-gray-500">
+								<div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
 									<span>12px</span>
 									<span>50px</span>
 								</div>
-								<div className="p-4 bg-pink-50 rounded-xl border-2 border-pink-200">
-									<p style={{ fontSize: `${preferences.fontSize}px` }} className="text-gray-900 text-center">
+								<div className="p-4 bg-pink-50 dark:bg-pink-900/30 rounded-xl border-2 border-pink-200 dark:border-pink-800">
+									<p style={{ fontSize: `${preferences.fontSize}px` }} className="text-gray-900 dark:text-gray-100 text-center">
 										Sample text preview
 									</p>
 								</div>
@@ -133,7 +133,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 
 						{/* Color Theme */}
 						<div>
-							<label className="block text-sm font-semibold text-gray-700 mb-3">
+							<label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
 								Color Theme
 							</label>
 							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -143,13 +143,13 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 										onClick={() => updatePreferences({ colorTheme: option.value })}
 										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.colorTheme === option.value
 												? 'border-blue-500 shadow-md scale-105'
-												: 'border-gray-300 hover:border-blue-300 hover:scale-102'
+												: 'border-gray-300 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600 hover:scale-102'
 											}`}
 									>
 										<div className={`${option.bg} ${option.text} ${option.border} border rounded-lg p-3 mb-2`}>
 											<span className="text-xs font-medium">Aa</span>
 										</div>
-										<span className="block text-sm font-medium text-gray-700">
+										<span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
 											{option.label}
 										</span>
 									</button>
@@ -159,7 +159,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 
 						{/* Line Height */}
 						<div>
-							<label className="block text-sm font-semibold text-gray-700 mb-3">
+							<label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
 								Line Height
 							</label>
 							<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -168,15 +168,15 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 										key={option.value}
 										onClick={() => updatePreferences({ lineHeight: option.value })}
 										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.lineHeight === option.value
-												? 'border-green-500 bg-green-50 shadow-md'
-												: 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+												? 'border-green-500 bg-green-50 dark:bg-green-900/30 shadow-md'
+												: 'border-gray-200 dark:border-slate-600 hover:border-green-300 dark:hover:border-green-600 hover:bg-green-50/50 dark:hover:bg-green-900/20'
 											}`}
 									>
-										<span className={`block text-sm font-medium ${preferences.lineHeight === option.value ? 'text-green-900' : 'text-gray-900'
+										<span className={`block text-sm font-medium ${preferences.lineHeight === option.value ? 'text-green-900 dark:text-green-200' : 'text-gray-900 dark:text-gray-100'
 											}`}>
 											{option.label}
 										</span>
-										<span className={`block text-xs mt-1 ${preferences.lineHeight === option.value ? 'text-green-700' : 'text-gray-600'
+										<span className={`block text-xs mt-1 ${preferences.lineHeight === option.value ? 'text-green-700 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'
 											}`}>
 											{option.height}
 										</span>
@@ -187,7 +187,7 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 
 						{/* Content Width */}
 						<div>
-							<label className="block text-sm font-semibold text-gray-700 mb-3">
+							<label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
 								Content Width
 							</label>
 							<div className="grid grid-cols-3 gap-3">
@@ -196,8 +196,8 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 										key={option.value}
 										onClick={() => updatePreferences({ contentWidth: option.value })}
 										className={`p-4 rounded-xl border-2 transition-all duration-200 ${preferences.contentWidth === option.value
-												? 'border-indigo-500 bg-indigo-50 shadow-md text-indigo-900'
-												: 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-gray-900'
+												? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 shadow-md text-indigo-900 dark:text-indigo-200'
+												: 'border-gray-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 text-gray-900 dark:text-gray-100'
 											}`}
 									>
 										<span className="block text-sm font-medium">
@@ -210,10 +210,10 @@ export default function ReadingPreferencesModal({ isOpen, onClose }: ReadingPref
 					</div>
 
 					{/* Footer */}
-					<div className="sticky bottom-0 bg-gray-50/95 backdrop-blur-md border-t border-gray-200 p-6 rounded-b-2xl flex gap-3">
+					<div className="sticky bottom-0 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-slate-700 p-6 rounded-b-2xl flex gap-3">
 						<button
 							onClick={resetPreferences}
-							className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+							className="flex-1 px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-400 dark:hover:border-slate-500 transition-all duration-200"
 						>
 							Reset to Default
 						</button>

@@ -117,11 +117,11 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	return (
 		<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
 			<div
-				className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all"
+				className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
-				<div className="flex items-center justify-between p-5 border-b border-gray-100">
+				<div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700">
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
 							<svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,14 +129,14 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 							</svg>
 						</div>
 						<div>
-							<h2 className="text-xl font-bold text-gray-900">Add New Article</h2>
-							<p className="text-sm text-gray-500">Save an article to your library</p>
+							<h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add New Article</h2>
+							<p className="text-sm text-gray-500 dark:text-gray-400">Save an article to your library</p>
 						</div>
 					</div>
 					<button
 						onClick={handleClose}
 						disabled={loading}
-						className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+						className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
 					>
 						<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,13 +147,13 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 				{/* Content */}
 				<form onSubmit={handleSubmit} className="p-5">
 					<div className="relative">
-						<label htmlFor="article-url" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+						<label htmlFor="article-url" className="flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 							<span>Article URL</span>
 							<button
 								type="button"
 								onClick={handlePasteFromClipboard}
 								disabled={loading}
-								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -163,7 +163,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 						</label>
 						<div className="relative">
 							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-								<svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 								</svg>
 							</div>
@@ -176,13 +176,13 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 								placeholder="https://example.com/article"
 								required
 								disabled={loading}
-								className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-gray-900 placeholder-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+								className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
 							/>
 							{url && !loading && (
 								<button
 									type="button"
 									onClick={() => setUrl('')}
-									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
 								>
 									<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -194,16 +194,16 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 
 					{/* Clipboard prompt */}
 					{showClipboardPrompt && clipboardUrl && (
-						<div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+						<div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
 							<div className="flex items-start gap-3">
 								<div className="flex-shrink-0 mt-0.5">
-									<svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
 									</svg>
 								</div>
 								<div className="flex-1 min-w-0">
-									<p className="text-sm font-medium text-blue-900 mb-1">Link found in clipboard</p>
-									<p className="text-xs text-blue-700 break-all mb-3">{clipboardUrl}</p>
+									<p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">Link found in clipboard</p>
+									<p className="text-xs text-blue-700 dark:text-blue-300 break-all mb-3">{clipboardUrl}</p>
 									<div className="flex gap-2">
 										<button
 											type="button"
@@ -215,7 +215,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 										<button
 											type="button"
 											onClick={handleDismissClipboardPrompt}
-											className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition-colors"
+											className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors"
 										>
 											Dismiss
 										</button>
@@ -227,17 +227,17 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 
 					{/* Loading progress indicator */}
 					{loading && (
-						<div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+						<div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border border-purple-100 dark:border-purple-800">
 							<div className="flex items-center gap-3">
 								<div className="flex-shrink-0">
-									<div className="w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+									<div className="w-8 h-8 border-3 border-purple-200 dark:border-purple-700 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
 								</div>
 								<div className="flex-1">
-									<p className="text-sm font-medium text-purple-900">
+									<p className="text-sm font-medium text-purple-900 dark:text-purple-200">
 										{parsingStep === 'parsing' && 'Parsing article content...'}
 										{parsingStep === 'saving' && 'Saving to your library...'}
 									</p>
-									<div className="mt-2 h-1.5 bg-purple-200 rounded-full overflow-hidden">
+									<div className="mt-2 h-1.5 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden">
 										<div
 											className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-500"
 											style={{ width: parsingStep === 'parsing' ? '40%' : '80%' }}
@@ -250,17 +250,17 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 
 					{/* Error message */}
 					{error && (
-						<div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-							<svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
+							<svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 							</svg>
 							<div className="flex-1">
-								<p className="text-sm font-medium text-red-800">{error}</p>
+								<p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
 							</div>
 							<button
 								type="button"
 								onClick={() => setError('')}
-								className="text-red-400 hover:text-red-600 transition-colors"
+								className="text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors"
 							>
 								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -275,7 +275,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 							type="button"
 							onClick={handleClose}
 							disabled={loading}
-							className="px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+							className="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
 						>
 							Cancel
 						</button>
