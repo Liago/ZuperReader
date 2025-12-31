@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu } from "next/font/google";
+import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
@@ -42,6 +42,12 @@ const ubuntu = Ubuntu({
 	subsets: ["latin"],
 });
 
+const montserrat = Montserrat({
+	weight: ['300', '400', '500', '600', '700'],
+	variable: "--font-montserrat",
+	subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
 	title: "SuperReader",
 	description: "Save and read your favorite articles",
@@ -55,7 +61,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} ${montserrat.variable} antialiased`}
 			>
 				<QueryProvider>
 					<AuthProvider>
