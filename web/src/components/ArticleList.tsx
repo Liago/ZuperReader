@@ -653,20 +653,20 @@ export default function ArticleList({ userId }: ArticleListProps) {
 								</h3>
 								<p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
 
-								{/* Meta info */}
-								<div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-									<span className="flex items-center gap-1">
-										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								{/* Meta info - Badge stile moderno */}
+								<div className="flex flex-wrap gap-2 mb-3">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full border border-indigo-100 dark:border-indigo-800">
+										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
 										</svg>
 										{article.domain}
 									</span>
 									{article.estimated_read_time && (
-										<span className="flex items-center gap-1">
-											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 text-xs font-medium rounded-full border border-pink-100 dark:border-pink-800">
+											<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
 											</svg>
-											{article.estimated_read_time} min
+											{article.estimated_read_time} min lettura
 										</span>
 									)}
 								</div>
@@ -834,20 +834,20 @@ export default function ArticleList({ userId }: ArticleListProps) {
 									</button>
 								</div>
 
-								{/* Meta info */}
-								<div className="flex flex-wrap gap-3 items-center text-xs text-gray-500 dark:text-gray-400">
-									<span className="flex items-center gap-1">
+								{/* Meta info - Badge stile moderno */}
+								<div className="flex flex-wrap gap-2 items-center text-xs text-gray-500 dark:text-gray-400">
+									<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full border border-indigo-100 dark:border-indigo-800">
 										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
 										</svg>
 										{article.domain}
 									</span>
 									{article.estimated_read_time && (
-										<span className="flex items-center gap-1">
+										<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 text-xs font-medium rounded-full border border-pink-100 dark:border-pink-800">
 											<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
 											</svg>
-											{article.estimated_read_time} min
+											{article.estimated_read_time} min lettura
 										</span>
 									)}
 									{/* Engagement stats */}
