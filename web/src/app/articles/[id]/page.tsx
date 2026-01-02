@@ -301,63 +301,6 @@ export default function ArticleReaderPage() {
 		}
 	};
 
-	// Helper function to get badge classes based on color theme
-	const getBadgeClasses = (color: 'purple' | 'pink' | 'blue' | 'green') => {
-		const isDark = preferences.colorTheme === 'dark';
-		const isOcean = preferences.colorTheme === 'ocean';
-		const isForest = preferences.colorTheme === 'forest';
-		const isSunset = preferences.colorTheme === 'sunset';
-
-		if (isDark) {
-			const colorMap = {
-				purple: 'bg-purple-900/30 text-purple-200 border-purple-700/50',
-				pink: 'bg-pink-900/30 text-pink-200 border-pink-700/50',
-				blue: 'bg-blue-900/30 text-blue-200 border-blue-700/50',
-				green: 'bg-green-900/30 text-green-200 border-green-700/50',
-			};
-			return colorMap[color];
-		}
-
-		if (isOcean) {
-			const colorMap = {
-				purple: 'bg-sky-100 text-cyan-900 border-sky-300',
-				pink: 'bg-sky-100 text-cyan-900 border-sky-300',
-				blue: 'bg-sky-100 text-cyan-900 border-sky-300',
-				green: 'bg-teal-100 text-teal-900 border-teal-300',
-			};
-			return colorMap[color];
-		}
-
-		if (isForest) {
-			const colorMap = {
-				purple: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-				pink: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-				blue: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-				green: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-			};
-			return colorMap[color];
-		}
-
-		if (isSunset) {
-			const colorMap = {
-				purple: 'bg-violet-100 text-violet-900 border-violet-300',
-				pink: 'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300',
-				blue: 'bg-violet-100 text-violet-900 border-violet-300',
-				green: 'bg-violet-100 text-violet-900 border-violet-300',
-			};
-			return colorMap[color];
-		}
-
-		// Light theme (default)
-		const colorMap = {
-			purple: 'bg-purple-50 text-purple-900 border-purple-100',
-			pink: 'bg-pink-50 text-pink-900 border-pink-100',
-			blue: 'bg-blue-50 text-blue-900 border-blue-100',
-			green: 'bg-green-50 text-green-900 border-green-100',
-		};
-		return colorMap[color];
-	};
-
 	useEffect(() => {
 		if (!authLoading && !user) {
 			router.push('/login');
@@ -972,38 +915,42 @@ export default function ArticleReaderPage() {
 						{article.title}
 					</h1>
 
-					{/* Metadata Row */}
-					<div className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-8 border-b pb-8 ${uiTheme.textSecondary} ${uiTheme.divider}`}>
+					{/* Metadata Row - Badge stile moderno */}
+					<div className="flex flex-wrap items-center gap-3 mb-8 pb-8 border-b border-gray-100 dark:border-slate-700">
 						{article.author && (
-							<div className="flex items-center gap-2">
-								<div className={`w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs ring-2 shadow-sm ${preferences.colorTheme === 'dark' ? 'ring-slate-800' : 'ring-white'}`}>
+							<div className="flex items-center gap-2.5">
+								<div className={`w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ${preferences.colorTheme === 'dark' ? 'ring-slate-800' : 'ring-white'}`}>
 									{article.author.charAt(0).toUpperCase()}
 								</div>
-								<span className={`font-medium ${uiTheme.textPrimary}`}>{article.author}</span>
+								<span className={`font-semibold text-base ${uiTheme.textPrimary}`}>{article.author}</span>
 							</div>
 						)}
 
 						{article.domain && (
-							<div className="flex items-center gap-2">
-								<svg className={`w-4 h-4 ${uiTheme.textTertiary}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<span className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-full border border-indigo-100 dark:border-indigo-800 shadow-sm">
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
 								</svg>
-								<span>{article.domain}</span>
-							</div>
-						)}
-
-						{article.published_date && (
-							<div className="flex items-center gap-2">
-								<span className={`w-1 h-1 rounded-full ${preferences.colorTheme === 'dark' ? 'bg-slate-600' : 'bg-gray-300'}`}></span>
-								<span>{new Date(article.published_date).toLocaleDateString()}</span>
-							</div>
+								{article.domain}
+							</span>
 						)}
 
 						{article.estimated_read_time && (
-							<div className="flex items-center gap-2">
-								<span className={`w-1 h-1 rounded-full ${preferences.colorTheme === 'dark' ? 'bg-slate-600' : 'bg-gray-300'}`}></span>
-								<span>{article.estimated_read_time} min read</span>
-							</div>
+							<span className="inline-flex items-center gap-2 px-4 py-2 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 text-sm font-medium rounded-full border border-pink-100 dark:border-pink-800 shadow-sm">
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+								</svg>
+								{article.estimated_read_time} min lettura
+							</span>
+						)}
+
+						{article.published_date && (
+							<span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 text-sm font-medium rounded-full border border-gray-100 dark:border-slate-600 shadow-sm">
+								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+								</svg>
+								{new Date(article.published_date).toLocaleDateString()}
+							</span>
 						)}
 					</div>
 
