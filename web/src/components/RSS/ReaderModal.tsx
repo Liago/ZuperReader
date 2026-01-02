@@ -14,10 +14,22 @@ interface ReaderModalProps {
   hasPrevious?: boolean;
 }
 
-export default function ReaderModal({ 
-    isOpen, 
-    onClose, 
-    url, 
+interface ParsedArticle {
+	content: string
+	title: string
+	excerpt: string | null
+	lead_image_url: string | null
+	author: string | null
+	date_published: string | null
+	domain: string | null
+	word_count: number
+	url: string
+}
+
+export default function ReaderModal({
+    isOpen,
+    onClose,
+    url,
     userId,
     onNext,
     onPrevious,
@@ -25,7 +37,7 @@ export default function ReaderModal({
     hasPrevious = false
 }: ReaderModalProps) {
   const [loading, setLoading] = useState(false);
-  const [parsedContent, setParsedContent] = useState<any>(null);
+  const [parsedContent, setParsedContent] = useState<ParsedArticle | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -33,7 +45,7 @@ export default function ReaderModal({
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isOpen) return;
-    
+
     // Only navigate if not typing in an input
     if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
 
@@ -41,8 +53,10 @@ export default function ReaderModal({
         onNext();
     } else if (e.key === 'ArrowLeft' && hasPrevious && onPrevious) {
         onPrevious();
+    } else if (e.key === 'Escape') {
+        onClose();
     }
-  }, [isOpen, hasNext, hasPrevious, onNext, onPrevious]);
+  }, [isOpen, hasNext, hasPrevious, onNext, onPrevious, onClose]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -74,7 +88,7 @@ export default function ReaderModal({
   }, [isOpen, url]);
 
   const handleSave = async () => {
-    if (!parsedContent) return;
+    if (!parsedContent || saving) return;
 
     setSaving(true);
     try {
@@ -91,173 +105,235 @@ export default function ReaderModal({
         setSaveSuccess(true);
         setTimeout(() => {
             onClose();
-        }, 1500);
+        }, 1000);
     } catch (err) {
         console.error(err);
-        alert('Failed to save article.');
-    } finally {
+        setError('Errore durante il salvataggio dell\'articolo');
         setSaving(false);
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !saving) {
+      onClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+        onClick={handleBackdropClick}
+      />
 
-      {/* Modal Content */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col z-10 transition-all">
-            
-            {/* Header / Actions */}
-            <div className="bg-gradient-to-r from-orange-50 to-pink-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-gray-200">
-                <div className="flex items-center gap-3 overflow-hidden flex-1">
-                    <button
-                        onClick={onClose}
-                        className="flex-shrink-0 p-1 rounded-full text-gray-500 hover:bg-white/60 hover:text-gray-900 transition-all"
-                        title="Close"
-                    >
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                    
-                    {/* Navigation Buttons */}
-                    <div className="flex items-center gap-1 border-l border-gray-300 pl-3 ml-1">
-                        <button 
-                            onClick={onPrevious}
-                            disabled={!hasPrevious}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                            title="Previous Article (Left Arrow)"
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button 
-                            onClick={onNext}
-                            disabled={!hasNext}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                            title="Next Article (Right Arrow)"
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none animate-in zoom-in-95 duration-200">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col pointer-events-auto overflow-hidden border border-gray-200/50 dark:border-gray-700/50">
 
-                    {url && (
-                        <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hidden sm:flex text-sm text-gray-600 truncate hover:text-orange-600 transition-colors items-center gap-1 ml-2 border-l border-gray-300 pl-3"
-                            title={url}
-                        >
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            <span className="truncate max-w-[200px]">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                        </a>
-                    )}
+          {/* Header */}
+          <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 px-8 py-6 flex items-center justify-between relative overflow-hidden">
+            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]"></div>
+
+            {/* Title and Navigation */}
+            <div className="flex items-center gap-4 relative z-10">
+              <h2 className="text-2xl font-bold text-white font-[family-name:var(--font-montserrat)]">
+                Articolo RSS
+              </h2>
+
+              {/* Navigation Buttons */}
+              {(hasPrevious || hasNext) && (
+                <div className="flex items-center gap-1 border-l border-white/30 pl-4 ml-2">
+                  <button
+                    onClick={onPrevious}
+                    disabled={!hasPrevious}
+                    className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    title="Articolo Precedente (Freccia Sinistra)"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={onNext}
+                    disabled={!hasNext}
+                    className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    title="Prossimo Articolo (Freccia Destra)"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    {saveSuccess ? (
-                         <span className="flex items-center gap-2 text-green-600 font-semibold px-4 py-2 bg-green-50 rounded-xl animate-scaleIn">
-                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                             </svg>
-                             Saved!
-                         </span>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={loading || !parsedContent || saving}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
-                        >
-                            {saving ? (
-                                <>
-                                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                    </svg>
-                                    Save to Library
-                                </>
-                            )}
-                        </button>
-                    )}
-                </div>
+              )}
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 sm:p-10 bg-gradient-to-br from-orange-50/30 via-white to-pink-50/30">
-                {loading && (
-                     <div className="flex flex-col items-center justify-center h-full gap-4">
-                        <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
-                        <p className="text-orange-600 font-medium text-lg">Parsing article...</p>
-                        <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                    </div>
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="relative z-10 text-white/80 hover:text-white transition-all hover:rotate-90 duration-300 disabled:opacity-50 p-2 rounded-full hover:bg-white/10"
+              aria-label="Chiudi"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-8 font-[family-name:var(--font-montserrat)]">
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-indigo-100 dark:border-indigo-900 border-t-indigo-600 rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin animation-delay-150"></div>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mt-6 text-lg font-medium">Caricamento articolo...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-5 text-red-700 dark:text-red-400 flex items-start gap-3">
+                <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">{error}</span>
+              </div>
+            )}
+
+            {saveSuccess && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-5 text-green-700 dark:text-green-400 mb-6 flex items-center gap-3">
+                <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold">Articolo salvato con successo!</span>
+              </div>
+            )}
+
+            {!loading && !error && parsedContent && (
+              <div className="space-y-6">
+                {/* Image */}
+                {parsedContent.lead_image_url && (
+                  <div className="mb-8 -mx-8 -mt-8 relative group">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <img
+                      src={parsedContent.lead_image_url}
+                      alt={parsedContent.title}
+                      className="w-full h-72 object-cover"
+                    />
+                  </div>
                 )}
 
-                {error && (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                        <div className="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-4">
-                            <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Failed to load content</h3>
-                        <p className="text-gray-600 mb-6 max-w-md">{error}</p>
-                        <a
-                            href={url!}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all"
-                        >
-                            Open in original site
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                        </a>
-                    </div>
+                {/* Metadata */}
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {parsedContent.domain && (
+                    <span className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-800 px-4 py-2 rounded-full text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                      {parsedContent.domain}
+                    </span>
+                  )}
+                  {parsedContent.author && (
+                    <span className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border border-purple-200 dark:border-purple-800 px-4 py-2 rounded-full text-sm font-medium text-purple-700 dark:text-purple-300">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {parsedContent.author}
+                    </span>
+                  )}
+                  {parsedContent.word_count && (
+                    <span className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 border border-pink-200 dark:border-pink-800 px-4 py-2 rounded-full text-sm font-medium text-pink-700 dark:text-pink-300">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      {Math.ceil(parsedContent.word_count / 200)} min lettura
+                    </span>
+                  )}
+                </div>
+
+                {/* Title */}
+                <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+                  {parsedContent.title}
+                </h3>
+
+                {/* Excerpt */}
+                {parsedContent.excerpt && (
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6">
+                    <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed italic">
+                      {parsedContent.excerpt}
+                    </p>
+                  </div>
                 )}
 
-                {!loading && parsedContent && (
-                    <article className="prose lg:prose-xl mx-auto">
-                        {parsedContent.lead_image_url && (
-                            <img 
-                                src={parsedContent.lead_image_url} 
-                                alt={parsedContent.title}
-                                className="w-full h-auto rounded-lg shadow-md mb-8 object-cover max-h-[500px]" 
-                            />
-                        )}
-                        <h1 className="mb-4">{parsedContent.title}</h1>
-                        <div className="flex gap-4 text-sm text-gray-500 mb-8 not-prose border-b pb-4">
-                            {parsedContent.author && <span>By {parsedContent.author}</span>}
-                            {parsedContent.date_published && <span>{new Date(parsedContent.date_published).toLocaleDateString()}</span>}
-                            {parsedContent.domain && <span>{parsedContent.domain}</span>}
-                            {parsedContent.word_count && <span>{parsedContent.word_count} words</span>}
-                        </div>
-                        
-                        <div dangerouslySetInnerHTML={{ __html: parsedContent.content }} />
-                    </article>
-                )}
+                {/* Content */}
+                <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-6">
+                  <div
+                    className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: parsedContent.content
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {!loading && !error && parsedContent && (
+            <div className="border-t-2 border-gray-200 dark:border-gray-700 px-8 py-5 flex justify-between items-center bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+              <a
+                href={url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-semibold transition-all hover:gap-3 group"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Apri originale
+              </a>
+              <div className="flex gap-4">
+                <button
+                  onClick={onClose}
+                  disabled={saving}
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold transition-all hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl disabled:opacity-50"
+                >
+                  Chiudi
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || saveSuccess}
+                  className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white rounded-xl font-semibold hover:from-indigo-700 hover:via-purple-700 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Salvataggio...
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Salvato
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      Salva Articolo
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+          )}
         </div>
       </div>
+    </>
   );
 }
