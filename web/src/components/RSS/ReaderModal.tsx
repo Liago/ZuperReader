@@ -64,16 +64,18 @@ export default function ReaderModal({
   }, [handleKeyDown]);
 
   useEffect(() => {
+    // Reset state when opening new article or closing
+    setSaveSuccess(false);
+    setSaving(false);
+    setError(null);
+
     if (!isOpen || !url) {
         setParsedContent(null);
-        setError(null);
-        setSaveSuccess(false);
         return;
     }
 
     const loadContent = async () => {
         setLoading(true);
-        setError(null);
         try {
             const data = await parseArticle(url);
             setParsedContent(data);
@@ -103,12 +105,11 @@ export default function ReaderModal({
             word_count: parsedContent.word_count
         }, userId);
         setSaveSuccess(true);
-        setTimeout(() => {
-            onClose();
-        }, 1000);
+        // Removed auto-close as per user request
     } catch (err) {
         console.error(err);
         setError('Errore durante il salvataggio dell\'articolo');
+    } finally {
         setSaving(false);
     }
   };
