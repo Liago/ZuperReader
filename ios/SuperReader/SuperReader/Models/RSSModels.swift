@@ -35,8 +35,8 @@ struct RSSArticle: Codable, Identifiable, Hashable {
     let content: String?
     let contentSnippet: String?
     let imageUrl: String?
-    let isRead: Bool
-    let readAt: Date?
+    var isRead: Bool
+    var readAt: Date?
     let userId: UUID
     
     enum CodingKeys: String, CodingKey {

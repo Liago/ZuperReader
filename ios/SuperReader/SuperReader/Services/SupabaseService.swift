@@ -171,11 +171,11 @@ actor SupabaseService {
     
     func saveRSSArticle(_ rssArticle: RSSArticle) async throws -> Article {
         let domain = URL(string: rssArticle.link)?.host ?? ""
-        
+
         // simple word count estimation if content exists
         let wordCount = rssArticle.content?.split(separator: " ").count ?? 0
         let estimatedReadTime = wordCount > 0 ? Int(ceil(Double(wordCount) / 200.0)) : 1
-        
+
         let articleData: [String: AnyJSON] = [
             "user_id": .string(rssArticle.userId.uuidString.lowercased()),
             "url": .string(rssArticle.link),
@@ -188,19 +188,57 @@ actor SupabaseService {
             "domain": .string(domain),
             "estimated_read_time": .integer(estimatedReadTime)
         ]
-        
+
         let articles: [Article] = try await client
             .from("articles")
             .insert(articleData)
             .select()
             .execute()
             .value
-        
+
         guard let article = articles.first else {
             throw SupabaseError.insertFailed
         }
-        
+
         return article
+    }
+
+    /// Saves an RSS article by first parsing its full content using the parser API
+    func saveRSSArticleWithParsing(_ rssArticle: RSSArticle) async throws -> Article {
+        // First, parse the article URL to get full content
+        let parsedData = try await parseArticleUrl(rssArticle.link)
+
+        // Save the article with parsed content
+        return try await saveArticle(parsedData: parsedData, userId: rssArticle.userId.uuidString)
+    }
+
+    /// Parses an article URL using the parser API
+    private func parseArticleUrl(_ url: String) async throws -> ParseResult {
+        guard let apiUrl = URL(string: SupabaseConfig.parseFunctionUrl) else {
+            throw SupabaseError.invalidUrl
+        }
+
+        var request = URLRequest(url: apiUrl)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body = ["url": url]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw SupabaseError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw SupabaseError.parsingFailed
+        }
+
+        let decoder = JSONDecoder()
+        let parseResult = try decoder.decode(ParseResult.self, from: data)
+
+        return parseResult
     }
     
     func deleteArticle(articleId: String) async throws {
@@ -692,7 +730,10 @@ enum SupabaseError: LocalizedError {
     case updateFailed
     case deleteFailed
     case notFound
-    
+    case invalidUrl
+    case invalidResponse
+    case parsingFailed
+
     var errorDescription: String? {
         switch self {
         case .invalidOtpType:
@@ -705,6 +746,12 @@ enum SupabaseError: LocalizedError {
             return "Failed to delete record"
         case .notFound:
             return "Record not found"
+        case .invalidUrl:
+            return "Invalid URL"
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .parsingFailed:
+            return "Failed to parse article content"
         }
     }
 }
