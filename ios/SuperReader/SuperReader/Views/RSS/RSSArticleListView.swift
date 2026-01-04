@@ -92,6 +92,7 @@ struct RSSArticleReader: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var isSaving = false
+    @State private var isSaved = false
     @State private var saveMessage: String?
     
     init(articles: [RSSArticle], initialIndex: Int) {
@@ -130,14 +131,18 @@ struct RSSArticleReader: View {
             }
             .padding()
         }
+        .navigationTitle(currentArticle.title) // Updates navbar title
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 // Previous
                 Button(action: {
-                    if currentIndex > 0 {
-                        currentIndex -= 1
-                        markAsRead()
+                    withAnimation {
+                        if currentIndex > 0 {
+                            currentIndex -= 1
+                            resetState()
+                            markAsRead()
+                        }
                     }
                 }) {
                     Image(systemName: "chevron.up")
@@ -146,9 +151,12 @@ struct RSSArticleReader: View {
                 
                 // Next
                 Button(action: {
-                    if currentIndex < articles.count - 1 {
-                        currentIndex += 1
-                        markAsRead()
+                    withAnimation {
+                        if currentIndex < articles.count - 1 {
+                            currentIndex += 1
+                            resetState()
+                            markAsRead()
+                        }
                     }
                 }) {
                     Image(systemName: "chevron.down")
@@ -162,9 +170,11 @@ struct RSSArticleReader: View {
                     if isSaving {
                          ProgressView()
                     } else {
-                        Image(systemName: "bookmark")
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .foregroundColor(isSaved ? .green : .accentColor)
                     }
                 }
+                .disabled(isSaving || isSaved)
             }
         }
         .overlay(alignment: .bottom) {
@@ -186,7 +196,12 @@ struct RSSArticleReader: View {
         .onAppear {
              markAsRead()
         }
-        .id(currentArticle.id) // Force refresh scrollview when article changes
+        .id(currentIndex) // Force refresh scrollview when index changes
+    }
+    
+    private func resetState() {
+        isSaved = false
+        saveMessage = nil
     }
     
     private func markAsRead() {
@@ -201,7 +216,10 @@ struct RSSArticleReader: View {
         isSaving = true
         do {
              _ = try await SupabaseService.shared.saveRSSArticle(currentArticle)
-             saveMessage = "Article saved to library"
+             withAnimation {
+                 isSaved = true
+                 saveMessage = "Saved to Library"
+             }
         } catch {
              saveMessage = "Failed to save"
         }
