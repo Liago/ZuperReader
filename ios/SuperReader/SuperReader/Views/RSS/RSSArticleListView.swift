@@ -24,21 +24,22 @@ struct RSSArticleListView: View {
             } else {
                 List {
                     ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
-                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: index)) {
-                           RSSArticleRow(article: article)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            if !article.isRead {
+                        RSSArticleRow(article: article)
+                            .background(
+                                NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: index))
+                                    .opacity(0)
+                            )
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button {
                                     Task {
                                         await markAsRead(article: article, at: index)
                                     }
                                 } label: {
-                                    Label("Read", systemImage: "envelope.open")
+                                    Label(article.isRead ? "Read" : "Mark as Read", systemImage: "envelope.open")
                                 }
-                                .tint(.blue)
+                                .tint(article.isRead ? .gray : .blue)
+                                .disabled(article.isRead)
                             }
-                        }
                     }
                 }
                 .listStyle(.plain)
@@ -154,8 +155,10 @@ struct RSSArticleReader: View {
                         .font(.body)
                         .lineSpacing(4)
 
-                    Link("Read Original", destination: URL(string: currentArticle.link)!)
-                        .padding()
+                    if let originalUrl = URL(string: currentArticle.link) {
+                        Link("Read Original", destination: originalUrl)
+                            .padding()
+                    }
                 }
                 .padding()
             }
