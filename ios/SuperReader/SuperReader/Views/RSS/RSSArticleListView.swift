@@ -9,8 +9,6 @@ struct RSSArticleListView: View {
     @State private var errorMessage: String?
     @EnvironmentObject var themeManager: ThemeManager
     
-    // We reuse the ArticleReader view if exists, or a simple WebLink
-    
     var body: some View {
         ZStack {
             themeManager.colors.backgroundGradient
@@ -25,8 +23,8 @@ struct RSSArticleListView: View {
                     .foregroundColor(.gray)
             } else {
                 List {
-                    ForEach(articles) { article in
-                        NavigationLink(destination: RSSArticleReader(article: article)) {
+                    ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
+                        NavigationLink(destination: RSSArticleReader(articles: articles, initialIndex: index)) {
                            RSSArticleRow(article: article)
                         }
                     }
@@ -87,26 +85,32 @@ struct RSSArticleRow: View {
     }
 }
 
-// Simple Reader Placeholder or real implementation
 struct RSSArticleReader: View {
-    let article: RSSArticle
+    let articles: [RSSArticle]
+    @State private var currentIndex: Int
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var isSaving = false
+    @State private var saveMessage: String?
+    
+    init(articles: [RSSArticle], initialIndex: Int) {
+        self.articles = articles
+        _currentIndex = State(initialValue: initialIndex)
+    }
+    
+    var currentArticle: RSSArticle {
+        articles[currentIndex]
+    }
     
     var body: some View {
-        // Here we could use a Webview or native parser display.
-        // For feature parity, web has "Reader Mode" or "Link".
-        // Let's assume we pass the link to a WebView for now or parsing logic?
-        // Web uses `ReaderModal` which displays parsed content.
-        // We have `NavigationStack` so pushing a view is better.
-        
-        // We will just show content formatted lightly or WebView.
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(article.title)
+                Text(currentArticle.title)
                     .font(.title)
                     .bold()
                 
-                if let imageUrl = article.imageUrl, let url = URL(string: imageUrl) {
+                if let imageUrl = currentArticle.imageUrl, let url = URL(string: imageUrl) {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image {
                             image.resizable().aspectRatio(contentMode: .fit)
@@ -116,23 +120,91 @@ struct RSSArticleReader: View {
                     .cornerRadius(8)
                 }
                 
-                Text(article.content ?? article.contentSnippet ?? "")
+                // Clean HTML content
+                Text(currentArticle.content?.decodedHTML ?? currentArticle.contentSnippet ?? "")
                     .font(.body)
+                    .lineSpacing(4)
                 
-                Link("Read Original", destination: URL(string: article.link)!)
+                Link("Read Original", destination: URL(string: currentArticle.link)!)
                     .padding()
             }
             .padding()
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // Previous
+                Button(action: {
+                    if currentIndex > 0 {
+                        currentIndex -= 1
+                        markAsRead()
+                    }
+                }) {
+                    Image(systemName: "chevron.up")
+                }
+                .disabled(currentIndex == 0)
+                
+                // Next
+                Button(action: {
+                    if currentIndex < articles.count - 1 {
+                        currentIndex += 1
+                        markAsRead()
+                    }
+                }) {
+                    Image(systemName: "chevron.down")
+                }
+                .disabled(currentIndex == articles.count - 1)
+                
+                // Save
+                Button(action: {
+                    Task { await saveArticle() }
+                }) {
+                    if isSaving {
+                         ProgressView()
+                    } else {
+                        Image(systemName: "bookmark")
+                    }
+                }
+            }
+        }
+        .overlay(alignment: .bottom) {
+             if let msg = saveMessage {
+                 Text(msg)
+                     .padding()
+                     .background(Color.green.opacity(0.9))
+                     .foregroundColor(.white)
+                     .cornerRadius(8)
+                     .padding(.bottom, 20)
+                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                     .onAppear {
+                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                             withAnimation { saveMessage = nil }
+                         }
+                     }
+             }
+        }
         .onAppear {
              markAsRead()
         }
+        .id(currentArticle.id) // Force refresh scrollview when article changes
     }
     
     private func markAsRead() {
+        let article = currentArticle
         Task {
             guard let userId = AuthManager.shared.user?.id.uuidString else { return }
             try? await RSSService.shared.markArticleAsRead(articleId: article.id, userId: userId)
         }
+    }
+    
+    private func saveArticle() async {
+        isSaving = true
+        do {
+             _ = try await SupabaseService.shared.saveRSSArticle(currentArticle)
+             saveMessage = "Article saved to library"
+        } catch {
+             saveMessage = "Failed to save"
+        }
+        isSaving = false
     }
 }

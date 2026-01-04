@@ -169,6 +169,40 @@ actor SupabaseService {
         return article
     }
     
+    func saveRSSArticle(_ rssArticle: RSSArticle) async throws -> Article {
+        let domain = URL(string: rssArticle.link)?.host ?? ""
+        
+        // simple word count estimation if content exists
+        let wordCount = rssArticle.content?.split(separator: " ").count ?? 0
+        let estimatedReadTime = wordCount > 0 ? Int(ceil(Double(wordCount) / 200.0)) : 1
+        
+        let articleData: [String: AnyJSON] = [
+            "user_id": .string(rssArticle.userId.uuidString.lowercased()),
+            "url": .string(rssArticle.link),
+            "title": .string(rssArticle.title),
+            "content": rssArticle.content.map { .string($0) } ?? .null,
+            "excerpt": rssArticle.contentSnippet.map { .string($0) } ?? .null,
+            "image_url": rssArticle.imageUrl.map { .string($0) } ?? .null,
+            "author": rssArticle.author.map { .string($0) } ?? .null,
+            "published_date": rssArticle.pubDate.map { .string(ISO8601DateFormatter().string(from: $0)) } ?? .null,
+            "domain": .string(domain),
+            "estimated_read_time": .integer(estimatedReadTime)
+        ]
+        
+        let articles: [Article] = try await client
+            .from("articles")
+            .insert(articleData)
+            .select()
+            .execute()
+            .value
+        
+        guard let article = articles.first else {
+            throw SupabaseError.insertFailed
+        }
+        
+        return article
+    }
+    
     func deleteArticle(articleId: String) async throws {
         try await client
             .from("articles")
