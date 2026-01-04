@@ -47,26 +47,45 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 	// I should probably pass a refresh callback or let Sidebar handle router refresh?
 	// I didn't add router.refresh() in Sidebar. I should probably add it there.
 
+	// Handle back to feeds on mobile
+	const handleBackToFeeds = () => {
+		setSelectedFeed(null);
+	};
+
 	return (
 		<>
 			<div className="flex h-[calc(100vh-73px)] overflow-hidden">
-				{/* Sidebar */}
-				<RSSSidebar
-					folders={initialFolders}
-					feeds={initialFeeds}
-					selectedFeedId={selectedFeed?.id}
-					onSelectFeed={setSelectedFeed}
-					onOpenImportModal={() => setShowImportModal(true)}
-					onOpenDiscoveryModal={() => setShowDiscoveryModal(true)}
-				/>
+				{/* Sidebar - Hidden on mobile if feed is selected */}
+				<div 
+					className={`
+						h-full
+						${selectedFeed ? 'hidden md:block' : 'w-full md:w-auto'}
+						md:flex-shrink-0
+					`}
+				>
+					<RSSSidebar
+						folders={initialFolders}
+						feeds={initialFeeds}
+						selectedFeedId={selectedFeed?.id}
+						onSelectFeed={setSelectedFeed}
+						onOpenImportModal={() => setShowImportModal(true)}
+						onOpenDiscoveryModal={() => setShowDiscoveryModal(true)}
+					/>
+				</div>
 
-				{/* Main Content */}
-				<div className="flex-1 flex flex-col h-full overflow-hidden">
+				{/* Main Content - Full width on mobile if feed selected, hidden if not (unless on desktop where it's always visible) */}
+				<div 
+					className={`
+						flex-1 flex flex-col h-full overflow-hidden
+						${selectedFeed ? 'w-full' : 'hidden md:flex'}
+					`}
+				>
 					<FeedList
 						feedUrl={selectedFeed?.url || null}
 						feedId={selectedFeed?.id || null}
 						userId={userId}
 						onFeedUpdated={onFeedUpdated}
+						onBack={handleBackToFeeds}
 					/>
 				</div>
 			</div>

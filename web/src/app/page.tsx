@@ -49,18 +49,18 @@ export default function Home() {
 	}
 
 	return (
-		<main className="min-h-screen app-bg-gradient py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+		<main className="min-h-screen app-bg-gradient py-6 px-4 sm:py-12 sm:px-6 lg:px-8 pb-24 sm:pb-12">
 			<div className="max-w-7xl mx-auto">
 				{/* Header con design moderno */}
 				<header className="mb-8 sm:mb-12">
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-						<div className="w-full sm:w-auto">
+						<div className="w-full sm:w-auto text-center sm:text-left">
 							<h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-2">
 								SuperReader
 							</h1>
 							<p className="text-sm sm:text-lg app-text-secondary">Save and read your favorite articles</p>
 						</div>
-						<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+						<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end flex-wrap">
 							{/* Theme Selector */}
 							<ThemeSelector />
 
@@ -76,16 +76,16 @@ export default function Home() {
 								<span className="hidden sm:inline">Riassunto</span>
 							</button>
 
-							{/* Add Article Button */}
+							{/* Add Article Button (Desktop) */}
 							<button
 								onClick={() => setShowAddModal(true)}
-								className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
+								className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
 								title="Add new article"
 							>
 								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
 								</svg>
-								<span className="hidden sm:inline">Add Article</span>
+								<span>Add Article</span>
 							</button>
 
 							{/* Navigation Icons */}
@@ -152,6 +152,17 @@ export default function Home() {
 
 				<ArticleList userId={user.id} />
 			</div>
+
+			{/* Floating Action Button for Mobile */}
+			<button
+				onClick={() => setShowAddModal(true)}
+				className="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 z-50 flex items-center justify-center"
+				title="Add new article"
+			>
+				<svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+				</svg>
+			</button>
 
 			{/* Add Article Modal */}
 			<AddArticleModal

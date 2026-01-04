@@ -12,9 +12,10 @@ interface FeedListProps {
 	feedId: string | null;
 	userId: string;
 	onFeedUpdated?: () => void;
+	onBack?: () => void;
 }
 
-export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: FeedListProps) {
+export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBack }: FeedListProps) {
 	const [items, setItems] = useState<FeedItem[]>([]);
 	const [feedTitle, setFeedTitle] = useState<string>('');
 	const [loading, setLoading] = useState(false);
@@ -244,7 +245,22 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated }: Fee
 
 	return (
 		<div className="flex-1 overflow-y-auto p-4 sm:p-6">
-			<h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent border-b border-gray-200 pb-3">{feedTitle}</h1>
+			<div className="flex items-center gap-2 mb-4 border-b border-gray-200 pb-3">
+				{onBack && (
+					<button
+						onClick={onBack}
+						className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+						title="Back to feeds"
+					>
+						<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+						</svg>
+					</button>
+				)}
+				<h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent truncate flex-1">
+					{feedTitle}
+				</h1>
+			</div>
 
 			{/* List View - Compact */}
 			<div className="max-w-5xl mx-auto">
