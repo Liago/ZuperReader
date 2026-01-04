@@ -59,8 +59,10 @@ export async function deleteFolder(folderId: string) {
 /**
  * Adds a new RSS feed
  */
-export async function addFeed(url: string, folderId: string | null = null) {
-	const supabase = await createClient();
+/**
+ * Internal logic for adding a feed
+ */
+export async function addFeedInternal(supabase: any, url: string, folderId: string | null = null) {
 	const { data: { user } } = await supabase.auth.getUser();
 
 	if (!user) {
@@ -90,7 +92,6 @@ export async function addFeed(url: string, folderId: string | null = null) {
 			return { error: error.message };
 		}
 
-		revalidatePath('/rss');
 		return { data };
 	} catch (err) {
 		return { error: `Failed to fetch feed: ${(err as Error).message}` };
@@ -98,10 +99,25 @@ export async function addFeed(url: string, folderId: string | null = null) {
 }
 
 /**
+ * Adds a new RSS feed
+ */
+export async function addFeed(url: string, folderId: string | null = null) {
+	const supabase = await createClient();
+	const result = await addFeedInternal(supabase, url, folderId);
+
+	if (!result.error) {
+		revalidatePath('/rss');
+	}
+	return result;
+}
+
+/**
  * Deletes a feed
  */
-export async function deleteFeed(feedId: string) {
-	const supabase = await createClient();
+/**
+ * Internal logic for deleting a feed
+ */
+export async function deleteFeedInternal(supabase: any, feedId: string) {
 	const { data: { user } } = await supabase.auth.getUser();
 
 	if (!user) {
@@ -118,8 +134,20 @@ export async function deleteFeed(feedId: string) {
 		return { error: error.message };
 	}
 
-	revalidatePath('/rss');
 	return { success: true };
+}
+
+/**
+ * Deletes a feed
+ */
+export async function deleteFeed(feedId: string) {
+	const supabase = await createClient();
+	const result = await deleteFeedInternal(supabase, feedId);
+
+	if (!result.error) {
+		revalidatePath('/rss');
+	}
+	return result;
 }
 
 /**
@@ -227,21 +255,23 @@ export async function importOPML(formData: FormData) {
  * PROXY ACTION: Fetch feed content server-side to avoid CORS
  * Also syncs articles to database for read tracking
  */
-export async function getFeedContent(url: string, feedId?: string): Promise<{ feed?: FeedData; error?: string; syncStats?: { added: number; existing: number } }> {
+/**
+ * Internal logic for getting feed content and syncing
+ */
+export async function getFeedContentInternal(supabase: any, url: string, feedId?: string): Promise<{ feed?: FeedData; error?: string; syncStats?: { added: number; existing: number } }> {
 	try {
 		const feed = await fetchFeed(url);
 
 		// If feedId is provided, sync articles to database for read tracking
 		let syncStats = undefined;
 		if (feedId) {
-			const supabase = await createClient();
 			const { data: { user } } = await supabase.auth.getUser();
 
 			if (user && feed.items && feed.items.length > 0) {
 				// Prepare articles for syncing - filter out items without guid/link/title
 				const articles = feed.items
-					.filter(item => item.guid || item.link || item.title)
-					.map(item => ({
+					.filter((item: any) => item.guid || item.link || item.title)
+					.map((item: any) => ({
 						guid: (item.guid || item.link || item.title)!,
 						title: item.title || 'Untitled',
 						link: item.link || '',
@@ -249,7 +279,7 @@ export async function getFeedContent(url: string, feedId?: string): Promise<{ fe
 						author: item.creator || item.author,
 						content: item.content,
 						contentSnippet: item.contentSnippet,
-					imageUrl: item.imageUrl
+						imageUrl: item.imageUrl
 					}));
 
 				// Sync articles to database
@@ -263,6 +293,15 @@ export async function getFeedContent(url: string, feedId?: string): Promise<{ fe
 	} catch (err) {
 		return { error: (err as Error).message };
 	}
+}
+
+/**
+ * PROXY ACTION: Fetch feed content server-side to avoid CORS
+ * Also syncs articles to database for read tracking
+ */
+export async function getFeedContent(url: string, feedId?: string): Promise<{ feed?: FeedData; error?: string; syncStats?: { added: number; existing: number } }> {
+	const supabase = await createClient();
+	return getFeedContentInternal(supabase, url, feedId);
 }
 
 /**
@@ -529,14 +568,10 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
  * Refreshes all RSS feeds for the current user
  * Fetches latest articles from all feeds and syncs them to the database
  */
-export async function refreshAllFeeds(): Promise<{
-	success: boolean;
-	totalAdded: number;
-	totalExisting: number;
-	feedsRefreshed: number;
-	errors: string[];
-}> {
-	const supabase = await createClient();
+/**
+ * Internal logic for refreshing all feeds
+ */
+export async function refreshAllFeedsInternal(supabase: any) {
 	const { data: { user } } = await supabase.auth.getUser();
 
 	if (!user) {
@@ -569,9 +604,24 @@ export async function refreshAllFeeds(): Promise<{
 	const errors: string[] = [];
 
 	// Refresh each feed
+	// Uses existing refreshSingleFeed/refreshFeedsParallel if possible?
+	// But refreshSingleFeed also uses createClient internally?
+	// refreshSingleFeed lines 612.. calls getFeedContent..
+	// getFeedContent line 230 calls createClient inside! 
+
+	// We need to fix getFeedContent too if we want it to work.
+	// However, getFeedContent is exported individually.
+
+	// For now, let's just proceed with the loop logic here or refactor deeper.
+	// The current implementation in refreshAllFeeds uses getFeedContent.
+
+	// Let's look at getFeedContent logic.
+	// getFeedContent(url, feedId)
+
 	for (const feed of feeds) {
 		try {
-			const result = await getFeedContent(feed.url, feed.id);
+			// We need a version of getFeedContent that accepts supabase client
+			const result = await getFeedContentInternal(supabase, feed.url, feed.id);
 
 			if (result.error) {
 				errors.push(`${feed.url}: ${result.error}`);
@@ -592,6 +642,21 @@ export async function refreshAllFeeds(): Promise<{
 		feedsRefreshed,
 		errors
 	};
+}
+
+/**
+ * Refreshes all RSS feeds for the current user
+ * Fetches latest articles from all feeds and syncs them to the database
+ */
+export async function refreshAllFeeds(): Promise<{
+	success: boolean;
+	totalAdded: number;
+	totalExisting: number;
+	feedsRefreshed: number;
+	errors: string[];
+}> {
+	const supabase = await createClient();
+	return refreshAllFeedsInternal(supabase);
 }
 
 /**

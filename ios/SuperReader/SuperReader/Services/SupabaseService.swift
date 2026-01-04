@@ -7,6 +7,7 @@ enum SupabaseConfig {
     static let url = URL(string: "https://wjotvfawhnibnjgoaqud.supabase.co")!
     static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqb3R2ZmF3aG5pYm5qZ29hcXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA0NDMxMDcsImV4cCI6MjAwNjAxOTEwN30.xtirkUL9f4ciRcJNvwtkGuWGTMcTfRKD3KW9kdZWBpo"
     static let parseFunctionUrl = "https://parser-api.netlify.app/.netlify/functions/parse"
+    static let webApiUrl = "http://localhost:3000" // Configure for local development
 }
 
 // MARK: - Supabase Service
@@ -14,7 +15,7 @@ enum SupabaseConfig {
 actor SupabaseService {
     static let shared = SupabaseService()
     
-    private let client: SupabaseClient
+    let client: SupabaseClient
     
     private init() {
         client = SupabaseClient(

@@ -21,13 +21,20 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
+            // RSS
+            RSSListView()
+                .tabItem {
+                    Label("RSS", systemImage: "dot.radiowaves.up.forward")
+                }
+                .tag(1)
+            
             // Shared Inbox
             SharedInboxView()
                 .tabItem {
                     Label("Inbox", systemImage: "tray.fill")
                 }
                 .badge(unreadSharesCount > 0 ? unreadSharesCount : 0)
-                .tag(1)
+                .tag(2)
             
             // Friends
             FriendsView()
