@@ -51,6 +51,18 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
 	title: "SuperReader",
 	description: "Save and read your favorite articles",
+	manifest: "/manifest.json",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "SuperReader",
+	},
+	formatDetection: {
+		telephone: false,
+	},
+	other: {
+		"mobile-web-app-capable": "yes",
+	},
 };
 
 export default function RootLayout({
