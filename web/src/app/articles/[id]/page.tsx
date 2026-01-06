@@ -530,48 +530,18 @@ export default function ArticleReaderPage() {
 		};
 	}, [article]);
 
-	// Sostituisci gli iframe video con placeholder eleganti
+	// Sostituisci gli iframe video con placeholder eleganti usando ReactDOM
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
 		if (!contentElement) return;
 
-		const isDark = preferences.colorTheme === 'dark';
-
-		// Helper per ottenere colori provider
-		const getProviderGradient = (provider: string) => {
-			switch (provider) {
-				case 'youtube': return 'linear-gradient(135deg, #dc2626, #b91c1c)';
-				case 'vimeo': return 'linear-gradient(135deg, #06b6d4, #2563eb)';
-				case 'reddit': return 'linear-gradient(135deg, #f97316, #ea580c)';
-				default: return 'linear-gradient(135deg, #a855f7, #ec4899)';
-			}
-		};
-
-		const getProviderIcon = (provider: string) => {
-			switch (provider) {
-				case 'youtube':
-					return `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`;
-				case 'vimeo':
-					return `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197a315.065 315.065 0 0 0 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z"/></svg>`;
-				case 'reddit':
-					return `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701z"/></svg>`;
-				default:
-					return `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
-			}
-		};
-
-		const getProviderName = (provider: string) => {
-			switch (provider) {
-				case 'youtube': return 'YouTube';
-				case 'vimeo': return 'Vimeo';
-				case 'reddit': return 'Reddit';
-				default: return 'Video';
-			}
-		};
-
 		// Trova tutti gli iframe video
 		const iframes = contentElement.querySelectorAll('iframe');
-		const videoDataMap: Map<HTMLElement, VideoInfo> = new Map();
+		const videoPlaceholders: Array<{
+			placeholder: HTMLDivElement;
+			videoInfo: VideoInfo;
+			src: string;
+		}> = [];
 
 		iframes.forEach((iframe) => {
 			const src = iframe.getAttribute('src');
@@ -588,259 +558,64 @@ export default function ArticleReaderPage() {
 			// Estrai info video
 			const videoInfo = extractVideoInfo(src);
 
-			// Crea il placeholder HTML
+			// Crea un semplice div placeholder che useremo per identificare dove rendere il componente
 			const placeholder = document.createElement('div');
-			placeholder.className = 'video-placeholder-wrapper';
+			placeholder.className = 'video-placeholder-container';
 			placeholder.setAttribute('data-video-src', src);
-			placeholder.setAttribute('role', 'button');
-			placeholder.setAttribute('tabindex', '0');
-			placeholder.setAttribute('aria-label', `Play ${getProviderName(videoInfo.provider)} video`);
+			placeholder.setAttribute('data-video-id', videoInfo.videoId || '');
+			placeholder.setAttribute('data-video-provider', videoInfo.provider);
+			placeholder.style.cursor = 'pointer';
 
-			const thumbnailUrl = videoInfo.thumbnailUrl || '';
-			const providerGradient = getProviderGradient(videoInfo.provider);
-
-			placeholder.innerHTML = `
-				<div class="video-placeholder" style="
-					position: relative;
-					width: 100%;
-					aspect-ratio: 16/9;
-					border-radius: 16px;
-					overflow: hidden;
-					cursor: pointer;
-					margin: 1.5rem 0;
-					background: ${isDark ? '#1e293b' : '#f1f5f9'};
-					box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
-					transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-				">
-					<!-- Thumbnail -->
-					${thumbnailUrl ? `
-						<img
-							src="${thumbnailUrl}"
-							alt="Video thumbnail"
-							style="
-								position: absolute;
-								inset: 0;
-								width: 100%;
-								height: 100%;
-								object-fit: cover;
-								transition: transform 0.5s ease;
-							"
-							onerror="this.style.display='none'"
-						/>
-					` : `
-						<div style="
-							position: absolute;
-							inset: 0;
-							background: ${providerGradient};
-							opacity: 0.15;
-						"></div>
-					`}
-
-					<!-- Gradient Overlay -->
-					<div style="
-						position: absolute;
-						inset: 0;
-						background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent);
-						opacity: 0.7;
-						transition: opacity 0.3s ease;
-					" class="video-overlay"></div>
-
-					<!-- Center Play Button -->
-					<div style="
-						position: absolute;
-						inset: 0;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-					">
-						<div class="play-button" style="
-							position: relative;
-							width: 80px;
-							height: 80px;
-							border-radius: 50%;
-							background: ${providerGradient};
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-							transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-						">
-							<!-- Pulse ring -->
-							<div class="pulse-ring" style="
-								position: absolute;
-								inset: 0;
-								border-radius: 50%;
-								background: ${providerGradient};
-								animation: pulse 2s ease-out infinite;
-							"></div>
-
-							<!-- Play icon -->
-							<svg style="
-								width: 32px;
-								height: 32px;
-								color: white;
-								margin-left: 4px;
-								position: relative;
-								z-index: 1;
-							" fill="currentColor" viewBox="0 0 24 24">
-								<path d="M8 5v14l11-7z"/>
-							</svg>
-						</div>
-					</div>
-
-					<!-- Provider Badge -->
-					<div style="
-						position: absolute;
-						top: 16px;
-						left: 16px;
-						display: flex;
-						align-items: center;
-						gap: 8px;
-						padding: 8px 12px;
-						border-radius: 12px;
-						background: ${isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)'};
-						backdrop-filter: blur(8px);
-						box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-						border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
-						transition: transform 0.3s ease;
-					" class="provider-badge">
-						<span style="color: ${videoInfo.provider === 'youtube' ? '#dc2626' : videoInfo.provider === 'vimeo' ? '#06b6d4' : '#f97316'}">
-							${getProviderIcon(videoInfo.provider)}
-						</span>
-						<span style="
-							font-size: 14px;
-							font-weight: 600;
-							color: ${isDark ? '#e2e8f0' : '#1e293b'};
-						">${getProviderName(videoInfo.provider)}</span>
-					</div>
-
-					<!-- Bottom Bar -->
-					<div style="
-						position: absolute;
-						bottom: 0;
-						left: 0;
-						right: 0;
-						padding: 16px;
-					">
-						<div style="
-							display: flex;
-							align-items: center;
-							gap: 12px;
-						">
-							<div class="click-hint" style="
-								display: flex;
-								align-items: center;
-								gap: 8px;
-								padding: 10px 16px;
-								border-radius: 12px;
-								background: rgba(255, 255, 255, 0.1);
-								backdrop-filter: blur(8px);
-								border: 1px solid rgba(255, 255, 255, 0.15);
-								transition: all 0.3s ease;
-							">
-								<svg style="width: 16px; height: 16px; color: white;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-								</svg>
-								<span style="
-									font-size: 14px;
-									font-weight: 500;
-									color: white;
-								">Click to play</span>
-							</div>
-						</div>
-					</div>
-				</div>
-			`;
-
-			// Aggiungi stili hover
-			const videoPlaceholder = placeholder.querySelector('.video-placeholder') as HTMLElement;
-			const playButton = placeholder.querySelector('.play-button') as HTMLElement;
-			const providerBadge = placeholder.querySelector('.provider-badge') as HTMLElement;
-			const clickHint = placeholder.querySelector('.click-hint') as HTMLElement;
-			const thumbnailImg = placeholder.querySelector('img') as HTMLElement;
-
-			placeholder.addEventListener('mouseenter', () => {
-				if (videoPlaceholder) {
-					videoPlaceholder.style.transform = 'translateY(-4px)';
-					videoPlaceholder.style.boxShadow = '0 20px 60px -15px rgba(0,0,0,0.4)';
-				}
-				if (playButton) {
-					playButton.style.transform = 'scale(1.1)';
-				}
-				if (providerBadge) {
-					providerBadge.style.transform = 'translateY(2px)';
-				}
-				if (clickHint) {
-					clickHint.style.background = 'rgba(255, 255, 255, 0.2)';
-				}
-				if (thumbnailImg) {
-					thumbnailImg.style.transform = 'scale(1.05)';
-				}
-			});
-
-			placeholder.addEventListener('mouseleave', () => {
-				if (videoPlaceholder) {
-					videoPlaceholder.style.transform = 'translateY(0)';
-					videoPlaceholder.style.boxShadow = '0 10px 40px -10px rgba(0,0,0,0.3)';
-				}
-				if (playButton) {
-					playButton.style.transform = 'scale(1)';
-				}
-				if (providerBadge) {
-					providerBadge.style.transform = 'translateY(0)';
-				}
-				if (clickHint) {
-					clickHint.style.background = 'rgba(255, 255, 255, 0.1)';
-				}
-				if (thumbnailImg) {
-					thumbnailImg.style.transform = 'scale(1)';
-				}
-			});
-
-			// Salva videoInfo per riferimento
-			videoDataMap.set(placeholder, videoInfo);
+			// Store video info for click handling
+			videoPlaceholders.push({ placeholder, videoInfo, src });
 
 			// Sostituisci l'iframe con il placeholder
 			iframe.parentNode?.replaceChild(placeholder, iframe);
 		});
 
-		// Gestisci click sui placeholder
-		const handlePlaceholderClick = (e: MouseEvent) => {
-			const target = e.target as HTMLElement;
-			const placeholder = target.closest('.video-placeholder-wrapper') as HTMLElement;
-			if (!placeholder) return;
+		// Render VideoPlaceholder components into placeholders
+		const renderPlaceholders = async () => {
+			// Dynamically import React and ReactDOM for rendering
+			const React = (await import('react')).default;
+			const ReactDOM = (await import('react-dom/client')).default;
+			const VideoPlaceholder = (await import('../../../components/VideoPlaceholder')).default;
 
-			e.preventDefault();
-			e.stopPropagation();
-
-			const src = placeholder.getAttribute('data-video-src');
-			if (!src) return;
-
-			const videoInfo = videoDataMap.get(placeholder) || extractVideoInfo(src);
-			setCurrentVideoInfo(videoInfo);
-			setVideoSrc(src);
+			videoPlaceholders.forEach(({ placeholder, videoInfo, src }) => {
+				// Create root and render VideoPlaceholder
+				const root = ReactDOM.createRoot(placeholder);
+				root.render(
+					React.createElement(VideoPlaceholder, {
+						videoInfo,
+						onClick: () => {
+							setCurrentVideoInfo(videoInfo);
+							setVideoSrc(src);
+						},
+						colorTheme: preferences.colorTheme,
+					})
+				);
+			});
 		};
 
-		// Gestisci keyboard accessibility
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				const target = e.target as HTMLElement;
-				const placeholder = target.closest('.video-placeholder-wrapper') as HTMLElement;
-				if (placeholder) {
-					e.preventDefault();
-					placeholder.click();
-				}
-			}
-		};
+		if (videoPlaceholders.length > 0) {
+			renderPlaceholders();
+		}
 
-		contentElement.addEventListener('click', handlePlaceholderClick);
-		contentElement.addEventListener('keydown', handleKeyDown);
-
+		// Cleanup function
 		return () => {
-			contentElement.removeEventListener('click', handlePlaceholderClick);
-			contentElement.removeEventListener('keydown', handleKeyDown);
+			// Unmount all video placeholder roots
+			videoPlaceholders.forEach(({ placeholder }) => {
+				// Find and unmount the root if it exists
+				try {
+					const root = (placeholder as any)._reactRootContainer;
+					if (root) {
+						root.unmount();
+					}
+				} catch (e) {
+					// Ignore cleanup errors
+				}
+			});
 		};
-	}, [article, preferences.colorTheme]);
+	}, [article?.content, preferences.colorTheme]);
 
 	const handleToggleFavorite = async () => {
 		if (!article) return;
