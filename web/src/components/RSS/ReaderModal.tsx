@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { parseArticle, saveArticle } from '@/lib/api';
+import VideoPreview from './VideoPreview';
+import MediaPlayerModal from './MediaPlayerModal';
 
 interface ReaderModalProps {
   isOpen: boolean;
@@ -41,13 +43,17 @@ export default function ReaderModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  // Media Player State
+  const [mediaPlayerOpen, setMediaPlayerOpen] = useState(false);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isOpen) return;
 
-    // Only navigate if not typing in an input
-    if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+    // Only navigate if not typing in an input and MediaPlayer is NOT open
+    if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA' || mediaPlayerOpen) return;
 
     if (e.key === 'ArrowRight' && hasNext && onNext) {
         onNext();
@@ -56,7 +62,7 @@ export default function ReaderModal({
     } else if (e.key === 'Escape') {
         onClose();
     }
-  }, [isOpen, hasNext, hasPrevious, onNext, onPrevious, onClose]);
+  }, [isOpen, hasNext, hasPrevious, onNext, onPrevious, onClose, mediaPlayerOpen]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -68,6 +74,8 @@ export default function ReaderModal({
     setSaveSuccess(false);
     setSaving(false);
     setError(null);
+    setMediaPlayerOpen(false);
+    setActiveVideoUrl(null);
 
     if (!isOpen || !url) {
         setParsedContent(null);
@@ -120,10 +128,59 @@ export default function ReaderModal({
     }
   };
 
+  const handlePlayVideo = (videoUrl: string) => {
+    setActiveVideoUrl(videoUrl);
+    setMediaPlayerOpen(true);
+  };
+
+  // Helper function to process content and replace iframes with VideoPreview
+  const renderContent = (content: string) => {
+    // Regex to capture iframe and video tags
+    // eslint-disable-next-line
+    const videoRegex = /(<iframe.*?<\/iframe>|<video.*?<\/video>)/g;
+    const parts = content.split(videoRegex);
+
+    return parts.map((part, index) => {
+        // Check if the part is a video/iframe
+        if (part.match(/<iframe|<video/)) {
+            // Extract src
+            const srcMatch = part.match(/src=["'](.*?)["']/);
+            if (srcMatch && srcMatch[1]) {
+                const videoUrl = srcMatch[1];
+                return (
+                    <VideoPreview 
+                        key={index} 
+                        videoUrl={videoUrl} 
+                        onPlay={() => handlePlayVideo(videoUrl)} 
+                    />
+                );
+            }
+        }
+
+        // Return regular HTML content
+        if (part.trim() === '') return null;
+        
+        return (
+            <div
+                key={index}
+                className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: part }}
+            />
+        );
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
+      {/* MediaPlayer Modal */}
+      <MediaPlayerModal 
+        isOpen={mediaPlayerOpen} 
+        onClose={() => setMediaPlayerOpen(false)} 
+        videoUrl={activeVideoUrl} 
+      />
+
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-200"
@@ -271,12 +328,7 @@ export default function ReaderModal({
 
                 {/* Content */}
                 <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-6">
-                  <div
-                    className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: parsedContent.content
-                    }}
-                  />
+                    {renderContent(parsedContent.content)}
                 </div>
               </div>
             )}

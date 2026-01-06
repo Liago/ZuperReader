@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { fetchFeed, parseOPML, OpmlOutline, FeedData } from '@/lib/rssService';
 import { syncRSSArticles } from '@/lib/api';
-import * as cheerio from 'cheerio';
+// cheerio import removed
 
 /**
  * Creates a new folder for RSS feeds
@@ -334,6 +334,8 @@ async function searchForUrl(query: string): Promise<string | null> {
 
 		if (response.ok) {
 			const html = await response.text();
+			// @ts-ignore
+			const cheerio = await import('cheerio');
 			const $ = cheerio.load(html);
 			const firstResult = $('.result__a').first().attr('href');
 
@@ -444,10 +446,12 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
 				}
 
 				const html = await response.text();
+				// @ts-ignore
+				const cheerio = await import('cheerio');
 				const $ = cheerio.load(html);
 
 				// Parse HTML to find <link rel="alternate"> tags
-				$('link[rel="alternate"]').each((_, el) => {
+				$('link[rel="alternate"]').each((_: any, el: any) => {
 					const $el = $(el);
 					const type = $el.attr('type')?.toLowerCase() || '';
 					const href = $el.attr('href');

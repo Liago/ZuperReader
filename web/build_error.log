@@ -1,0 +1,47 @@
+
+> web@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.10 (Turbopack)
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./src/app/actions/rss.ts:7:1
+Module not found: Can't resolve 'cheerio'
+[0m [90m  5 |[39m [36mimport[39m { fetchFeed[33m,[39m parseOPML[33m,[39m [33mOpmlOutline[39m[33m,[39m [33mFeedData[39m } [36mfrom[39m [32m'@/lib/rssService'[39m[33m;[39m
+ [90m  6 |[39m [36mimport[39m { syncRSSArticles } [36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m cheerio [36mfrom[39m [32m'cheerio'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [90m/**[39m
+ [90m 10 |[39m [90m * Creates a new folder for RSS feeds[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/app/actions/rss.ts
+    ./src/app/api/rss/discover/route.ts
+
+  Client Component Browser:
+    ./src/app/actions/rss.ts [Client Component Browser]
+    ./src/components/RSS/FeedList.tsx [Client Component Browser]
+    ./src/components/RSS/RSSLayout.tsx [Client Component Browser]
+    ./src/app/rss/page.tsx [Client Component Browser]
+    ./src/app/rss/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/actions/rss.ts [Client Component SSR]
+    ./src/components/RSS/FeedList.tsx [Client Component SSR]
+    ./src/components/RSS/RSSLayout.tsx [Client Component SSR]
+    ./src/app/rss/page.tsx [Client Component SSR]
+    ./src/app/rss/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./src/app/actions/rss.ts:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
