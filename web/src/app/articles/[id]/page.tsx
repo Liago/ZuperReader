@@ -534,10 +534,14 @@ export default function ArticleReaderPage() {
 	// Sostituisci gli iframe video con placeholder eleganti usando ReactDOM
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
-		if (!contentElement) return;
+		if (!contentElement) {
+			console.log('VideoDebug: contentElement not found');
+			return;
+		}
 
 		// Trova tutti gli iframe video
 		const iframes = contentElement.querySelectorAll('iframe');
+		console.log(`VideoDebug: Found ${iframes.length} iframes in content`);
 		const videoPlaceholders: Array<{
 			placeholder: HTMLDivElement;
 			videoInfo: VideoInfo;
@@ -545,12 +549,14 @@ export default function ArticleReaderPage() {
 			originalIframe: HTMLIFrameElement;
 		}> = [];
 
-		iframes.forEach((iframe) => {
+		iframes.forEach((iframe, index) => {
 			const src = iframe.getAttribute('src');
+			console.log(`VideoDebug: Checking iframe ${index}, src:`, src);
 			if (!src) return;
 
 			// Check if supported using shared logic
 			const videoInfo = extractVideoInfo(src);
+			console.log(`VideoDebug: Detected info for iframe ${index}:`, videoInfo);
 
 			// Only replace if we identified the provider or strictly matched domain keywords
 			const isSupported = videoInfo.provider !== 'unknown' ||
@@ -559,14 +565,15 @@ export default function ArticleReaderPage() {
 				src.includes('vimeo.com') ||
 				src.includes('redditmedia.com');
 
+			console.log(`VideoDebug: Is supported? ${isSupported}`);
+
 			if (!isSupported) return;
 
 			// Crea un semplice div placeholder
 			const placeholder = document.createElement('div');
 			placeholder.className = 'video-placeholder-container my-8'; // Add margin for spacing
 			placeholder.setAttribute('data-video-src', src);
-			placeholder.setAttribute('data-video-id', videoInfo.videoId || '');
-			placeholder.setAttribute('data-video-provider', videoInfo.provider);
+			placeholder.setAttribute('data-video-provider', videoInfo.provider || 'unknown');
 			placeholder.style.cursor = 'pointer';
 			placeholder.style.width = '100%';
 
@@ -576,6 +583,7 @@ export default function ArticleReaderPage() {
 
 			// Sostituisci l'iframe con il placeholder
 			if (iframe.parentNode) {
+				console.log(`VideoDebug: Replacing iframe ${index} with placeholder`);
 				iframe.parentNode.replaceChild(placeholder, iframe);
 
 				videoPlaceholders.push({
@@ -584,6 +592,8 @@ export default function ArticleReaderPage() {
 					src,
 					originalIframe: iframe as HTMLIFrameElement
 				});
+			} else {
+				console.log(`VideoDebug: Iframe ${index} has no parentNode??`);
 			}
 		});
 
@@ -621,9 +631,13 @@ export default function ArticleReaderPage() {
 			// Since I can only modify the provided block, I will remove the dynamic imports and use the assumed top-level imports.
 			// The user's instruction implies that the necessary top-level imports will be handled.
 
+			console.log(`VideoDebug: Rendering ${videoPlaceholders.length} placeholders`);
 			videoPlaceholders.forEach(({ placeholder, videoInfo, src }) => {
 				// Safety check: make sure placeholder is still in DOM
-				if (!document.contains(placeholder)) return;
+				if (!document.contains(placeholder)) {
+					console.log('VideoDebug: Placeholder no longer in DOM before render');
+					return;
+				}
 
 				// Create root and render VideoPlaceholder
 				const root = ReactDOM.createRoot(placeholder);
@@ -644,6 +658,7 @@ export default function ArticleReaderPage() {
 
 		// Cleanup function
 		return () => {
+			console.log('VideoDebug: Cleaning up video placeholders');
 			videoPlaceholders.forEach(({ placeholder, originalIframe }) => {
 				// Unmount React root
 				try {
