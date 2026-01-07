@@ -45,7 +45,14 @@ struct RSSListView: View {
                 
                 if viewModel.isRefreshing {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        ProgressView()
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            if let progress = viewModel.refreshProgress {
+                                Text(progress)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
                     }
                 }
             }

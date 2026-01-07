@@ -144,6 +144,58 @@ class RSSService {
         
         return feeds
     }
+
+    func refreshFeed(feedId: UUID, url: String) async throws -> FeedRefreshResult {
+       // Re-using performFeedAction logic but simplified for specific return type
+       guard let apiUrl = URL(string: "\(webApiUrl)/api/rss/feed") else {
+           throw URLError(.badURL)
+       }
+       
+       var request = URLRequest(url: apiUrl)
+       request.httpMethod = "POST"
+       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+       try await attachAuthHeader(to: &request)
+       
+       let body: [String: String?] = [
+           "action": "refresh",
+           "url": url,
+           "feedId": feedId.uuidString
+       ]
+       
+       request.httpBody = try JSONSerialization.data(withJSONObject: body.compactMapValues { $0 })
+       
+       let (data, response) = try await session.data(for: request)
+       
+       guard let httpResponse = response as? HTTPURLResponse else {
+           throw URLError(.badServerResponse)
+       }
+       
+       if httpResponse.statusCode != 200 {
+           if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                throw NSError(domain: "RSSService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error])
+           }
+           throw URLError(.badServerResponse)
+       }
+        
+       // We can reuse FeedRefreshResult but we need to fill the struct properly
+       // The API returns { success: true, added: X, existing: Y }
+       // We need to decode that partial response and map to FeedRefreshResult
+       struct PartialRefreshResult: Codable {
+           let success: Bool
+           let added: Int
+           let existing: Int
+       }
+       
+       let partial = try JSONDecoder().decode(PartialRefreshResult.self, from: data)
+       
+       return FeedRefreshResult(
+           success: partial.success,
+           totalAdded: partial.added,
+           totalExisting: partial.existing,
+           feedsRefreshed: 1,
+           errors: nil
+       )
+   }
     
     func getUnreadCounts(userId: String) async throws -> [UUID: Int] {
         struct UnreadItem: Decodable {

@@ -40,25 +40,64 @@ class RSSViewModel: ObservableObject {
         isLoading = false
     }
     
+    @Published var refreshProgress: String? = nil
+
     func refreshFeeds() async {
         guard authManager.isAuthenticated else { return }
         
         isRefreshing = true
         errorMessage = nil
+        refreshProgress = "Starting update..."
         
-        do {
-            let result = try await rssService.refreshAllFeeds()
-            
-            if !result.success {
-                self.errorMessage = result.errors?.first ?? "Refresh failed"
-            }
-            
-            // Reload feeds to get updated counts/items
-            await loadFeeds()
-        } catch {
-            self.errorMessage = "Failed to refresh: \(error.localizedDescription)"
+        // 1. Get current feeds to refresh
+        let feedsToRefresh = self.feeds
+        if feedsToRefresh.isEmpty {
+            isRefreshing = false
+            refreshProgress = nil
+            return
         }
         
+        let total = feedsToRefresh.count
+        var completed = 0
+        
+        // 2. Refresh in batches of 5
+        let batchSize = 5
+        
+        do {
+            // We use a task group to run batches
+            // Since we want to limit concurrency to 5, we can just loop through chunks
+            // OR use a semaphore. Chunks is easier to implement without extra deps.
+            
+            for i in stride(from: 0, to: total, by: batchSize) {
+                let end = min(i + batchSize, total)
+                let batch = feedsToRefresh[i..<end]
+                
+                refreshProgress = "Updating \(completed)/\(total)..."
+                
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    for feed in batch {
+                        group.addTask {
+                            _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
+                        }
+                    }
+                    // Wait for all in this batch
+                    try await group.waitForAll()
+                }
+                
+                completed += batch.count
+            }
+            
+            refreshProgress = "Finalizing..."
+            
+            // 3. Reload everything
+            await loadFeeds()
+            
+        } catch {
+            self.errorMessage = "Failed to refresh some feeds: \(error.localizedDescription)"
+            await loadFeeds() // Reload anyway to show what succeeded
+        }
+        
+        refreshProgress = nil
         isRefreshing = false
     }
     

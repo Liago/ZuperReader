@@ -7,6 +7,7 @@ struct RSSArticleListView: View {
     @State private var articles: [RSSArticle] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showReadArticles = false // Default: hide read articles
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
@@ -14,43 +15,73 @@ struct RSSArticleListView: View {
             themeManager.colors.backgroundGradient
                 .ignoresSafeArea()
             
-            if isLoading {
+                if isLoading {
                 ProgressView()
             } else if let error = errorMessage {
                 Text(error).foregroundColor(.red)
-            } else if articles.isEmpty {
-                Text("No articles found.")
-                    .foregroundColor(.gray)
             } else {
-                List {
-                    ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
-                        RSSArticleRow(article: article)
-                            .background(
-                                NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: index))
-                                    .opacity(0)
-                            )
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button {
-                                    Task {
-                                        await markAsRead(article: article, at: index)
+                let displayedArticles = articles.filter { !showReadArticles || !$0.isRead }
+                
+                if displayedArticles.isEmpty {
+                     if articles.isEmpty {
+                        Text("No articles found.").foregroundColor(.gray)
+                     } else {
+                        Text("All articles read.").foregroundColor(.gray)
+                     }
+                } else {
+                    List {
+                        ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
+                            // Find original index for binding if needed, or just pass value and handle updates via store
+                            // For simplicity with array state, we need careful index management if we pass binding
+                            // But RSSArticleReader marks as read via service and local update.
+                            // Let's pass the correct binding from the main array.
+                            
+                            let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? index
+                            
+                            RSSArticleRow(article: article)
+                                .background(
+                                    NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex))
+                                        .opacity(0)
+                                )
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button {
+                                        Task {
+                                            await markAsRead(article: article, at: originalIndex)
+                                        }
+                                    } label: {
+                                        Label(article.isRead ? "Read" : "Mark as Read", systemImage: "envelope.open")
                                     }
-                                } label: {
-                                    Label(article.isRead ? "Read" : "Mark as Read", systemImage: "envelope.open")
+                                    .tint(article.isRead ? .gray : .blue)
+                                    .disabled(article.isRead)
                                 }
-                                .tint(article.isRead ? .gray : .blue)
-                                .disabled(article.isRead)
-                            }
+                        }
                     }
-                }
-                .listStyle(.plain)
-                .refreshable {
-                    await loadArticles()
+                    .listStyle(.plain)
+                    .refreshable {
+                        await refreshFeed()
+                    }
                 }
             }
         }
         .navigationTitle(feed.title)
+        .toolbar {
+             ToolbarItem(placement: .navigationBarTrailing) {
+                 Button(action: { showReadArticles.toggle() }) {
+                     Image(systemName: showReadArticles ? "eye.slash" : "eye")
+                 }
+             }
+        }
         .task {
             await loadArticles()
+        }
+    }
+    
+    private func refreshFeed() async {
+        do {
+            _ = try await RSSService.shared.refreshFeed(feedId: feed.id, url: feed.url)
+            await loadArticles()
+        } catch {
+            print("Failed to refresh feed: \(error)")
         }
     }
     
