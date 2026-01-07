@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addFeedInternal, deleteFeedInternal } from '@/app/actions/rss';
+import { addFeedInternal, deleteFeedInternal, getFeedContentInternal } from '@/app/actions/rss';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
@@ -45,8 +45,25 @@ export async function POST(request: NextRequest) {
 				return NextResponse.json(result, { status: 400 });
 			}
 			return NextResponse.json(result);
+
+		} else if (action === 'refresh') {
+			if (!url) {
+				return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+			}
+			// Use getFeedContentInternal to refresh and sync
+			const result = await getFeedContentInternal(supabase, url, feedId);
+			if (result.error) {
+				return NextResponse.json({ error: result.error }, { status: 500 });
+			}
+			// Return simplified result expected by client
+			return NextResponse.json({
+				success: true,
+				added: result.syncStats?.added || 0,
+				existing: result.syncStats?.existing || 0
+			});
+
 		} else {
-			return NextResponse.json({ error: 'Invalid action. Use "add" or "delete"' }, { status: 400 });
+			return NextResponse.json({ error: 'Invalid action. Use "add", "delete", or "refresh"' }, { status: 400 });
 		}
 
 	} catch (error) {

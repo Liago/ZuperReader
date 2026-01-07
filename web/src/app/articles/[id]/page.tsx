@@ -658,13 +658,14 @@ export default function ArticleReaderPage() {
 
 		// Cleanup function
 		return () => {
-			console.log('VideoDebug: Cleaning up video placeholders');
+			console.log('VideoDebug: Cleanup called. NOT restoring iframes to test persistence.');
+			/*
 			videoPlaceholders.forEach(({ placeholder, originalIframe }) => {
 				// Unmount React root
 				try {
 					const root = (placeholder as any)._reactRoot;
 					if (root) {
-						root.unmount();
+						// root.unmount(); // Keep mounted
 					}
 				} catch (e) {
 					// Ignore cleanup errors
@@ -672,9 +673,10 @@ export default function ArticleReaderPage() {
 
 				// RESTORE original iframe if placeholder is still in DOM
 				if (placeholder.parentNode) {
-					placeholder.parentNode.replaceChild(originalIframe, placeholder);
+					// placeholder.parentNode.replaceChild(originalIframe, placeholder); // Do NOT restore
 				}
 			});
+			*/
 		};
 	}, [article?.content, preferences.colorTheme]);
 
