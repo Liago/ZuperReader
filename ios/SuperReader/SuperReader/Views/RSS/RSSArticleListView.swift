@@ -176,6 +176,7 @@ struct RSSArticleReader: View {
                             .padding()
                     }
                 }
+                }
                 .padding()
                 .id(currentIndex) // Move ID here to reset scroll position but keep view identity
             }
