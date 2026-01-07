@@ -566,41 +566,67 @@ export default function ArticleReaderPage() {
 	// Hydrate the placeholder markers with the React component
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
-		if (!contentElement) return;
+		console.log('HydrationDebug: Effect triggered');
+
+		if (!contentElement) {
+			console.log('HydrationDebug: No content element ref');
+			return;
+		}
 
 		// Find our specific markers
 		const markers = contentElement.querySelectorAll('.video-placeholder-marker');
+		console.log(`HydrationDebug: Found ${markers.length} markers to hydrate`);
+
 		const mountedRoots: Array<ReactDOM.Root> = [];
 
-		markers.forEach((marker) => {
+		markers.forEach((marker, index) => {
 			// Skip if already hydrated (though useEffect cleanup should handle this)
-			if (marker.hasAttribute('data-hydrated')) return;
+			if (marker.hasAttribute('data-hydrated')) {
+				console.log(`HydrationDebug: Marker ${index} already hydrated`);
+				return;
+			}
 
 			const src = marker.getAttribute('data-video-src');
+			console.log(`HydrationDebug: Marker ${index} src:`, src);
+
 			if (!src) return;
 
 			// We need videoInfo again for the component
 			const videoInfo = extractVideoInfo(src);
+			console.log(`HydrationDebug: hydrating marker ${index} for ${videoInfo.provider}`);
 
-			const root = ReactDOM.createRoot(marker);
-			root.render(
-				React.createElement(VideoPlaceholder, {
-					videoInfo,
-					onClick: () => {
-						setCurrentVideoInfo(videoInfo);
-						setVideoSrc(src);
-					},
-					colorTheme: preferences.colorTheme,
-				})
-			);
+			try {
+				const root = ReactDOM.createRoot(marker);
+				root.render(
+					React.createElement(VideoPlaceholder, {
+						videoInfo,
+						onClick: () => {
+							setCurrentVideoInfo(videoInfo);
+							setVideoSrc(src);
+						},
+						colorTheme: preferences.colorTheme,
+					})
+				);
 
-			mountedRoots.push(root);
-			marker.setAttribute('data-hydrated', 'true');
+				mountedRoots.push(root);
+				marker.setAttribute('data-hydrated', 'true');
+				console.log(`HydrationDebug: hydration successful for ${index}`);
+			} catch (err) {
+				console.error(`HydrationDebug: Error hydrating marker ${index}:`, err);
+			}
 		});
 
 		return () => {
+			console.log('HydrationDebug: Cleanup hydrating roots');
 			mountedRoots.forEach(root => {
-				setTimeout(() => root.unmount(), 0); // Defer unmount slightly to avoid conflicts
+				// Use setTimeout to avoid synchronous unmounting conflicts during updates if needed
+				setTimeout(() => {
+					try {
+						root.unmount();
+					} catch (e) {
+						// ignore
+					}
+				}, 0);
 			});
 		};
 	}, [processedContent, preferences.colorTheme]);
