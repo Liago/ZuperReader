@@ -124,6 +124,7 @@ struct RSSArticleReader: View {
     @State private var saveMessage: String?
     @State private var dragOffset: CGFloat = 0
     @State private var hasInitialized = false
+    @State private var displayedContent: String = ""
 
     var currentArticle: RSSArticle {
         if articles.indices.contains(currentIndex) {
@@ -152,14 +153,27 @@ struct RSSArticleReader: View {
                         }
 
                         // Clean HTML content
-                        Text(currentArticle.content?.decodedHTML ?? currentArticle.contentSnippet ?? "")
-                            .font(.body)
-                            .lineSpacing(4)
-
-                        if let originalUrl = URL(string: currentArticle.link) {
-                            Link("Read Original", destination: originalUrl)
-                                .padding()
+                    Text(displayedContent.isEmpty ? (currentArticle.contentSnippet ?? "") : displayedContent)
+                        .font(.body)
+                        .lineSpacing(4)
+                        .task(id: currentArticle.id) {
+                            if let content = currentArticle.content {
+                                // Decode off main actor if possible, but NSAttributedString might need main thread.
+                                // However, putting it in a task allows the view update to finish *before* this runs.
+                                let decoded = content.decodedHTML
+                                await MainActor.run {
+                                    withAnimation {
+                                        displayedContent = decoded
+                                    }
+                                }
+                            } else {
+                                displayedContent = currentArticle.contentSnippet ?? ""
+                            }
                         }
+
+                    if let originalUrl = URL(string: currentArticle.link) {
+                        Link("Read Original", destination: originalUrl)
+                            .padding()
                     }
                 }
                 .padding()
