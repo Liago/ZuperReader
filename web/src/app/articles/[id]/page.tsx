@@ -541,22 +541,25 @@ export default function ArticleReaderPage() {
 			placeholder: HTMLDivElement;
 			videoInfo: VideoInfo;
 			src: string;
+			originalIframe: HTMLIFrameElement; // Keep reference to original iframe
 		}> = [];
 
 		iframes.forEach((iframe) => {
 			const src = iframe.getAttribute('src');
 			if (!src) return;
 
-			const isVideo =
+			// Check if supported using shared logic
+			const videoInfo = extractVideoInfo(src);
+
+			// Only replace if we identified the provider or strictly matched domain keywords as fallback
+			// This ensures we catch youtube.com/embed even if regex fails, but prefer identified ones
+			const isSupported = videoInfo.provider !== 'unknown' ||
 				src.includes('youtube.com') ||
 				src.includes('youtube-nocookie.com') ||
 				src.includes('vimeo.com') ||
 				src.includes('redditmedia.com');
 
-			if (!isVideo) return;
-
-			// Estrai info video
-			const videoInfo = extractVideoInfo(src);
+			if (!isSupported) return;
 
 			// Crea un semplice div placeholder che useremo per identificare dove rendere il componente
 			const placeholder = document.createElement('div');
@@ -566,8 +569,13 @@ export default function ArticleReaderPage() {
 			placeholder.setAttribute('data-video-provider', videoInfo.provider);
 			placeholder.style.cursor = 'pointer';
 
-			// Store video info for click handling
-			videoPlaceholders.push({ placeholder, videoInfo, src });
+			// Store video info and original iframe for cleanup/restoration
+			videoPlaceholders.push({
+				placeholder,
+				videoInfo,
+				src,
+				originalIframe: iframe as HTMLIFrameElement
+			});
 
 			// Sostituisci l'iframe con il placeholder
 			iframe.parentNode?.replaceChild(placeholder, iframe);
@@ -581,8 +589,13 @@ export default function ArticleReaderPage() {
 			const VideoPlaceholder = (await import('../../../components/VideoPlaceholder')).default;
 
 			videoPlaceholders.forEach(({ placeholder, videoInfo, src }) => {
+				// Safety check: make sure placeholder is still in DOM
+				if (!document.contains(placeholder)) return;
+
 				// Create root and render VideoPlaceholder
 				const root = ReactDOM.createRoot(placeholder);
+				(placeholder as any)._reactRoot = root; // Attach root to element for cleanup
+
 				root.render(
 					React.createElement(VideoPlaceholder, {
 						videoInfo,
@@ -602,16 +615,20 @@ export default function ArticleReaderPage() {
 
 		// Cleanup function
 		return () => {
-			// Unmount all video placeholder roots
-			videoPlaceholders.forEach(({ placeholder }) => {
-				// Find and unmount the root if it exists
+			videoPlaceholders.forEach(({ placeholder, originalIframe }) => {
+				// Unmount React root
 				try {
-					const root = (placeholder as any)._reactRootContainer;
+					const root = (placeholder as any)._reactRoot;
 					if (root) {
 						root.unmount();
 					}
 				} catch (e) {
 					// Ignore cleanup errors
+				}
+
+				// RESTORE original iframe if placeholder is still in DOM
+				if (placeholder.parentNode) {
+					placeholder.parentNode.replaceChild(originalIframe, placeholder);
 				}
 			});
 		};
@@ -698,9 +715,8 @@ export default function ArticleReaderPage() {
 
 			{/* Sticky Toolbar */}
 			<div
-				className={`fixed top-0 left-0 right-0 backdrop-blur-md shadow-lg border-b z-40 transition-all duration-300 ${uiTheme.toolbarBg} ${uiTheme.toolbarBorder} ${
-					showStickyToolbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-				}`}
+				className={`fixed top-0 left-0 right-0 backdrop-blur-md shadow-lg border-b z-40 transition-all duration-300 ${uiTheme.toolbarBg} ${uiTheme.toolbarBorder} ${showStickyToolbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+					}`}
 			>
 				<div className={`${getContentWidthClass()} mx-auto px-4 py-3`}>
 					<div className="flex items-center justify-between gap-4">
@@ -736,13 +752,12 @@ export default function ArticleReaderPage() {
 							{/* AI Summary button */}
 							<button
 								onClick={() => setShowAISummaryModal(true)}
-								className={`p-2 rounded-full border transition-all ${
-									article.ai_summary
+								className={`p-2 rounded-full border transition-all ${article.ai_summary
 										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
 										: preferences.colorTheme === 'dark'
 											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-400 hover:bg-slate-600'
 											: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
-								}`}
+									}`}
 								title="Riassunto AI"
 							>
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -753,13 +768,12 @@ export default function ArticleReaderPage() {
 							{/* Reading Status Dropdown - compact version */}
 							<div className="relative group">
 								<button
-									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-sm ${
-										article.reading_status === 'unread'
+									className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-sm ${article.reading_status === 'unread'
 											? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
 											: article.reading_status === 'reading'
 												? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
 												: 'bg-green-100 text-green-700 hover:bg-green-200'
-									}`}
+										}`}
 								>
 									{article.reading_status === 'reading' && (
 										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -775,13 +789,12 @@ export default function ArticleReaderPage() {
 								<div className={`absolute right-0 mt-2 w-40 rounded-xl shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 ${uiTheme.dropdownBg} ${uiTheme.dropdownBorder}`}>
 									<button
 										onClick={() => handleReadingStatusChange('unread')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${
-											article.reading_status === 'unread'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${article.reading_status === 'unread'
 												? 'bg-blue-50 text-blue-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
 													: 'text-gray-700 hover:bg-blue-50'
-										}`}
+											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -790,13 +803,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('reading')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${
-											article.reading_status === 'reading'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${article.reading_status === 'reading'
 												? 'bg-amber-50 text-amber-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
 													: 'text-gray-700 hover:bg-amber-50'
-										}`}
+											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -805,13 +817,12 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('completed')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${
-											article.reading_status === 'completed'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${article.reading_status === 'completed'
 												? 'bg-green-50 text-green-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
 													: 'text-gray-700 hover:bg-green-50'
-										}`}
+											}`}
 									>
 										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -824,13 +835,12 @@ export default function ArticleReaderPage() {
 							{/* Favorite button */}
 							<button
 								onClick={handleToggleFavorite}
-								className={`p-2 rounded-full border transition-all ${
-									article.is_favorite
+								className={`p-2 rounded-full border transition-all ${article.is_favorite
 										? 'bg-red-50 border-red-200 text-red-600'
 										: preferences.colorTheme === 'dark'
 											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
 											: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
-								}`}
+									}`}
 								title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
 							>
 								<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -862,11 +872,10 @@ export default function ArticleReaderPage() {
 							{/* Tags button */}
 							<button
 								onClick={() => setShowTagModal(true)}
-								className={`p-2 rounded-full border transition-all ${
-									preferences.colorTheme === 'dark'
+								className={`p-2 rounded-full border transition-all ${preferences.colorTheme === 'dark'
 										? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
 										: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
-								}`}
+									}`}
 								title="Manage tags"
 							>
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -894,11 +903,10 @@ export default function ArticleReaderPage() {
 
 						<button
 							onClick={() => setShowDeleteConfirm(true)}
-							className={`transition-colors p-2 rounded-full ${
-								preferences.colorTheme === 'dark'
+							className={`transition-colors p-2 rounded-full ${preferences.colorTheme === 'dark'
 									? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30'
 									: 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-							}`}
+								}`}
 							title="Delete Article"
 						>
 							<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -959,11 +967,10 @@ export default function ArticleReaderPage() {
 									href={article.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className={`inline-flex items-center gap-2 px-5 py-2.5 font-medium rounded-full hover:shadow-lg transition-all active:scale-95 ${
-										preferences.colorTheme === 'dark'
+									className={`inline-flex items-center gap-2 px-5 py-2.5 font-medium rounded-full hover:shadow-lg transition-all active:scale-95 ${preferences.colorTheme === 'dark'
 											? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
 											: 'bg-gray-900 text-white hover:bg-gray-800'
-									}`}
+										}`}
 								>
 									Read Original
 									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -978,10 +985,10 @@ export default function ArticleReaderPage() {
 							<div className="relative group">
 								<button
 									className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all shadow-sm ${article.reading_status === 'unread'
-											? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-											: article.reading_status === 'reading'
-												? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-												: 'bg-green-100 text-green-700 hover:bg-green-200'
+										? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+										: article.reading_status === 'reading'
+											? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+											: 'bg-green-100 text-green-700 hover:bg-green-200'
 										}`}
 								>
 									{article.reading_status === 'unread' && (
@@ -1017,8 +1024,7 @@ export default function ArticleReaderPage() {
 								<div className={`absolute left-0 mt-2 w-40 rounded-xl shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30 ${uiTheme.dropdownBg} ${uiTheme.dropdownBorder}`}>
 									<button
 										onClick={() => handleReadingStatusChange('unread')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${
-											article.reading_status === 'unread'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-t-xl ${article.reading_status === 'unread'
 												? 'bg-blue-50 text-blue-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
@@ -1032,8 +1038,7 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('reading')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${
-											article.reading_status === 'reading'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${article.reading_status === 'reading'
 												? 'bg-amber-50 text-amber-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
@@ -1047,8 +1052,7 @@ export default function ArticleReaderPage() {
 									</button>
 									<button
 										onClick={() => handleReadingStatusChange('completed')}
-										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${
-											article.reading_status === 'completed'
+										className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 rounded-b-xl ${article.reading_status === 'completed'
 												? 'bg-green-50 text-green-700 font-medium'
 												: preferences.colorTheme === 'dark'
 													? 'text-slate-300 hover:bg-slate-700'
@@ -1068,13 +1072,12 @@ export default function ArticleReaderPage() {
 							{/* AI Summary button */}
 							<button
 								onClick={() => setShowAISummaryModal(true)}
-								className={`group p-2.5 rounded-full border transition-all ${
-									article.ai_summary
+								className={`group p-2.5 rounded-full border transition-all ${article.ai_summary
 										? 'bg-purple-50 border-purple-500 text-purple-600 hover:border-purple-600 hover:bg-purple-100'
 										: preferences.colorTheme === 'dark'
 											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-400 hover:bg-slate-600'
 											: 'bg-white border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50'
-								}`}
+									}`}
 								title="Riassunto AI"
 							>
 								<svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1084,8 +1087,7 @@ export default function ArticleReaderPage() {
 
 							<button
 								onClick={handleToggleFavorite}
-								className={`group p-2.5 rounded-full border transition-all ${
-									article.is_favorite
+								className={`group p-2.5 rounded-full border transition-all ${article.is_favorite
 										? 'bg-red-50 border-red-200 text-red-600'
 										: preferences.colorTheme === 'dark'
 											? 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
@@ -1128,11 +1130,10 @@ export default function ArticleReaderPage() {
 							)}
 							<button
 								onClick={() => setShowTagModal(true)}
-								className={`text-xs font-medium transition-colors px-2 py-1 rounded-lg ${
-									preferences.colorTheme === 'dark'
+								className={`text-xs font-medium transition-colors px-2 py-1 rounded-lg ${preferences.colorTheme === 'dark'
 										? 'text-slate-400 hover:text-purple-400 hover:bg-purple-900/30'
 										: 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
-								}`}
+									}`}
 							>
 								{article.tags && article.tags.length > 0 ? 'Edit' : '+ Add Tags'}
 							</button>
@@ -1183,11 +1184,10 @@ export default function ArticleReaderPage() {
 
 			{/* Footer con azioni */}
 			<div className="mt-6 flex justify-center">
-				<Link href="/" className={`inline-flex items-center gap-2 px-6 py-3 font-medium rounded-xl hover:shadow-lg transition-all duration-200 border backdrop-blur-sm ${
-					preferences.colorTheme === 'dark'
+				<Link href="/" className={`inline-flex items-center gap-2 px-6 py-3 font-medium rounded-xl hover:shadow-lg transition-all duration-200 border backdrop-blur-sm ${preferences.colorTheme === 'dark'
 						? 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700'
 						: 'bg-white/80 text-gray-700 border-gray-200 hover:bg-white'
-				}`}>
+					}`}>
 					<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 					</svg>
@@ -1249,11 +1249,10 @@ export default function ArticleReaderPage() {
 					<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
 						<div className={`rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all ${uiTheme.modalBg}`}>
 							<div className="flex items-center gap-4 mb-4">
-								<div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
-									preferences.colorTheme === 'dark'
+								<div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${preferences.colorTheme === 'dark'
 										? 'bg-red-900/30'
 										: 'bg-red-100'
-								}`}>
+									}`}>
 									<svg className={`w-6 h-6 ${preferences.colorTheme === 'dark' ? 'text-red-400' : 'text-red-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 									</svg>
@@ -1270,11 +1269,10 @@ export default function ArticleReaderPage() {
 								<button
 									onClick={() => setShowDeleteConfirm(false)}
 									disabled={isDeleting}
-									className={`px-4 py-2 font-medium rounded-xl transition-colors disabled:opacity-50 ${
-										preferences.colorTheme === 'dark'
+									className={`px-4 py-2 font-medium rounded-xl transition-colors disabled:opacity-50 ${preferences.colorTheme === 'dark'
 											? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
 											: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-									}`}
+										}`}
 								>
 									Cancel
 								</button>
