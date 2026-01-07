@@ -619,14 +619,11 @@ export default function ArticleReaderPage() {
 		return () => {
 			console.log('HydrationDebug: Cleanup hydrating roots');
 			mountedRoots.forEach(root => {
-				// Use setTimeout to avoid synchronous unmounting conflicts during updates if needed
-				setTimeout(() => {
-					try {
-						root.unmount();
-					} catch (e) {
-						// ignore
-					}
-				}, 0);
+				try {
+					root.unmount();
+				} catch (e) {
+					console.error('HydrationDebug: Error unmounting root', e);
+				}
 			});
 		};
 	}, [processedContent, preferences.colorTheme]);
