@@ -114,7 +114,8 @@ struct RSSArticleRow: View {
 
 struct RSSArticleReader: View {
     @Binding var articles: [RSSArticle]
-    @State private var currentIndex: Int
+    let initialIndex: Int
+    @State private var currentIndex: Int = 0
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
 
@@ -122,45 +123,47 @@ struct RSSArticleReader: View {
     @State private var isSaved = false
     @State private var saveMessage: String?
     @State private var dragOffset: CGFloat = 0
-
-    init(articles: Binding<[RSSArticle]>, initialIndex: Int) {
-        self._articles = articles
-        _currentIndex = State(initialValue: initialIndex)
-    }
+    @State private var hasInitialized = false
 
     var currentArticle: RSSArticle {
-        articles[currentIndex]
+        if articles.indices.contains(currentIndex) {
+            return articles[currentIndex]
+        }
+        return articles[0] // Fallback
     }
 
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(currentArticle.title)
-                        .font(.title)
-                        .bold()
+                    if articles.indices.contains(currentIndex) {
+                        Text(currentArticle.title)
+                            .font(.title)
+                            .bold()
 
-                    if let imageUrl = currentArticle.imageUrl, let url = URL(string: imageUrl) {
-                        AsyncImage(url: url) { phase in
-                            if let image = phase.image {
-                                image.resizable().aspectRatio(contentMode: .fit)
+                        if let imageUrl = currentArticle.imageUrl, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                if let image = phase.image {
+                                    image.resizable().aspectRatio(contentMode: .fit)
+                                }
                             }
+                            .frame(maxHeight: 200)
+                            .cornerRadius(8)
                         }
-                        .frame(maxHeight: 200)
-                        .cornerRadius(8)
-                    }
 
-                    // Clean HTML content
-                    Text(currentArticle.content?.decodedHTML ?? currentArticle.contentSnippet ?? "")
-                        .font(.body)
-                        .lineSpacing(4)
+                        // Clean HTML content
+                        Text(currentArticle.content?.decodedHTML ?? currentArticle.contentSnippet ?? "")
+                            .font(.body)
+                            .lineSpacing(4)
 
-                    if let originalUrl = URL(string: currentArticle.link) {
-                        Link("Read Original", destination: originalUrl)
-                            .padding()
+                        if let originalUrl = URL(string: currentArticle.link) {
+                            Link("Read Original", destination: originalUrl)
+                                .padding()
+                        }
                     }
                 }
                 .padding()
+                .id(currentIndex) // Move ID here to reset scroll position but keep view identity
             }
             .offset(x: dragOffset)
             .gesture(
@@ -192,7 +195,7 @@ struct RSSArticleReader: View {
                     }
             )
         }
-        .navigationTitle(currentArticle.title)
+        .navigationTitle(articles.indices.contains(currentIndex) ? currentArticle.title : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -255,9 +258,12 @@ struct RSSArticleReader: View {
              }
         }
         .onAppear {
+             if !hasInitialized {
+                 currentIndex = initialIndex
+                 hasInitialized = true
+             }
              markAsRead()
         }
-        .id(currentIndex)
     }
 
     private func resetState() {
