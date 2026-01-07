@@ -531,154 +531,79 @@ export default function ArticleReaderPage() {
 		};
 	}, [article]);
 
-	// Sostituisci gli iframe video con placeholder eleganti usando ReactDOM
-	useEffect(() => {
-		const contentElement = articleContentRef.current;
-		if (!contentElement) {
-			console.log('VideoDebug: contentElement not found');
-			return;
-		}
+	// Process content to replace iframes with placeholder markers
+	// This runs during render (and SSR), ensuring the initial HTML has divs instead of iframes
+	const processedContent = React.useMemo(() => {
+		if (!article?.content) return '';
 
-		// Trova tutti gli iframe video
-		const iframes = contentElement.querySelectorAll('iframe');
-		console.log(`VideoDebug: Found ${iframes.length} iframes in content`);
-		const videoPlaceholders: Array<{
-			placeholder: HTMLDivElement;
-			videoInfo: VideoInfo;
-			src: string;
-			originalIframe: HTMLIFrameElement;
-		}> = [];
+		let content = article.content;
 
-		iframes.forEach((iframe, index) => {
-			const src = iframe.getAttribute('src');
-			console.log(`VideoDebug: Checking iframe ${index}, src:`, src);
-			if (!src) return;
+		// Regex to find iframes and extract src
+		// Handles different quote styles and multiline attributes
+		const iframeRegex = /<iframe[^>]+src=["']([^"']+)["'][^>]*>(?:<\/iframe>)?/gi;
 
-			// Check if supported using shared logic
+		return content.replace(iframeRegex, (match, src) => {
+			if (!src) return match;
+
 			const videoInfo = extractVideoInfo(src);
-			console.log(`VideoDebug: Detected info for iframe ${index}:`, videoInfo);
-
-			// Only replace if we identified the provider or strictly matched domain keywords
 			const isSupported = videoInfo.provider !== 'unknown' ||
 				src.includes('youtube.com') ||
 				src.includes('youtube-nocookie.com') ||
 				src.includes('vimeo.com') ||
 				src.includes('redditmedia.com');
 
-			console.log(`VideoDebug: Is supported? ${isSupported}`);
+			if (!isSupported) return match;
 
-			if (!isSupported) return;
+			// Replace with a marker div that we can hydrate later
+			// encoding src to be safe in attribute
+			const safeSrc = src.replace(/"/g, '&quot;');
+			const provider = videoInfo.provider || 'unknown';
 
-			// Crea un semplice div placeholder
-			const placeholder = document.createElement('div');
-			placeholder.className = 'video-placeholder-container my-8'; // Add margin for spacing
-			placeholder.setAttribute('data-video-src', src);
-			placeholder.setAttribute('data-video-provider', videoInfo.provider || 'unknown');
-			placeholder.style.cursor = 'pointer';
-			placeholder.style.width = '100%';
+			return `<div class="video-placeholder-marker" data-video-src="${safeSrc}" data-provider="${provider}" style="width: 100%; min-height: 300px;"></div>`;
+		});
+	}, [article?.content]);
 
-			// If inside a paragraph, we might want to unwrap or handle differently, 
-			// but modern browsers handle div-in-p replacement okay-ish in JS (though invalid HTML).
-			// To be safer, we store the necessary info.
+	// Hydrate the placeholder markers with the React component
+	useEffect(() => {
+		const contentElement = articleContentRef.current;
+		if (!contentElement) return;
 
-			// Sostituisci l'iframe con il placeholder
-			if (iframe.parentNode) {
-				console.log(`VideoDebug: Replacing iframe ${index} with placeholder`);
-				iframe.parentNode.replaceChild(placeholder, iframe);
+		// Find our specific markers
+		const markers = contentElement.querySelectorAll('.video-placeholder-marker');
+		const mountedRoots: Array<ReactDOM.Root> = [];
 
-				videoPlaceholders.push({
-					placeholder,
+		markers.forEach((marker) => {
+			// Skip if already hydrated (though useEffect cleanup should handle this)
+			if (marker.hasAttribute('data-hydrated')) return;
+
+			const src = marker.getAttribute('data-video-src');
+			if (!src) return;
+
+			// We need videoInfo again for the component
+			const videoInfo = extractVideoInfo(src);
+
+			const root = ReactDOM.createRoot(marker);
+			root.render(
+				React.createElement(VideoPlaceholder, {
 					videoInfo,
-					src,
-					originalIframe: iframe as HTMLIFrameElement
-				});
-			} else {
-				console.log(`VideoDebug: Iframe ${index} has no parentNode??`);
-			}
+					onClick: () => {
+						setCurrentVideoInfo(videoInfo);
+						setVideoSrc(src);
+					},
+					colorTheme: preferences.colorTheme,
+				})
+			);
+
+			mountedRoots.push(root);
+			marker.setAttribute('data-hydrated', 'true');
 		});
 
-		// Render VideoPlaceholder components synchronously
-		if (videoPlaceholders.length > 0) {
-			// Dynamically import React and ReactDOM for rendering
-			// Assuming React and ReactDOM are already available or imported at the top level.
-			// For VideoPlaceholder, we assume it's imported at the top level.
-			// This block will now use the top-level imported VideoPlaceholder.
-			// The original code had dynamic imports for React, ReactDOM, and VideoPlaceholder.
-			// To make it synchronous, we need React and ReactDOM to be available.
-			// For this change, we'll assume React and ReactDOM are available globally or imported.
-			// If not, a top-level import for React and ReactDOM would also be needed.
-			// Given the context of a React component, React is implicitly available.
-			// ReactDOM.createRoot is typically imported as `import ReactDOM from 'react-dom/client';`
-			// For this specific instruction, I will assume `VideoPlaceholder` is the only one needing a new top-level import.
-			// The original code had `const React = (await import('react')).default;` and `const ReactDOM = (await import('react-dom/client')).default;`
-			// To truly make it synchronous, these also need to be top-level imports.
-			// However, the instruction specifically mentions `VideoPlaceholder` for top-level import.
-			// I will proceed by making `VideoPlaceholder` synchronous and keeping the `React` and `ReactDOM` dynamic imports for now,
-			// as changing them would be outside the scope of the explicit instruction for `VideoPlaceholder`.
-			// If the user wants `React` and `ReactDOM` to be top-level imports too, that would be a separate instruction.
-
-			// Re-evaluating: The instruction is "Refactor video placeholder logic to be synchronous by importing VideoPlaceholder at the top level, avoiding async race conditions."
-			// The original code's `renderPlaceholders` function was async because of `await import(...)`.
-			// To make the *rendering* synchronous, all imports used in the rendering must be synchronous.
-			// This means `React`, `ReactDOM`, and `VideoPlaceholder` must all be available synchronously.
-			// The most common way in a React component is to have them as top-level imports.
-			// So, I will assume `React` and `ReactDOM` are also imported at the top.
-			// I will add `import ReactDOM from 'react-dom/client';` and `import VideoPlaceholder from '../../../components/VideoPlaceholder';`
-			// `React` is usually implicitly available in JSX files or imported as `import React from 'react';`.
-
-			// Let's assume `React` is already in scope (it usually is for JSX).
-			// We need `ReactDOM` and `VideoPlaceholder` to be imported at the top.
-			// Since I can only modify the provided block, I will remove the dynamic imports and use the assumed top-level imports.
-			// The user's instruction implies that the necessary top-level imports will be handled.
-
-			console.log(`VideoDebug: Rendering ${videoPlaceholders.length} placeholders`);
-			videoPlaceholders.forEach(({ placeholder, videoInfo, src }) => {
-				// Safety check: make sure placeholder is still in DOM
-				if (!document.contains(placeholder)) {
-					console.log('VideoDebug: Placeholder no longer in DOM before render');
-					return;
-				}
-
-				// Create root and render VideoPlaceholder
-				const root = ReactDOM.createRoot(placeholder);
-				(placeholder as any)._reactRoot = root; // Attach root to element for cleanup
-
-				root.render(
-					React.createElement(VideoPlaceholder, {
-						videoInfo,
-						onClick: () => {
-							setCurrentVideoInfo(videoInfo);
-							setVideoSrc(src);
-						},
-						colorTheme: preferences.colorTheme,
-					})
-				);
-			});
-		}
-
-		// Cleanup function
 		return () => {
-			console.log('VideoDebug: Cleanup called. NOT restoring iframes to test persistence.');
-			/*
-			videoPlaceholders.forEach(({ placeholder, originalIframe }) => {
-				// Unmount React root
-				try {
-					const root = (placeholder as any)._reactRoot;
-					if (root) {
-						// root.unmount(); // Keep mounted
-					}
-				} catch (e) {
-					// Ignore cleanup errors
-				}
-
-				// RESTORE original iframe if placeholder is still in DOM
-				if (placeholder.parentNode) {
-					// placeholder.parentNode.replaceChild(originalIframe, placeholder); // Do NOT restore
-				}
+			mountedRoots.forEach(root => {
+				setTimeout(() => root.unmount(), 0); // Defer unmount slightly to avoid conflicts
 			});
-			*/
 		};
-	}, [article?.content, preferences.colorTheme]);
+	}, [processedContent, preferences.colorTheme]);
 
 	const handleToggleFavorite = async () => {
 		if (!article) return;
@@ -1205,7 +1130,7 @@ export default function ArticleReaderPage() {
 								${colorTheme.proseCode} dark:prose-code:text-blue-300 dark:prose-code:bg-slate-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
 								${preferences.colorTheme === 'dark' ? 'prose-pre:bg-slate-900 prose-pre:text-slate-100' : 'prose-pre:bg-gray-900 prose-pre:text-gray-100'} dark:prose-pre:bg-slate-900 dark:prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
 					style={{ fontSize: `${preferences.fontSize}px` }}
-					dangerouslySetInnerHTML={{ __html: article.content || '' }}
+					dangerouslySetInnerHTML={{ __html: processedContent || '' }}
 				/>
 
 				{/* Divider before comments section */}
