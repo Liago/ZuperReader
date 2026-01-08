@@ -34,25 +34,17 @@ struct RSSListView: View {
                         await viewModel.refreshFeeds()
                     }
                 }
+                // end of list
+
+                if viewModel.isRefreshing {
+                    RSSRefreshLoaderView(viewModel: viewModel)
+                }
             }
             .navigationTitle("Feeds")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingDiscovery = true }) {
                         Image(systemName: "plus")
-                    }
-                }
-                
-                if viewModel.isRefreshing {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        HStack(spacing: 8) {
-                            ProgressView()
-                            if let progress = viewModel.refreshProgress {
-                                Text(progress)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
                     }
                 }
             }

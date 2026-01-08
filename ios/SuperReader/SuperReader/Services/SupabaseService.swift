@@ -213,7 +213,7 @@ actor SupabaseService {
     }
 
     /// Parses an article URL using the parser API
-    private func parseArticleUrl(_ url: String) async throws -> ParseResult {
+    func parseArticleUrl(_ url: String) async throws -> ParseResult {
         guard let apiUrl = URL(string: SupabaseConfig.parseFunctionUrl) else {
             throw SupabaseError.invalidUrl
         }

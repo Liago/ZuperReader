@@ -210,10 +210,10 @@ struct Typography {
             case .lora: return .custom("Lora-Regular", size: size)
             case .montserrat: return .custom("Montserrat-Regular", size: size)
             case .crimsonText: return .custom("CrimsonText-Regular", size: size)
-            case .roboto: return .system(size: size, design: .default)
-            case .lato: return .system(size: size, design: .rounded)
-            case .openSans: return .system(size: size, design: .default)
-            case .ubuntu: return .system(size: size, design: .monospaced)
+            case .roboto: return .custom("Roboto-Regular", size: size)
+            case .lato: return .custom("Lato-Regular", size: size)
+            case .openSans: return .custom("OpenSans-Regular", size: size)
+            case .ubuntu: return .system(size: size, design: .monospaced) // Ubuntu not requested/installed yet
             }
         }
     }

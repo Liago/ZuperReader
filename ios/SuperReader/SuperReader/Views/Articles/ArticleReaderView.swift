@@ -22,6 +22,7 @@ struct ArticleReaderView: View {
     @State private var readingProgress: Double = 0
     @State private var hasLiked = false
     @State private var likeCount = 0
+    @State private var selectedLink: IdentifiableURL? // For link preview
 
     @Environment(\.dismiss) private var dismiss
 
@@ -77,6 +78,12 @@ struct ArticleReaderView: View {
                     userId: userId
                 )
                 .environmentObject(themeManager)
+            }
+        }
+        .sheet(item: $selectedLink) { item in
+            if let userId = authManager.user?.id.uuidString {
+                ArticleLinkPreviewView(url: item.url)
+                    .environmentObject(themeManager)
             }
         }
         .confirmationDialog("Delete Article", isPresented: $showDeleteConfirm) {
@@ -162,6 +169,7 @@ struct ArticleReaderView: View {
                     }
                 }
                 .padding(Spacing.lg)
+                .padding(.bottom, 100) // Extra padding for comments/navigation
             }
         }
         .background(preferences.colorTheme.colors.bgPrimary)
@@ -289,14 +297,19 @@ struct ArticleReaderView: View {
     
     // MARK: - Text Content
     
+    @State private var contentHeight: CGFloat = 100 // Initial estimate
+
     private func articleTextContent(_ content: String) -> some View {
-        // For HTML content, we'll use a simple text display
-        // In production, you'd use a WebView or AttributedString
-        Text(content.decodedHTML)
-            .font(preferences.fontFamily.font(size: preferences.fontSize))
-            .lineSpacing(preferences.fontSize * (preferences.lineHeight.multiplier - 1))
-            .foregroundColor(preferences.colorTheme.colors.textPrimary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HTMLContentView(
+            htmlContent: content,
+            preferences: preferences,
+            dynamicHeight: $contentHeight,
+            onLinkTap: { url in
+                selectedLink = IdentifiableURL(url: url)
+            }
+        )
+        .frame(height: contentHeight)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Comments Button
@@ -483,4 +496,9 @@ struct ArticleReaderView: View {
         ArticleReaderView(articleId: "test-id")
             .environmentObject(ThemeManager.shared)
     }
+}
+
+struct IdentifiableURL: Identifiable {
+    let id = UUID()
+    let url: URL
 }

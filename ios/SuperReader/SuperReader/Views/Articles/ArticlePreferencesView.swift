@@ -194,6 +194,9 @@ struct TagManagementView: View {
             .onAppear {
                 tags = currentTags
             }
+            .onChange(of: currentTags) { newValue in
+                tags = newValue
+            }
         }
     }
     

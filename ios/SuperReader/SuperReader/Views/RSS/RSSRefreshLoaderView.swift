@@ -30,9 +30,8 @@ struct RSSRefreshLoaderView: View {
                                 .font(.headline)
                                 .foregroundColor(themeManager.colors.textPrimary)
                             
-                            Text("\(viewModel.processedFeedsCount) of \(viewModel.totalFeedsCount) feeds processed")
-                                .font(.subheadline)
-                                .foregroundColor(themeManager.colors.textSecondary)
+                            // Redundant text removed
+
                         }
                         
                         Spacer()

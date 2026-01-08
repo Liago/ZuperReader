@@ -22,6 +22,9 @@
 		<string>Lora-Regular.ttf</string>
 		<string>Montserrat-Regular.ttf</string>
 		<string>CrimsonText-Regular.ttf</string>
+		<string>Lato-Regular.ttf</string>
+		<string>Roboto-Regular.ttf</string>
+		<string>OpenSans-Regular.ttf</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
