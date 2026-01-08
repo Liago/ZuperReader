@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import ReactDOM from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus, updateReadingProgress } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
@@ -563,72 +563,51 @@ export default function ArticleReaderPage() {
 		});
 	}, [article?.content]);
 
-	// Hydrate the placeholder markers with the React component
+	// State for video portals
+	const [videoPortals, setVideoPortals] = useState<Array<{ container: Element, videoInfo: VideoInfo, src: string, key: string }>>([]);
+
+	// Hydrate the placeholder markers using Portals
 	useEffect(() => {
 		const contentElement = articleContentRef.current;
-		console.log('HydrationDebug: Effect triggered');
-
-		if (!contentElement) {
-			console.log('HydrationDebug: No content element ref');
-			return;
-		}
+		if (!contentElement) return;
 
 		// Find our specific markers
 		const markers = contentElement.querySelectorAll('.video-placeholder-marker');
-		console.log(`HydrationDebug: Found ${markers.length} markers to hydrate`);
 
-		const mountedRoots: Array<ReactDOM.Root> = [];
+		const newPortals: Array<{ container: Element, videoInfo: VideoInfo, src: string, key: string }> = [];
 
 		markers.forEach((marker, index) => {
-			// Skip if already hydrated (though useEffect cleanup should handle this)
-			if (marker.hasAttribute('data-hydrated')) {
-				console.log(`HydrationDebug: Marker ${index} already hydrated`);
-				return;
-			}
-
 			const src = marker.getAttribute('data-video-src');
-			console.log(`HydrationDebug: Marker ${index} src:`, src);
-
 			if (!src) return;
 
-			// We need videoInfo again for the component
+			// We need videoInfo for the component
 			const videoInfo = extractVideoInfo(src);
-			console.log(`HydrationDebug: hydrating marker ${index} for ${videoInfo.provider}`);
 
-			try {
-				const root = ReactDOM.createRoot(marker);
-				root.render(
-					React.createElement(VideoPlaceholder, {
-						videoInfo,
-						onClick: () => {
-							setCurrentVideoInfo(videoInfo);
-							setVideoSrc(src);
-						},
-						colorTheme: preferences.colorTheme,
-					})
-				);
-
-				mountedRoots.push(root);
-				marker.setAttribute('data-hydrated', 'true');
-				console.log(`HydrationDebug: hydration successful for ${index}`);
-			} catch (err) {
-				console.error(`HydrationDebug: Error hydrating marker ${index}:`, err);
-			}
+			newPortals.push({
+				container: marker,
+				videoInfo,
+				src,
+				key: `portal-${index}-${src}`
+			});
 		});
 
-		return () => {
-			console.log('HydrationDebug: Cleanup hydrating roots - DISABLED');
-			/*
-			mountedRoots.forEach(root => {
-				try {
-					root.unmount();
-				} catch (e) {
-					console.error('HydrationDebug: Error unmounting root', e);
-				}
-			});
-			*/
-		};
-	}, [processedContent, preferences.colorTheme]);
+		setVideoPortals(newPortals);
+	}, [processedContent]);
+
+	const renderedVideoPortals = videoPortals.map((portal) => (
+		createPortal(
+			<VideoPlaceholder
+				videoInfo={portal.videoInfo}
+				onClick={() => {
+					setCurrentVideoInfo(portal.videoInfo);
+					setVideoSrc(portal.src);
+				}}
+				colorTheme={preferences.colorTheme}
+			/>,
+			portal.container,
+			portal.key
+		)
+	));
 
 	const handleToggleFavorite = async () => {
 		if (!article) return;
@@ -1332,6 +1311,9 @@ export default function ArticleReaderPage() {
 					/>
 				)
 			}
+
+			{/* Render Portals */}
+			{renderedVideoPortals}
 		</div >
 	);
 }
