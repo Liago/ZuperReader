@@ -141,6 +141,8 @@ export default function VideoPlaceholder({ videoInfo, onClick, colorTheme = 'lig
 
 	const isDark = colorTheme === 'dark';
 
+	console.log(`VideoPlaceholder: Rendering for ${videoInfo.provider}`, { videoInfo, imageLoaded, imageError, isDark });
+
 	return (
 		<div
 			className="video-placeholder-container relative w-full rounded-2xl overflow-hidden cursor-pointer group my-6"
@@ -158,9 +160,8 @@ export default function VideoPlaceholder({ videoInfo, onClick, colorTheme = 'lig
 						<img
 							src={thumbnailUrl}
 							alt={videoInfo.title || 'Video thumbnail'}
-							className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-								imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-							} group-hover:scale-105`}
+							className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+								} group-hover:scale-105`}
 							onLoad={() => setImageLoaded(true)}
 							onError={() => setImageError(true)}
 						/>

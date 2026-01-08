@@ -617,7 +617,8 @@ export default function ArticleReaderPage() {
 		});
 
 		return () => {
-			console.log('HydrationDebug: Cleanup hydrating roots');
+			console.log('HydrationDebug: Cleanup hydrating roots - DISABLED');
+			/*
 			mountedRoots.forEach(root => {
 				try {
 					root.unmount();
@@ -625,6 +626,7 @@ export default function ArticleReaderPage() {
 					console.error('HydrationDebug: Error unmounting root', e);
 				}
 			});
+			*/
 		};
 	}, [processedContent, preferences.colorTheme]);
 
