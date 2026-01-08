@@ -41,6 +41,9 @@ class RSSViewModel: ObservableObject {
     }
     
     @Published var refreshProgress: String? = nil
+    @Published var progressPercentage: Double = 0.0
+    @Published var processedFeedsCount: Int = 0
+    @Published var totalFeedsCount: Int = 0
 
     func refreshFeeds() async {
         guard authManager.isAuthenticated else { return }
@@ -48,6 +51,8 @@ class RSSViewModel: ObservableObject {
         isRefreshing = true
         errorMessage = nil
         refreshProgress = "Starting update..."
+        progressPercentage = 0.0
+        processedFeedsCount = 0
         
         // 1. Get current feeds to refresh
         let feedsToRefresh = self.feeds
@@ -57,22 +62,16 @@ class RSSViewModel: ObservableObject {
             return
         }
         
-        let total = feedsToRefresh.count
+        totalFeedsCount = feedsToRefresh.count
         var completed = 0
         
         // 2. Refresh in batches of 5
         let batchSize = 5
         
         do {
-            // We use a task group to run batches
-            // Since we want to limit concurrency to 5, we can just loop through chunks
-            // OR use a semaphore. Chunks is easier to implement without extra deps.
-            
-            for i in stride(from: 0, to: total, by: batchSize) {
-                let end = min(i + batchSize, total)
+            for i in stride(from: 0, to: totalFeedsCount, by: batchSize) {
+                let end = min(i + batchSize, totalFeedsCount)
                 let batch = feedsToRefresh[i..<end]
-                
-                refreshProgress = "Updating \(completed)/\(total)..."
                 
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for feed in batch {
@@ -85,9 +84,13 @@ class RSSViewModel: ObservableObject {
                 }
                 
                 completed += batch.count
+                processedFeedsCount = completed
+                progressPercentage = Double(completed) / Double(totalFeedsCount)
+                refreshProgress = "Updating \(completed)/\(totalFeedsCount)..."
             }
             
             refreshProgress = "Finalizing..."
+            progressPercentage = 1.0
             
             // 3. Reload everything
             await loadFeeds()
@@ -97,8 +100,14 @@ class RSSViewModel: ObservableObject {
             await loadFeeds() // Reload anyway to show what succeeded
         }
         
+        // Add a small delay to let user see 100%
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+        
         refreshProgress = nil
         isRefreshing = false
+        progressPercentage = 0.0
+        processedFeedsCount = 0
+        totalFeedsCount = 0
     }
     
     func deleteFeed(_ feed: RSSFeed) async {

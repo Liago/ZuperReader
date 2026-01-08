@@ -101,12 +101,26 @@ struct RSSFeedRow: View {
     
     var body: some View {
         HStack {
-            // Favicon if we had it, for now just generic icon
-            Image(systemName: "rss")
-                .foregroundColor(.orange)
-                .frame(width: 30, height: 30)
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(6)
+            // Favicon
+            AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .cornerRadius(4)
+                case .failure:
+                    Image(systemName: "rss")
+                        .foregroundColor(.orange)
+                case .empty:
+                     Color.gray.opacity(0.1)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 30, height: 30)
+            .background(Color.white) // readable on dark backgrounds too
+            .cornerRadius(4)
             
             Text(feed.title)
                 .font(.body)

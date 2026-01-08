@@ -20,7 +20,7 @@ struct RSSArticleListView: View {
             } else if let error = errorMessage {
                 Text(error).foregroundColor(.red)
             } else {
-                let displayedArticles = articles.filter { !showReadArticles || !$0.isRead }
+                let displayedArticles = articles.filter { showReadArticles || !$0.isRead }
                 
                 if displayedArticles.isEmpty {
                      if articles.isEmpty {
@@ -43,16 +43,15 @@ struct RSSArticleListView: View {
                                     NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex))
                                         .opacity(0)
                                 )
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                     Button {
                                         Task {
                                             await markAsRead(article: article, at: originalIndex)
                                         }
                                     } label: {
-                                        Label(article.isRead ? "Read" : "Mark as Read", systemImage: "envelope.open")
+                                        Label("Mark as Read", systemImage: "envelope.open")
                                     }
-                                    .tint(article.isRead ? .gray : .blue)
-                                    .disabled(article.isRead)
+                                    .tint(.blue)
                                 }
                         }
                     }
@@ -65,13 +64,16 @@ struct RSSArticleListView: View {
         }
         .navigationTitle(feed.title)
         .toolbar {
-             ToolbarItem(placement: .navigationBarTrailing) {
-                 Button(action: { showReadArticles.toggle() }) {
-                     Image(systemName: showReadArticles ? "eye.slash" : "eye")
-                 }
-             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showReadArticles.toggle() }) {
+                    Image(systemName: showReadArticles ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                }
+                .help(showReadArticles ? "Show Unread Only" : "Show All")
+            }
         }
         .task {
+            // Reset to unread only on load if that's the desired default behavior every time
+            showReadArticles = false
             await loadArticles()
         }
     }
@@ -117,26 +119,45 @@ struct RSSArticleRow: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(article.title)
-                .font(.headline)
-                .foregroundColor(article.isRead ? .gray : themeManager.colors.textPrimary)
-                .lineLimit(2)
-            
-            if let snippet = article.contentSnippet {
-                Text(snippet)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .lineLimit(3)
+        HStack(alignment: .top, spacing: 12) {
+            if let imageUrl = article.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    default:
+                        Color.gray.opacity(0.1)
+                    }
+                }
+                .frame(width: 80, height: 60)
+                .cornerRadius(6)
+                .clipped()
             }
             
-            HStack {
-                if let date = article.pubDate {
-                    Text(date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption2)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(article.title)
+                    .font(.headline)
+                    .foregroundColor(article.isRead ? .gray : themeManager.colors.textPrimary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true) // Prevents truncation issues
+                
+                if let snippet = article.contentSnippet {
+                    Text(snippet)
+                        .font(.subheadline)
                         .foregroundColor(.gray)
+                        .lineLimit(2)
                 }
-                Spacer()
+                
+                HStack {
+                    if let date = article.pubDate {
+                        Text(date.formatted(date: .abbreviated, time: .shortened))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
             }
         }
         .padding(.vertical, 4)
