@@ -531,83 +531,76 @@ export default function ArticleReaderPage() {
 		};
 	}, [article]);
 
-	// Process content to replace iframes with placeholder markers
-	// This runs during render (and SSR), ensuring the initial HTML has divs instead of iframes
-	const processedContent = React.useMemo(() => {
-		if (!article?.content) return '';
+	// Split content into parts (HTML chunks and Video components)
+	// This avoids using dangerouslySetInnerHTML for the videos, preventing React overwrite issues
+	const contentParts = React.useMemo(() => {
+		if (!article?.content) return [];
 
-		let content = article.content;
+		const content = article.content;
+		// Regex that captures the full iframe tag AND the src
+		// format: [html, full_iframe_tag, src_url, html, full_iframe_tag, src_url, ...]
+		const iframeSplitRegex = /(<iframe[^>]+src=["']([^"']+)["'][^>]*>(?:<\/iframe>)?)/gi;
 
-		// Regex to find iframes and extract src
-		// Handles different quote styles and multiline attributes
-		const iframeRegex = /<iframe[^>]+src=["']([^"']+)["'][^>]*>(?:<\/iframe>)?/gi;
+		const parts = content.split(iframeSplitRegex);
+		const components: React.ReactNode[] = [];
 
-		return content.replace(iframeRegex, (match, src) => {
-			if (!src) return match;
+		for (let i = 0; i < parts.length; i++) {
+			const part = parts[i];
 
-			const videoInfo = extractVideoInfo(src);
-			const isSupported = videoInfo.provider !== 'unknown' ||
-				src.includes('youtube.com') ||
-				src.includes('youtube-nocookie.com') ||
-				src.includes('vimeo.com') ||
-				src.includes('redditmedia.com');
+			// skip empty strings if unrelated
+			if (i % 3 === 0) {
+				// This is an HTML chunk
+				if (part) {
+					components.push(
+						<div
+							key={`html-${i}`}
+							dangerouslySetInnerHTML={{ __html: part }}
+							// Use display: contents to avoid breaking layout flow where possible, or just be a block
+							className="html-chunk"
+						/>
+					);
+				}
+			} else if (i % 3 === 1) {
+				// This is the captured full iframe tag - we ignore it, we use the next part (src)
+				continue;
+			} else if (i % 3 === 2) {
+				// This is the captured src
+				const src = part;
+				const videoInfo = extractVideoInfo(src);
+				const isSupported = videoInfo.provider !== 'unknown' ||
+					src.includes('youtube.com') ||
+					src.includes('youtube-nocookie.com') ||
+					src.includes('vimeo.com') ||
+					src.includes('redditmedia.com');
 
-			if (!isSupported) return match;
+				if (isSupported) {
+					components.push(
+						<VideoPlaceholder
+							key={`video-${i}`}
+							videoInfo={videoInfo}
+							onClick={() => {
+								setCurrentVideoInfo(videoInfo);
+								setVideoSrc(src);
+							}}
+							colorTheme={preferences.colorTheme}
+						/>
+					);
+				} else {
+					// Fallback for unsupported iframes: render original iframe
+					// We need the full tag which was at i-1
+					const originalTag = parts[i - 1];
+					components.push(
+						<div
+							key={`iframe-${i}`}
+							dangerouslySetInnerHTML={{ __html: originalTag }}
+						/>
+					);
+				}
+			}
+		}
 
-			// Replace with a marker div that we can hydrate later
-			// encoding src to be safe in attribute
-			const safeSrc = src.replace(/"/g, '&quot;');
-			const provider = videoInfo.provider || 'unknown';
-
-			return `<div class="video-placeholder-marker" data-video-src="${safeSrc}" data-provider="${provider}" style="width: 100%; min-height: 300px;"></div>`;
-		});
-	}, [article?.content]);
-
-	// State for video portals
-	const [videoPortals, setVideoPortals] = useState<Array<{ container: Element, videoInfo: VideoInfo, src: string, key: string }>>([]);
-
-	// Hydrate the placeholder markers using Portals
-	useEffect(() => {
-		const contentElement = articleContentRef.current;
-		if (!contentElement) return;
-
-		// Find our specific markers
-		const markers = contentElement.querySelectorAll('.video-placeholder-marker');
-
-		const newPortals: Array<{ container: Element, videoInfo: VideoInfo, src: string, key: string }> = [];
-
-		markers.forEach((marker, index) => {
-			const src = marker.getAttribute('data-video-src');
-			if (!src) return;
-
-			// We need videoInfo for the component
-			const videoInfo = extractVideoInfo(src);
-
-			newPortals.push({
-				container: marker,
-				videoInfo,
-				src,
-				key: `portal-${index}-${src}`
-			});
-		});
-
-		setVideoPortals(newPortals);
-	}, [processedContent]);
-
-	const renderedVideoPortals = videoPortals.map((portal) => (
-		createPortal(
-			<VideoPlaceholder
-				videoInfo={portal.videoInfo}
-				onClick={() => {
-					setCurrentVideoInfo(portal.videoInfo);
-					setVideoSrc(portal.src);
-				}}
-				colorTheme={preferences.colorTheme}
-			/>,
-			portal.container,
-			portal.key
-		)
-	));
+		return components;
+	}, [article?.content, preferences.colorTheme]);
 
 	const handleToggleFavorite = async () => {
 		if (!article) return;
@@ -1134,8 +1127,9 @@ export default function ArticleReaderPage() {
 								${colorTheme.proseCode} dark:prose-code:text-blue-300 dark:prose-code:bg-slate-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
 								${preferences.colorTheme === 'dark' ? 'prose-pre:bg-slate-900 prose-pre:text-slate-100' : 'prose-pre:bg-gray-900 prose-pre:text-gray-100'} dark:prose-pre:bg-slate-900 dark:prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:shadow-lg`}
 					style={{ fontSize: `${preferences.fontSize}px` }}
-					dangerouslySetInnerHTML={{ __html: processedContent || '' }}
-				/>
+				>
+					{contentParts}
+				</div>
 
 				{/* Divider before comments section */}
 				<div className={`h-px bg-gradient-to-r from-transparent to-transparent mt-12 mb-8 ${preferences.colorTheme === 'dark'
@@ -1312,8 +1306,7 @@ export default function ArticleReaderPage() {
 				)
 			}
 
-			{/* Render Portals */}
-			{renderedVideoPortals}
+
 		</div >
 	);
 }
