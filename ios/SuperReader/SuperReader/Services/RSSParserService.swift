@@ -35,7 +35,36 @@ class RSSParserService: NSObject, XMLParserDelegate {
     func parse(data: Data, completion: @escaping ([ParsedRSSItem]) -> Void) {
         self.completion = completion
         self.currentItems = []
-        let parser = XMLParser(data: data)
+        
+        // Robust Encoding Handling:
+        // XMLParser defaults to UTF-8 but can fail or produce broken chars if the encoding is different (e.g. ISO-8859-1)
+        // and not properly declared or handled.
+        
+        var parserData = data
+        
+        // 1. Try to detect if it's valid UTF-8
+        let utf8String = String(data: data, encoding: .utf8)
+        
+        if utf8String == nil {
+            // 2. Fallback to ISO-8859-1 (Latin1)
+            if let latin1String = String(data: data, encoding: .isoLatin1) {
+                // Convert to UTF-8 data
+                // We also need to replace the encoding declaration if it exists, to match the new UTF-8 data
+                var fixedString = latin1String.replacingOccurrences(of: "encoding=\"ISO-8859-1\"", with: "encoding=\"UTF-8\"", options: .caseInsensitive)
+                fixedString = fixedString.replacingOccurrences(of: "encoding='ISO-8859-1'", with: "encoding='UTF-8'", options: .caseInsensitive)
+                
+                if let utf8Data = fixedString.data(using: .utf8) {
+                    parserData = utf8Data
+                }
+            } else if let windowsString = String(data: data, encoding: .windowsCP1252) {
+                 // Fallback to Windows-1252
+                 if let utf8Data = windowsString.data(using: .utf8) {
+                     parserData = utf8Data
+                 }
+            }
+        }
+        
+        let parser = XMLParser(data: parserData)
         parser.delegate = self
         parser.parse()
     }
