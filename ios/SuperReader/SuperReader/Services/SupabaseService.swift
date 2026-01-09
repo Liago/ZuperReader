@@ -202,6 +202,67 @@ actor SupabaseService {
 
         return article
     }
+    
+    // MARK: - RSS Sync
+    
+    func upsertRSSArticles(_ articles: [RSSArticle]) async throws -> (added: Int, existing: Int) {
+        guard !articles.isEmpty else { return (0, 0) }
+        
+        let userId = articles[0].userId.uuidString
+        let feedId = articles[0].feedId.uuidString
+        let guids = articles.map { $0.guid }
+        
+        // 1. Get count of existing articles
+        let countResponse = try await client
+            .from("rss_articles")
+            .select(head: true, count: .exact)
+            .eq("user_id", value: userId)
+            .eq("feed_id", value: feedId)
+            .in("guid", value: guids)
+            .execute()
+            
+        let existingCount = countResponse.count ?? 0
+        
+        // 2. Batch upsert
+        struct RSSArticleUpload: Encodable {
+            let user_id: UUID
+            let feed_id: UUID
+            let guid: String
+            let title: String
+            let link: String
+            let author: String?
+            let pub_date: Date?
+            let content: String?
+            let content_snippet: String?
+            let image_url: String?
+            let is_read: Bool
+        }
+        
+        let uploadData = articles.map { article in
+            RSSArticleUpload(
+                user_id: article.userId,
+                feed_id: article.feedId,
+                guid: article.guid,
+                title: article.title,
+                link: article.link,
+                author: article.author,
+                pub_date: article.pubDate,
+                content: article.content,
+                content_snippet: article.contentSnippet,
+                image_url: article.imageUrl,
+                is_read: article.isRead
+            )
+        }
+        
+        try await client
+            .from("rss_articles")
+            .upsert(uploadData, onConflict: "user_id,feed_id,guid", ignoreDuplicates: true)
+            .execute()
+            
+        let addedCount = max(0, articles.count - existingCount)
+        
+        return (added: addedCount, existing: existingCount)
+    }
 
     /// Saves an RSS article by first parsing its full content using the parser API
     func saveRSSArticleWithParsing(_ rssArticle: RSSArticle) async throws -> Article {

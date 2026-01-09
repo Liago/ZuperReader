@@ -60,28 +60,47 @@ class RSSService {
     }
     
     func refreshAllFeeds() async throws -> FeedRefreshResult {
-        guard let url = URL(string: "\(webApiUrl)/api/rss/refresh") else {
-            throw URLError(.badURL)
+        // 1. Fetch all feeds for the user
+        guard let user = await SupabaseService.shared.currentUser else {
+             throw NSError(domain: "RSSService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Unauthorized"])
         }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        try await attachAuthHeader(to: &request)
+        let feeds = try await getFeeds(userId: user.id.uuidString)
         
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-        
-        if httpResponse.statusCode != 200 {
-            if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                 throw NSError(domain: "RSSService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error])
+        // 2. Refresh concurrently
+        return await withTaskGroup(of: (FeedRefreshResult?).self) { group in
+            for feed in feeds {
+                group.addTask {
+                    try? await self.refreshFeed(feedId: feed.id, url: feed.url)
+                }
             }
-            throw URLError(.badServerResponse)
+            
+            var totalAdded = 0
+            var totalExisting = 0
+            var totalRefreshed = 0
+            var errors: [String] = []
+            
+            for await result in group {
+                if let result = result {
+                    if result.success {
+                        totalAdded += result.totalAdded
+                        totalExisting += result.totalExisting
+                        totalRefreshed += 1
+                    }
+                    if let errs = result.errors {
+                        errors.append(contentsOf: errs)
+                    }
+                }
+            }
+            
+            return FeedRefreshResult(
+                success: true,
+                totalAdded: totalAdded,
+                totalExisting: totalExisting,
+                feedsRefreshed: totalRefreshed,
+                errors: errors.isEmpty ? nil : errors
+            )
         }
-        
-        return try JSONDecoder().decode(FeedRefreshResult.self, from: data)
     }
     
     func addFeed(url: String) async throws {
@@ -146,56 +165,58 @@ class RSSService {
     }
 
     func refreshFeed(feedId: UUID, url: String) async throws -> FeedRefreshResult {
-       // Re-using performFeedAction logic but simplified for specific return type
-       guard let apiUrl = URL(string: "\(webApiUrl)/api/rss/feed") else {
-           throw URLError(.badURL)
-       }
-       
-       var request = URLRequest(url: apiUrl)
-       request.httpMethod = "POST"
-       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-       try await attachAuthHeader(to: &request)
-       
-       let body: [String: String?] = [
-           "action": "refresh",
-           "url": url,
-           "feedId": feedId.uuidString
-       ]
-       
-       request.httpBody = try JSONSerialization.data(withJSONObject: body.compactMapValues { $0 })
-       
-       let (data, response) = try await session.data(for: request)
-       
-       guard let httpResponse = response as? HTTPURLResponse else {
-           throw URLError(.badServerResponse)
-       }
-       
-       if httpResponse.statusCode != 200 {
-           if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                throw NSError(domain: "RSSService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error])
-           }
-           throw URLError(.badServerResponse)
-       }
+        guard let feedUrl = URL(string: url) else {
+             throw URLError(.badURL)
+        }
         
-       // We can reuse FeedRefreshResult but we need to fill the struct properly
-       // The API returns { success: true, added: X, existing: Y }
-       // We need to decode that partial response and map to FeedRefreshResult
-       struct PartialRefreshResult: Codable {
-           let success: Bool
-           let added: Int
-           let existing: Int
-       }
-       
-       let partial = try JSONDecoder().decode(PartialRefreshResult.self, from: data)
-       
-       return FeedRefreshResult(
-           success: partial.success,
-           totalAdded: partial.added,
-           totalExisting: partial.existing,
-           feedsRefreshed: 1,
-           errors: nil
-       )
-   }
+        // 1. Fetch Data
+        var request = URLRequest(url: feedUrl)
+        request.timeoutInterval = 30
+        // Some feeds block default user agents
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        
+        let (data, _) = try await session.data(for: request)
+        
+        // 2. Parse XML
+        let parsedItems = await RSSParserService.shared.parse(data: data)
+        guard !parsedItems.isEmpty else {
+             return FeedRefreshResult(success: false, totalAdded: 0, totalExisting: 0, feedsRefreshed: 0, errors: ["No items found or failed to parse"])
+        }
+        
+        // 3. Map to RSSArticle
+        guard let user = await SupabaseService.shared.currentUser else {
+             throw NSError(domain: "RSSService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Unauthorized"])
+        }
+        
+        let articles: [RSSArticle] = parsedItems.map { item in
+            RSSArticle(
+                id: UUID(), // Supabase will generate this usually? No, the struct has let id: UUID. We can generate a temp one, the Upsert logic matching on GUID will ignore ID if it exists, or insert new one.
+                feedId: feedId,
+                guid: item.guid,
+                title: item.title,
+                link: item.link,
+                author: item.author.isEmpty ? nil : item.author,
+                pubDate: item.pubDate,
+                content: item.content.isEmpty ? nil : item.content,
+                contentSnippet: item.contentSnippet.isEmpty ? nil : item.contentSnippet,
+                imageUrl: item.imageUrl,
+                isRead: false,
+                readAt: nil,
+                userId: user.id
+            )
+        }
+        
+        // 4. Upsert to Supabase
+        let (added, existing) = try await SupabaseService.shared.upsertRSSArticles(articles)
+        
+        return FeedRefreshResult(
+            success: true,
+            totalAdded: added,
+            totalExisting: existing,
+            feedsRefreshed: 1,
+            errors: nil
+        )
+    }
     
     func getUnreadCounts(userId: String) async throws -> [UUID: Int] {
         struct UnreadItem: Decodable {

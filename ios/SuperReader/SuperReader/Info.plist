@@ -26,6 +26,8 @@
 		<string>Roboto-Regular.ttf</string>
 		<string>OpenSans-Regular.ttf</string>
 	</array>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>SuperReader needs access to your local network to communicate with the development server.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
