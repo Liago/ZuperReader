@@ -15,7 +15,7 @@ struct ArticleLinkPreviewView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
+                LazyVStack(alignment: .leading, spacing: 0) {
                     if isLoading {
                         loadingView
                     } else if let error = errorMessage {
@@ -163,7 +163,7 @@ struct ArticleLinkPreviewView: View {
                         .fontWeight(.bold)
                         .foregroundStyle(themeManager.colors.textPrimary)
                         .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(3)
                     
                     if let author = result.author {
                         Text("By \(author)")
@@ -182,6 +182,7 @@ struct ArticleLinkPreviewView: View {
                         .font(.body)
                         .foregroundStyle(themeManager.colors.textPrimary.opacity(0.9))
                         .lineSpacing(6)
+                        .padding(.vertical, 4)
                         .padding(.vertical, 4)
                 }
                 
