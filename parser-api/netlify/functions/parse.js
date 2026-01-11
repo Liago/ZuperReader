@@ -175,10 +175,21 @@ exports.handler = async (event) => {
 					}
 
 					result.content = $.html();
-					console.log('Cleaned up classes and styles from content');
+					console.log('Cheerio cleanup done');
 				} catch (err) {
-					console.error('Failed to clean up content:', err);
+					console.error('Failed to clean up content with cheerio:', err);
 				}
+
+				// NUCLEAR FALLBACK: Regex-based removal of class and style attributes
+				// This catches anything Cheerio 0.22 might have missed (especially on self-closing tags)
+				const beforeRegex = result.content.includes('class=');
+				result.content = result.content
+					.replace(/\s+class="[^"]*"/gi, '')
+					.replace(/\s+class='[^']*'/gi, '')
+					.replace(/\s+style="[^"]*"/gi, '')
+					.replace(/\s+style='[^']*'/gi, '');
+				const afterRegex = result.content.includes('class=');
+				console.log(`Regex cleanup: class= before=${beforeRegex}, after=${afterRegex}`);
 
 				result.content = he.decode(result.content);
 			}
