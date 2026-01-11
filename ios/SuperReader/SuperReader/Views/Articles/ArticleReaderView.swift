@@ -308,6 +308,7 @@ struct ArticleReaderView: View {
                 selectedLink = IdentifiableURL(url: url)
             }
         )
+        .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(preferences.lineHeight)") // Force view recreation when preferences change
         .frame(height: contentHeight)
         .frame(maxWidth: .infinity)
     }
