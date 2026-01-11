@@ -142,21 +142,22 @@ exports.handler = async (event) => {
 		if (result) {
 			if (result.title) result.title = he.decode(result.title);
 			if (result.content) {
-				// Clean up content: Remove class and style attributes from images/figures
-				// to prevent lazy-loading issues (like opacity-0) where JS is not present to reveal them
+				// Clean up content: Remove class and style attributes from ALL elements
+				// to prevent source styling (lazy loading, absolute positioning, etc.) from breaking the reader layout
 				try {
 					const cheerio = require('cheerio');
-					const $ = cheerio.load(result.content, { decodeEntities: false }); // decodeEntities: false to preserve other entities for he.decode
+					const $ = cheerio.load(result.content, { decodeEntities: false });
 
-					$('img, picture, figure').removeAttr('class').removeAttr('style');
+					// Aggressively strip class and style from everything
+					$('*').removeAttr('class').removeAttr('style');
 
-					// Also clean up source elements inside picture
-					$('source').removeAttr('class').removeAttr('style').removeAttr('srcset');
+					// Also clean up source elements inside picture just in case
+					$('source').removeAttr('srcset');
 
 					result.content = $.html();
-					console.log('Cleaned up image classes and styles');
+					console.log('Cleaned up all classes and styles');
 				} catch (err) {
-					console.error('Failed to clean up images:', err);
+					console.error('Failed to clean up content:', err);
 				}
 
 				result.content = he.decode(result.content);
