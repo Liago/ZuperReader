@@ -1,2 +1,5 @@
 parser-api/node_modules*
 ios/builds*
+.DS_Store
+
+ios/SuperReader/SuperReader.xcodeproj/project.xcworkspace/xcuserdata/andreazampierolo.xcuserdatad/UserInterfaceState.xcuserstate
