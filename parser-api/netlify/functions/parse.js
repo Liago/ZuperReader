@@ -141,7 +141,26 @@ exports.handler = async (event) => {
 		// Decode HTML entities in all text fields after Mercury parsing
 		if (result) {
 			if (result.title) result.title = he.decode(result.title);
-			if (result.content) result.content = he.decode(result.content);
+			if (result.content) {
+				// Clean up content: Remove class and style attributes from images/figures
+				// to prevent lazy-loading issues (like opacity-0) where JS is not present to reveal them
+				try {
+					const cheerio = require('cheerio');
+					const $ = cheerio.load(result.content, { decodeEntities: false }); // decodeEntities: false to preserve other entities for he.decode
+
+					$('img, picture, figure').removeAttr('class').removeAttr('style');
+
+					// Also clean up source elements inside picture
+					$('source').removeAttr('class').removeAttr('style').removeAttr('srcset');
+
+					result.content = $.html();
+					console.log('Cleaned up image classes and styles');
+				} catch (err) {
+					console.error('Failed to clean up images:', err);
+				}
+
+				result.content = he.decode(result.content);
+			}
 			if (result.excerpt) result.excerpt = he.decode(result.excerpt);
 			if (result.author) result.author = he.decode(result.author);
 		}
