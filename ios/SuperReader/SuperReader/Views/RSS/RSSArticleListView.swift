@@ -294,15 +294,15 @@ struct RSSArticleReader: View {
             resetState()
             markAsRead()
         }
+        .offset(y: dragOffset.height > 0 ? dragOffset.height : 0)
         // Swipe Down Gesture to Dismiss
-        // We apply it to the TabView container.
-        // To avoid conflicts with ScrollView inside, we need to be careful.
-        // A simple way is to check translations.
-        .gesture(
+        // Use simultaneousGesture to allow it to work alongside ScrollView
+        .simultaneousGesture(
             DragGesture()
                 .onChanged { value in
+                    // Only track if mainly vertical and downwards
                     if value.translation.height > 0 && abs(value.translation.width) < value.translation.height {
-                        // Dragging down primarily
+                        // Dampen the drag a bit
                         dragOffset = value.translation
                     }
                 }
@@ -310,7 +310,9 @@ struct RSSArticleReader: View {
                     if value.translation.height > 100 && abs(value.translation.width) < value.translation.height {
                          dismiss()
                     }
-                    dragOffset = .zero
+                    withAnimation {
+                        dragOffset = .zero
+                    }
                 }
         )
         // Animate the view down if dragging?
