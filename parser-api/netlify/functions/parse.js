@@ -145,17 +145,37 @@ exports.handler = async (event) => {
 				// Clean up content: Remove class and style attributes from ALL elements
 				// to prevent source styling (lazy loading, absolute positioning, etc.) from breaking the reader layout
 				try {
+					console.log('Starting content cleanup...');
 					const cheerio = require('cheerio');
 					const $ = cheerio.load(result.content, { decodeEntities: false });
 
-					// Aggressively strip class and style from everything
-					$('*').removeAttr('class').removeAttr('style');
+					// Aggressively strip class and style from common elements
+					// Using explicit list to be safe with older cheerio versions
+					const tagsToClean = [
+						'div', 'span', 'p', 'a',
+						'img', 'picture', 'figure', 'figcaption',
+						'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+						'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+						'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+						'section', 'article', 'aside', 'header', 'footer', 'nav',
+						'blockquote', 'pre', 'code', 'form', 'input', 'button',
+						'video', 'source', 'iframe'
+					].join(', ');
 
-					// Also clean up source elements inside picture just in case
+					$(tagsToClean).removeAttr('class').removeAttr('style');
+
+					// Also clean up source elements inside picture specifically
 					$('source').removeAttr('srcset');
 
+					// Double check wildcard for anything else, inside try-catch to not break if it fails
+					try {
+						$('*').removeAttr('class').removeAttr('style');
+					} catch (e) {
+						console.log('Wildcard cleanup failed, relying on explicit tags', e);
+					}
+
 					result.content = $.html();
-					console.log('Cleaned up all classes and styles');
+					console.log('Cleaned up classes and styles from content');
 				} catch (err) {
 					console.error('Failed to clean up content:', err);
 				}
