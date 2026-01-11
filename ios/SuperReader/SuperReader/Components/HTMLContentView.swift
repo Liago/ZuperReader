@@ -59,21 +59,40 @@ struct HTMLContentView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <style>
                 @font-face {
-                    font-family: 'Lato';
-                    src: url('Lato-Regular.ttf') format('truetype');
+                    font-family: 'Inter';
+                    src: url('Inter-Regular.ttf') format('truetype');
                 }
                 @font-face {
-                    font-family: 'Open Sans';
-                    src: url('OpenSans-Regular.ttf') format('truetype');
+                    font-family: 'Poppins';
+                    src: url('Poppins-Regular.ttf') format('truetype');
+                }
+                @font-face {
+                    font-family: 'Lora';
+                    src: url('Lora-Regular.ttf') format('truetype');
+                }
+                @font-face {
+                    font-family: 'Montserrat';
+                    src: url('Montserrat-Regular.ttf') format('truetype');
+                }
+                @font-face {
+                    font-family: 'Crimson Text';
+                    src: url('CrimsonText-Regular.ttf') format('truetype');
+                }
+                @font-face {
+                    font-family: 'Lato';
+                    src: url('Lato-Regular.ttf') format('truetype');
                 }
                 @font-face {
                     font-family: 'Roboto';
                     src: url('Roboto-Regular.ttf') format('truetype');
                 }
-                /* Ensure all custom fonts are defined if files exist */
+                @font-face {
+                    font-family: 'Open Sans';
+                    src: url('OpenSans-Regular.ttf') format('truetype');
+                }
                 
                 body {
-                    font-family: "\(fontFamily)", -apple-system, system-ui, sans-serif;
+                    font-family: \(fontFamily);
                     font-size: \(fontSize)px;
                     line-height: \(lineHeight);
                     color: \(textColor);
@@ -152,18 +171,30 @@ struct HTMLContentView: UIViewRepresentable {
     
     private func getCSSFontFamily(for family: Typography.FontFamily) -> String {
         switch family {
+        case .sans:
+            return "-apple-system, system-ui, 'Helvetica Neue', sans-serif"
+        case .serif:
+            return "Georgia, 'Times New Roman', Times, serif"
+        case .mono:
+            return "'SF Mono', Menlo, Monaco, monospace"
+        case .inter:
+            return "'Inter', -apple-system, sans-serif"
+        case .poppins:
+            return "'Poppins', sans-serif"
+        case .lora:
+            return "'Lora', Georgia, serif"
+        case .montserrat:
+            return "'Montserrat', sans-serif"
+        case .crimsonText:
+            return "'Crimson Text', Georgia, serif"
         case .lato:
-            return "'Lato', 'Lato-Regular', sans-serif"
-        case .serif, .lora, .crimsonText:
-            return "'\(family.rawValue)', Georgia, serif"
-        case .mono, .ubuntu:
-             return "'\(family.rawValue)', 'SF Mono', Menlo, monospace"
-        case .openSans:
-             return "'Open Sans', 'OpenSans-Regular', sans-serif"
+            return "'Lato', sans-serif"
         case .roboto:
-             return "'Roboto', 'Roboto-Regular', sans-serif"
-        default:
-            return "'\(family.rawValue)', -apple-system, system-ui, sans-serif"
+            return "'Roboto', -apple-system, sans-serif"
+        case .openSans:
+            return "'Open Sans', sans-serif"
+        case .ubuntu:
+            return "'SF Mono', Menlo, Monaco, monospace"
         }
     }
     
