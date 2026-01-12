@@ -90,6 +90,10 @@ struct HTMLContentView: UIViewRepresentable {
                     font-family: 'Open Sans';
                     src: url('OpenSans-Regular.ttf') format('truetype');
                 }
+                @font-face {
+                    font-family: 'Ubuntu';
+                    src: url('Ubuntu-Regular.ttf') format('truetype');
+                }
                 
                 body {
                     font-family: \(fontFamily);
@@ -194,7 +198,7 @@ struct HTMLContentView: UIViewRepresentable {
         case .openSans:
             return "'Open Sans', sans-serif"
         case .ubuntu:
-            return "'SF Mono', Menlo, Monaco, monospace"
+            return "'Ubuntu', sans-serif"
         }
     }
     

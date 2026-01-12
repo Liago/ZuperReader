@@ -196,7 +196,7 @@ struct Typography {
             case .roboto: return .system(.body, design: .default)
             case .lato: return .system(.body, design: .rounded)
             case .openSans: return .system(.body, design: .default)
-            case .ubuntu: return .system(.body, design: .monospaced)
+            case .ubuntu: return .custom("Ubuntu-Regular", size: 17)
             }
         }
         
@@ -213,7 +213,7 @@ struct Typography {
             case .roboto: return .custom("Roboto-Regular", size: size)
             case .lato: return .custom("Lato-Regular", size: size)
             case .openSans: return .custom("OpenSans-Regular", size: size)
-            case .ubuntu: return .system(size: size, design: .monospaced) // Ubuntu not requested/installed yet
+            case .ubuntu: return .custom("Ubuntu-Regular", size: size)
             }
         }
     }
