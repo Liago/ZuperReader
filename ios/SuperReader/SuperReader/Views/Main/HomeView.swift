@@ -26,6 +26,9 @@ struct HomeView: View {
                     // Article List
                     ArticleListView(viewModel: viewModel)
                 }
+                .onAppear {
+                    Task { await viewModel.refresh() }
+                }
             }
             .sheet(isPresented: $showAddArticle) {
                 AddArticleSheet(onArticleAdded: {

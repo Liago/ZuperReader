@@ -175,7 +175,6 @@ struct ArticleListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     private let gridColumns = [
-        GridItem(.flexible(), spacing: Spacing.md),
         GridItem(.flexible(), spacing: Spacing.md)
     ]
     

@@ -233,6 +233,7 @@ struct ArticleLinkPreviewView: View {
             do {
                 _ = try await SupabaseService.shared.saveArticle(parsedData: result, userId: userId)
                 await MainActor.run {
+                    isSaving = false
                     isSaved = true
                     // Haptic feedback
                     let generator = UINotificationFeedbackGenerator()

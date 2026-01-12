@@ -103,13 +103,9 @@ struct ArticleCardView: View {
         .background(themeManager.colors.bgPrimary)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-        .confirmationDialog(
-            "Delete Article",
-            isPresented: $showDeleteConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive, action: onDelete)
+        .alert("Delete Article", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive, action: onDelete)
         } message: {
             Text("Are you sure you want to delete \"\(article.title)\"?")
         }

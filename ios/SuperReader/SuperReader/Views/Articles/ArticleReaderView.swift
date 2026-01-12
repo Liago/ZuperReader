@@ -86,11 +86,11 @@ struct ArticleReaderView: View {
                     .environmentObject(themeManager)
             }
         }
-        .confirmationDialog("Delete Article", isPresented: $showDeleteConfirm) {
+        .alert("Delete Article", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 Task { await deleteArticle() }
             }
-            Button("Cancel", role: .cancel) { }
         } message: {
             Text("Are you sure you want to delete this article? This cannot be undone.")
         }
