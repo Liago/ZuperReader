@@ -326,6 +326,16 @@ actor SupabaseService {
             .execute()
     }
     
+    func updateReadingProgress(articleId: String, progress: Int) async throws {
+        // Clamp progress between 0 and 100
+        let clampedProgress = max(0, min(100, progress))
+        try await client
+            .from("articles")
+            .update(["reading_progress": clampedProgress])
+            .eq("id", value: articleId)
+            .execute()
+    }
+    
     func updateArticleTags(articleId: String, tags: [String]) async throws -> Article {
         let articles: [Article] = try await client
             .from("articles")

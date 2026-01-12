@@ -23,6 +23,9 @@ struct ArticleReaderView: View {
     @State private var hasLiked = false
     @State private var likeCount = 0
     @State private var selectedLink: IdentifiableURL? // For link preview
+    @State private var saveProgressTask: Task<Void, Never>? // For debouncing progress saves
+    @State private var hasRestoredPosition = false // Track if we've restored scroll position
+    @State private var scrollContentHeight: CGFloat = 0 // Total height of scroll content
 
     @Environment(\.dismiss) private var dismiss
 
@@ -105,84 +108,127 @@ struct ArticleReaderView: View {
     
     @ViewBuilder
     private func articleContent(_ article: Article) -> some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                // Hero Image
-                if let imageUrl = article.imageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: 0)
-                        .frame(height: 250)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                        .overlay(
-                            LinearGradient(
-                                colors: [.clear, .black.opacity(0.4)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                }
+        GeometryReader { outerGeometry in
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        // Scroll tracking anchor
+                        Color.clear
+                            .frame(height: 1)
+                            .id("top")
+                        
+                        // Hero Image
+                        if let imageUrl = article.imageUrl {
+                            AsyncImageView(url: imageUrl, cornerRadius: 0)
+                                .frame(height: 250)
+                                .frame(maxWidth: .infinity)
+                                .clipped()
+                                .overlay(
+                                    LinearGradient(
+                                        colors: [.clear, .black.opacity(0.4)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
 
-                // Content section with padding
-                VStack(alignment: .leading, spacing: Spacing.lg) {
-                    // Title
-                    Text(article.title)
-                        .font(preferences.fontFamily.font(size: preferences.fontSize * 1.6))
-                        .fontWeight(.bold)
-                        .foregroundColor(preferences.colorTheme.colors.textPrimary)
+                        // Content section with padding
+                        VStack(alignment: .leading, spacing: Spacing.lg) {
+                            // Title
+                            Text(article.title)
+                                .font(preferences.fontFamily.font(size: preferences.fontSize * 1.6))
+                                .fontWeight(.bold)
+                                .foregroundColor(preferences.colorTheme.colors.textPrimary)
 
-                    // Metadata
-                    metadataRow(article)
+                            // Metadata
+                            metadataRow(article)
 
-                    // Action Bar
-                    actionBar(article)
+                            // Action Bar
+                            actionBar(article)
 
-                    Divider()
-                        .background(preferences.colorTheme.colors.border)
+                            Divider()
+                                .background(preferences.colorTheme.colors.border)
 
-                    // Tags
-                    if !article.tags.isEmpty {
-                        TagListView(tags: article.tags)
-                    }
-
-                    // Content
-                    if let content = article.content {
-                        articleTextContent(content)
-                    }
-
-                    // Comments button
-                    commentsButton(article)
-
-                    // Original Link
-                    if let url = URL(string: article.url) {
-                        Link(destination: url) {
-                            HStack {
-                                Text("Read Original")
-                                    .font(.system(size: 16, weight: .semibold))
-                                Image(systemName: "arrow.up.right")
+                            // Tags
+                            if !article.tags.isEmpty {
+                                TagListView(tags: article.tags)
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Spacing.md)
-                            .background(Color.black)
-                            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+
+                            // Content
+                            if let content = article.content {
+                                articleTextContent(content)
+                            }
+
+                            // Comments button
+                            commentsButton(article)
+
+                            // Original Link
+                            if let url = URL(string: article.url) {
+                                Link(destination: url) {
+                                    HStack {
+                                        Text("Read Original")
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Image(systemName: "arrow.up.right")
+                                    }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, Spacing.md)
+                                    .background(Color.black)
+                                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                                }
+                            }
+                        }
+                        .padding(Spacing.lg)
+                        .padding(.bottom, 100) // Extra padding for comments/navigation
+                        
+                        // Bottom anchor for scroll tracking
+                        GeometryReader { geometry in
+                            Color.clear
+                                .preference(
+                                    key: ScrollOffsetPreferenceKey.self,
+                                    value: geometry.frame(in: .named("scrollView")).minY
+                                )
+                        }
+                        .frame(height: 1)
+                        .id("bottom")
+                    }
+                    .background(
+                        GeometryReader { contentGeometry in
+                            Color.clear.preference(
+                                key: ContentHeightPreferenceKey.self,
+                                value: contentGeometry.size.height
+                            )
+                        }
+                    )
+                }
+                .coordinateSpace(name: "scrollView")
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                    updateReadingProgress(offset: offset, viewHeight: outerGeometry.size.height, article: article)
+                }
+                .onPreferenceChange(ContentHeightPreferenceKey.self) { height in
+                    scrollContentHeight = height
+                }
+                .onAppear {
+                    // Restore scroll position if there's saved progress
+                    if article.readingProgress > 0 && !hasRestoredPosition {
+                        hasRestoredPosition = true
+                        // Small delay to ensure content is loaded
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            readingProgress = Double(article.readingProgress) / 100.0
                         }
                     }
                 }
-                .padding(Spacing.lg)
-                .padding(.bottom, 100) // Extra padding for comments/navigation
             }
         }
         .background(preferences.colorTheme.colors.bgPrimary)
-        .overlay(alignment: .top) {
-            // Reading progress bar
-            GeometryReader { _ in
-                Rectangle()
-                    .fill(PremiumGradients.primary)
-                    .frame(width: UIScreen.main.bounds.width * readingProgress, height: 3)
-            }
-            .frame(height: 3)
+        // Circular progress indicator - bottom left
+        .overlay(alignment: .bottomLeading) {
+            CircularProgressIndicator(progress: readingProgress)
+                .padding(Spacing.lg)
+                .opacity(readingProgress > 0 ? 0.95 : 0.7)
+                .animation(.easeInOut(duration: 0.2), value: readingProgress)
         }
-        // Floating preferences button
+        // Floating preferences button - bottom right
         .overlay(alignment: .bottomTrailing) {
             Button(action: { showPreferences = true }) {
                 Image(systemName: "slider.horizontal.3")
@@ -196,6 +242,10 @@ struct ArticleReaderView: View {
                     .shadow(color: Color.purple.opacity(0.4), radius: 8, x: 0, y: 4)
             }
             .padding(Spacing.lg)
+        }
+        .onDisappear {
+            // Cancel pending save task when view disappears
+            saveProgressTask?.cancel()
         }
     }
     
@@ -490,6 +540,57 @@ struct ArticleReaderView: View {
             print("Failed to delete article: \(error)")
         }
     }
+    
+    // MARK: - Reading Progress
+    
+    private func updateReadingProgress(offset: CGFloat, viewHeight: CGFloat, article: Article) {
+        // Calculate progress based on scroll offset
+        // offset is the minY of the bottom anchor relative to scroll view
+        // When at top, offset is large (content height)
+        // When at bottom, offset approaches viewHeight
+        
+        let totalScrollableHeight = max(1, contentHeight - viewHeight)
+        let scrolled = max(0, contentHeight - offset - viewHeight)
+        let progress = min(1.0, max(0.0, scrolled / totalScrollableHeight))
+        
+        // Update local progress state
+        readingProgress = progress
+        
+        // Check for status transitions
+        let progressPercent = Int(progress * 100)
+        
+        // Mark as completed when reaching 85%
+        if progressPercent >= 85 && article.readingStatus == .reading {
+            Task {
+                await markAsCompleted()
+            }
+        }
+        
+        // Debounced save to database (2 seconds)
+        saveProgressTask?.cancel()
+        saveProgressTask = Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            guard !Task.isCancelled else { return }
+            
+            do {
+                try await SupabaseService.shared.updateReadingProgress(
+                    articleId: articleId,
+                    progress: progressPercent
+                )
+            } catch {
+                print("Failed to save reading progress: \(error)")
+            }
+        }
+    }
+    
+    private func markAsCompleted() async {
+        do {
+            try await SupabaseService.shared.updateReadingStatus(articleId: articleId, status: .completed)
+            self.article = try await SupabaseService.shared.getArticleById(articleId)
+        } catch {
+            print("Failed to mark as completed: \(error)")
+        }
+    }
 }
 
 #Preview {
@@ -502,4 +603,22 @@ struct ArticleReaderView: View {
 struct IdentifiableURL: Identifiable {
     let id = UUID()
     let url: URL
+}
+
+// MARK: - Preference Keys for Scroll Tracking
+
+/// Tracks the scroll offset for reading progress calculation
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+/// Tracks the content height for reading progress calculation
+struct ContentHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }

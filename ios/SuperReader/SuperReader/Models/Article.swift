@@ -51,6 +51,7 @@ struct Article: Identifiable, Codable, Equatable {
     let likeCount: Int
     let commentCount: Int
     let readingStatus: ReadingStatus
+    var readingProgress: Int = 0
     let estimatedReadTime: Int?
     let isPublic: Bool?
     let scrapedAt: String?
@@ -74,6 +75,7 @@ struct Article: Identifiable, Codable, Equatable {
         case likeCount = "like_count"
         case commentCount = "comment_count"
         case readingStatus = "reading_status"
+        case readingProgress = "reading_progress"
         case estimatedReadTime = "estimated_read_time"
         case isPublic = "is_public"
         case scrapedAt = "scraped_at"
