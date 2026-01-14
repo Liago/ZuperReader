@@ -117,6 +117,7 @@ struct ProfileView: View {
     private var statsGrid: some View {
         VStack(spacing: Spacing.md) {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.md) {
+                // Row 1
                 StatCard(
                     title: "Articles",
                     value: "\(stats.totalArticles)",
@@ -131,6 +132,29 @@ struct ProfileView: View {
                     color: .green
                 )
                 
+                // Row 2
+                StatCard(
+                    title: "Favorites",
+                    value: "\(stats.favoriteArticles)",
+                    icon: "star.fill",
+                    color: .yellow
+                )
+                
+                StatCard(
+                    title: "Likes Rcvd",
+                    value: "\(stats.totalLikesReceived)",
+                    icon: "heart.fill",
+                    color: .pink
+                )
+                
+                // Row 3
+                StatCard(
+                    title: "Comments",
+                    value: "\(stats.totalCommentsReceived)",
+                    icon: "bubble.left.fill",
+                    color: .blue
+                )
+                
                 StatCard(
                     title: "Friends",
                     value: "\(stats.friendsCount)",
@@ -138,11 +162,19 @@ struct ProfileView: View {
                     color: .orange
                 )
                 
+                // Row 4
                 StatCard(
-                    title: "Likes",
-                    value: "\(stats.totalLikesReceived)",
-                    icon: "heart.fill",
-                    color: .pink
+                    title: "Shared",
+                    value: "\(stats.sharedArticlesCount)",
+                    icon: "square.and.arrow.up.fill",
+                    color: .purple
+                )
+                
+                StatCard(
+                    title: "Received",
+                    value: "\(stats.receivedArticlesCount)",
+                    icon: "tray.and.arrow.down.fill",
+                    color: .teal
                 )
             }
         }

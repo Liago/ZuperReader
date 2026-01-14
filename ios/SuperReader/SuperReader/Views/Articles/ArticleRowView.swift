@@ -85,8 +85,8 @@ struct ArticleRowView: View {
         }
         .padding(Spacing.sm)
         .background(themeManager.colors.bgPrimary)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-        .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
     }
 }
 

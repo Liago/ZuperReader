@@ -12,97 +12,135 @@ struct ArticleCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Image
+            // Image Area
             ZStack(alignment: .topTrailing) {
                 AsyncImageView(url: article.imageUrl, cornerRadius: 0)
-                    .frame(height: 140)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 180)
+                    .clipped()
                 
-                // Gradient overlay
+                // Gradient Overlay for Text Readability (Bottom)
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.6)],
-                    startPoint: .top,
+                    colors: [.clear, .black.opacity(0.3)],
+                    startPoint: .center,
                     endPoint: .bottom
                 )
                 
-                // Actions
-                HStack(spacing: Spacing.xs) {
-                    // Favorite button
+                // Top Gradient for Buttons
+                LinearGradient(
+                    colors: [.black.opacity(0.4), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 60)
+                
+                // Action Buttons
+                HStack(spacing: 8) {
+                    Spacer()
+                    
                     Button(action: onFavorite) {
                         Image(systemName: article.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(article.isFavorite ? .red : .white)
-                            .padding(Spacing.xs + 2)
-                            .background(Color.black.opacity(0.4))
+                            .padding(8)
+                            .background(.ultraThinMaterial)
                             .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                     }
                     
-                    // Delete button
                     Button(action: { showDeleteConfirm = true }) {
                         Image(systemName: "trash")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(Spacing.xs + 2)
-                            .background(Color.black.opacity(0.4))
+                            .padding(8)
+                            .background(.ultraThinMaterial)
                             .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                     }
                 }
-                .padding(Spacing.sm)
+                .padding(12)
             }
+            .frame(height: 180)
+            .clipped()
             
-            // Content
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                // Domain & Reading Status
+            // Content Area
+            VStack(alignment: .leading, spacing: 12) {
+                // Meta Header
                 HStack {
                     if let domain = article.domain {
-                        Text(domain)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(themeManager.colors.accent)
+                        HStack(spacing: 6) {
+                            if let faviconUrl = article.faviconUrl {
+                                AsyncImageView(url: faviconUrl, cornerRadius: 4)
+                                    .frame(width: 16, height: 16)
+                            } else {
+                                Image(systemName: "globe")
+                                    .font(.caption2)
+                                    .foregroundColor(themeManager.colors.accent)
+                            }
+                            
+                            Text(domain.replacingOccurrences(of: "www.", with: "").capitalized)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(themeManager.colors.accent)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(themeManager.colors.accent.opacity(0.1))
+                        .cornerRadius(6)
                     }
                     
                     Spacer()
                     
-                    ReadingStatusBadge(status: article.readingStatus)
+                    if let readTime = article.formattedReadTime {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock")
+                                .font(.caption2)
+                            Text(readTime)
+                                .font(.caption2)
+                        }
+                        .foregroundColor(themeManager.colors.textSecondary)
+                    }
                 }
                 
                 // Title
                 Text(article.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(Typography.FontFamily.inter.font(size: 17).weight(.bold))
                     .foregroundColor(themeManager.colors.textPrimary)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 
-                // Excerpt
-                if let excerpt = article.excerpt {
-                    Text(excerpt)
-                        .font(.system(size: 13))
-                        .foregroundColor(themeManager.colors.textSecondary)
-                        .lineLimit(2)
-                }
-                
-                // Meta info
-                HStack(spacing: Spacing.sm) {
-                    if let readTime = article.formattedReadTime {
-                        HStack(spacing: 2) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 10))
-                            Text(readTime)
-                                .font(.system(size: 11))
-                        }
-                        .foregroundColor(themeManager.colors.textSecondary)
-                    }
+                // Footer
+                HStack {
+                    ReadingStatusBadge(status: article.readingStatus)
                     
                     Spacer()
                     
-                    // Tags
-                    if !article.tags.isEmpty {
-                        TagListView(tags: article.tags, maxVisible: 1)
+                    // Engagement
+                    if article.likeCount > 0 || article.commentCount > 0 {
+                        HStack(spacing: 12) {
+                            if article.likeCount > 0 {
+                                Label("\(article.likeCount)", systemImage: "heart.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.pink)
+                            }
+                            if article.commentCount > 0 {
+                                Label("\(article.commentCount)", systemImage: "bubble.left.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+                            }
+                        }
                     }
                 }
             }
-            .padding(Spacing.sm)
+            .padding(16)
+            .background(themeManager.colors.cardBg)
         }
-        .background(themeManager.colors.bgPrimary)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
-        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .background(themeManager.colors.cardBg)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
+        )
         .alert("Delete Article", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive, action: onDelete)

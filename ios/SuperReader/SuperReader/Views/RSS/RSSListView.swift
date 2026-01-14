@@ -137,8 +137,9 @@ struct RSSFeedRow: View {
                     case .success(let image):
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .aspectRatio(contentMode: .fill)
                             .frame(width: 28, height: 28)
+                            .clipShape(Circle())
                     case .failure:
                         Image(systemName: "rss")
                             .font(.system(size: 16))
