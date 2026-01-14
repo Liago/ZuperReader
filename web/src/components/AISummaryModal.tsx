@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Article } from '../lib/supabase';
 import { regenerateArticleSummary } from '../lib/api';
+import Dropdown from './Dropdown';
 
 interface AISummaryModalProps {
 	isOpen: boolean;
@@ -103,31 +104,34 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 								<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
 									Formato:
 								</label>
-								<select
+								<Dropdown
 									value={summaryFormat}
-									onChange={(e) => setSummaryFormat(e.target.value as 'summary' | 'bullet')}
+									onChange={(value) => setSummaryFormat(value as 'summary' | 'bullet')}
+									options={[
+										{ label: 'Riassunto', value: 'summary' },
+										{ label: 'Punti elenco', value: 'bullet' }
+									]}
 									disabled={isGenerating}
-									className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-								>
-									<option value="summary">Riassunto</option>
-									<option value="bullet">Punti elenco</option>
-								</select>
+									className="w-40"
+								/>
+
 							</div>
 
 							<div className="flex items-center gap-3">
 								<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
 									Lunghezza:
 								</label>
-								<select
+								<Dropdown
 									value={summaryLength}
-									onChange={(e) => setSummaryLength(e.target.value as 'short' | 'medium' | 'long')}
+									onChange={(value) => setSummaryLength(value as 'short' | 'medium' | 'long')}
+									options={[
+										{ label: 'Breve', value: 'short' },
+										{ label: 'Medio', value: 'medium' },
+										{ label: 'Lungo', value: 'long' }
+									]}
 									disabled={isGenerating}
-									className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-								>
-									<option value="short">Breve</option>
-									<option value="medium">Medio</option>
-									<option value="long">Lungo</option>
-								</select>
+									className="w-32"
+								/>
 							</div>
 						</div>
 
