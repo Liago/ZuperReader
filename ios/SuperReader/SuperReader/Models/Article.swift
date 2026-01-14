@@ -55,6 +55,8 @@ struct Article: Identifiable, Codable, Equatable {
     let estimatedReadTime: Int?
     let isPublic: Bool?
     let scrapedAt: String?
+    let aiSummary: String?
+    let aiSummaryGeneratedAt: String?
     let createdAt: String
     let updatedAt: String
     
@@ -79,6 +81,8 @@ struct Article: Identifiable, Codable, Equatable {
         case estimatedReadTime = "estimated_read_time"
         case isPublic = "is_public"
         case scrapedAt = "scraped_at"
+        case aiSummary = "ai_summary"
+        case aiSummaryGeneratedAt = "ai_summary_generated_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

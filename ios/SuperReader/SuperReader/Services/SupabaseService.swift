@@ -7,6 +7,7 @@ enum SupabaseConfig {
     static let url = URL(string: "https://wjotvfawhnibnjgoaqud.supabase.co")!
     static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqb3R2ZmF3aG5pYm5qZ29hcXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA0NDMxMDcsImV4cCI6MjAwNjAxOTEwN30.xtirkUL9f4ciRcJNvwtkGuWGTMcTfRKD3KW9kdZWBpo"
     static let parseFunctionUrl = "https://parser-api.netlify.app/.netlify/functions/parse"
+    static let generateSummaryUrl = "https://parser-api.netlify.app/.netlify/functions/generate-summary"
     static let webApiUrl = "http://192.168.1.24:3000" // Configure for local development (Use local IP for Simulator)
 }
 
@@ -752,6 +753,73 @@ actor SupabaseService {
             receivedArticlesCount: sharedWithMe.count
         )
     }
+
+    // MARK: - AI Summary
+    
+    func generateArticleSummary(
+        article: Article,
+        length: String = "medium",
+        format: String = "summary"
+    ) async throws -> Article {
+        guard let content = article.content, !content.isEmpty else {
+            throw SupabaseError.custom("Article has no content to summarize")
+        }
+        
+        guard let url = URL(string: SupabaseConfig.generateSummaryUrl) else {
+            throw SupabaseError.invalidUrl
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: String] = [
+            "content": content,
+            "length": length,
+            "format": format
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errorMessage = errorJson["error"] as? String {
+                throw SupabaseError.custom(errorMessage)
+            }
+            throw SupabaseError.custom("Failed to generate summary (HTTP \( (response as? HTTPURLResponse)?.statusCode ?? 0 ))")
+        }
+        
+        struct SummaryResponse: Decodable {
+            let summary: String
+        }
+        
+        let summaryResponse = try JSONDecoder().decode(SummaryResponse.self, from: data)
+        let summary = summaryResponse.summary
+        
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let timestamp = formatter.string(from: Date())
+        
+        // Update Article in Supabase
+        let articles: [Article] = try await client
+            .from("articles")
+            .update([
+                "ai_summary": summary,
+                "ai_summary_generated_at": timestamp
+            ])
+            .eq("id", value: article.id)
+            .select()
+            .execute()
+            .value
+            
+        guard let updatedArticle = articles.first else {
+            throw SupabaseError.updateFailed
+        }
+        
+        return updatedArticle
+    }
     
     // MARK: - User Preferences
     
@@ -804,6 +872,7 @@ enum SupabaseError: LocalizedError {
     case invalidUrl
     case invalidResponse
     case parsingFailed
+    case custom(String)
 
     var errorDescription: String? {
         switch self {
@@ -823,6 +892,8 @@ enum SupabaseError: LocalizedError {
             return "Invalid response from server"
         case .parsingFailed:
             return "Failed to parse article content"
+        case .custom(let message):
+            return message
         }
     }
 }

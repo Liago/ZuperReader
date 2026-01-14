@@ -12,6 +12,9 @@ struct HTMLContentView: UIViewRepresentable {
         // Disable data detectors to prevent unwanted links (phone numbers etc) unless they are actual links
         config.dataDetectorTypes = [.link]
         
+        // Register script message handler for height updates
+        config.userContentController.add(context.coordinator, name: "heightObserver")
+        
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
@@ -26,9 +29,8 @@ struct HTMLContentView: UIViewRepresentable {
         // Construct the full HTML with CSS based on preferences
         let fullHtml = generateHtml(content: htmlContent, preferences: preferences)
         
-        // Only reload if content or relevant preferences changed
-        // For simplicity in this implementation, we load HTML. 
-        // In a more optimized version, we might inject JS to change styles without full reload.
+        // Check if we need to reload (avoid reload if content matches current)
+        // For now, simple reload is safer to ensure preferences stick
         webView.loadHTMLString(fullHtml, baseURL: Bundle.main.bundleURL)
     }
     
@@ -41,10 +43,6 @@ struct HTMLContentView: UIViewRepresentable {
         let fontSize = Int(preferences.fontSize)
         // Convert ColorTheme to CSS hex colors
         let colors = preferences.colorTheme.colors
-        // We need a way to get hex strings from SwiftUI Color. 
-        // For now, let's map the theme enum directly to known hex values or use a helper.
-        // Since we don't have easy access to hex from SwiftUI Color in standard library without extensions,
-        // we'll use a mapping based on the ColorTheme enum.
         
         // Map ColorTheme to CSS values
         let (textColor, linkColor) = getThemeColors(theme: preferences.colorTheme)
@@ -202,25 +200,35 @@ struct HTMLContentView: UIViewRepresentable {
         }
     }
     
-    class Coordinator: NSObject, WKNavigationDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         var parent: HTMLContentView
         
         init(_ parent: HTMLContentView) {
             self.parent = parent
         }
         
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Calculate height
-            webView.evaluateJavaScript("document.body.scrollHeight") { (result, error) in
-                if let height = result as? CGFloat {
-                    DispatchQueue.main.async {
-                        // Avoid update cycles by checking difference
-                        if abs(self.parent.dynamicHeight - height) > 1 {
-                            self.parent.dynamicHeight = height
-                        }
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "heightObserver", let height = message.body as? CGFloat {
+                DispatchQueue.main.async {
+                    // Update dynamicHeight binding
+                    if abs(self.parent.dynamicHeight - height) > 1 {
+                        self.parent.dynamicHeight = height
                     }
                 }
             }
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Inject ResizeObserver to monitor height changes
+            let js = """
+            const resizeObserver = new ResizeObserver(entries => {
+                window.webkit.messageHandlers.heightObserver.postMessage(document.body.scrollHeight);
+            });
+            resizeObserver.observe(document.body);
+            // Initial check
+            window.webkit.messageHandlers.heightObserver.postMessage(document.body.scrollHeight);
+            """
+            webView.evaluateJavaScript(js, completionHandler: nil)
         }
         
         // Handle links - open in external browser or handle navigation
@@ -240,4 +248,6 @@ struct HTMLContentView: UIViewRepresentable {
             }
         }
     }
+    
+
 }

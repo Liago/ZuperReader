@@ -26,6 +26,13 @@ struct ArticleReaderView: View {
     @State private var saveProgressTask: Task<Void, Never>? // For debouncing progress saves
     @State private var hasRestoredPosition = false // Track if we've restored scroll position
     @State private var scrollContentHeight: CGFloat = 0 // Total height of scroll content
+    
+    // Debug state
+    @State private var initialScrollOffset: CGFloat? = nil
+
+    // AI Summary State
+    @State private var isGeneratingSummary = false
+    @State private var summaryError: String?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -109,65 +116,67 @@ struct ArticleReaderView: View {
     @ViewBuilder
     private func articleContent(_ article: Article) -> some View {
         GeometryReader { outerGeometry in
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        // Scroll tracking anchor
-                        Color.clear
-                            .frame(height: 1)
-                            .id("top")
-                        
-                        // Hero Image
-                        if let imageUrl = article.imageUrl {
-                            AsyncImageView(url: imageUrl, cornerRadius: 0)
-                                .frame(height: 250)
-                                .frame(maxWidth: .infinity)
-                                .clipped()
-                                .overlay(
-                                    LinearGradient(
-                                        colors: [.clear, .black.opacity(0.4)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
+            ScrollView {
+                // Main Content
+                VStack(alignment: .leading, spacing: 0) {
+                    // Hero Image
+                    if let imageUrl = article.imageUrl {
+                        AsyncImageView(url: imageUrl, cornerRadius: 0)
+                            .frame(height: 250)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .overlay(
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.4)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
                                 )
+                            )
+                    }
+                    
+                    // Content section with padding
+                    VStack(alignment: .leading, spacing: Spacing.lg) {
+                        // Title
+                        Text(article.title)
+                            .font(preferences.fontFamily.font(size: preferences.fontSize * 1.6))
+                            .fontWeight(.bold)
+                            .foregroundColor(preferences.colorTheme.colors.textPrimary)
+                        
+                        // Metadata
+                        metadataRow(article)
+                        
+                        // AI Summary
+                        AISummaryView(
+                            article: article,
+                            onGenerate: { length in
+                                Task { await generateSummary(length: length) }
+                            },
+                            isGenerating: isGeneratingSummary,
+                            error: summaryError
+                        )
+                        
+                        // Action Bar
+                        actionBar(article)
+                        
+                        Divider()
+                            .background(preferences.colorTheme.colors.border)
+                        
+                        // Tags
+                        if !article.tags.isEmpty {
+                            TagListView(tags: article.tags)
                         }
-
-                        // Content section with padding
-                        VStack(alignment: .leading, spacing: Spacing.lg) {
-                            // Title
-                            Text(article.title)
-                                .font(preferences.fontFamily.font(size: preferences.fontSize * 1.6))
-                                .fontWeight(.bold)
-                                .foregroundColor(preferences.colorTheme.colors.textPrimary)
-
-                            // Metadata
-                            metadataRow(article)
-
-                            // Action Bar
-                            actionBar(article)
-
-                            Divider()
-                                .background(preferences.colorTheme.colors.border)
-
-                            // Tags
-                            if !article.tags.isEmpty {
-                                TagListView(tags: article.tags)
-                            }
-
-                            // Content
-                            if let content = article.content {
-                                articleTextContent(content)
-                            }
-
-                            // Comments button
-                            commentsButton(article)
-
-                            // Original Link
-                            if let url = URL(string: article.url) {
-                                Link(destination: url) {
-                                    HStack {
-                                        Text("Read Original")
-                                            .font(.system(size: 16, weight: .semibold))
+                        
+                        // Content
+                        if let content = article.content {
+                            articleTextContent(content)
+                        }
+                        
+                        // Original Link
+                        if let url = URL(string: article.url) {
+                            Link(destination: url) {
+                                HStack {
+                                    Text("Read Original")
+                                        .font(.system(size: 16, weight: .semibold))
                                         Image(systemName: "arrow.up.right")
                                     }
                                     .foregroundColor(.white)
@@ -177,46 +186,39 @@ struct ArticleReaderView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
                                 }
                             }
+                            
+                            // Comments button
+                            commentsButton(article)
                         }
                         .padding(Spacing.lg)
-                        .padding(.bottom, 100) // Extra padding for comments/navigation
-                        
-                        // Bottom anchor for scroll tracking
-                        GeometryReader { geometry in
-                            Color.clear
-                                .preference(
-                                    key: ScrollOffsetPreferenceKey.self,
-                                    value: geometry.frame(in: .named("scrollView")).minY
-                                )
-                        }
-                        .frame(height: 1)
-                        .id("bottom")
+                        .padding(.bottom, 220)
                     }
-                    .background(
+                    .overlay(
                         GeometryReader { contentGeometry in
-                            Color.clear.preference(
-                                key: ContentHeightPreferenceKey.self,
-                                value: contentGeometry.size.height
-                            )
+                            ZStack {
+                                Color.clear.preference(
+                                    key: ContentHeightPreferenceKey.self,
+                                    value: contentGeometry.size.height
+                                )
+                                
+                                Color.clear.preference(
+                                    key: ScrollOffsetPreferenceKey.self,
+                                    value: contentGeometry.frame(in: .named("scroll")).minY
+                                )
+                            }
                         }
                     )
-                }
-                .coordinateSpace(name: "scrollView")
-                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                    updateReadingProgress(offset: offset, viewHeight: outerGeometry.size.height, article: article)
-                }
-                .onPreferenceChange(ContentHeightPreferenceKey.self) { height in
-                    scrollContentHeight = height
-                }
-                .onAppear {
-                    // Restore scroll position if there's saved progress
-                    if article.readingProgress > 0 && !hasRestoredPosition {
-                        hasRestoredPosition = true
-                        // Small delay to ensure content is loaded
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            readingProgress = Double(article.readingProgress) / 100.0
-                        }
-                    }
+            }
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { scrollY in
+                updateReadingProgress(currentY: scrollY, viewHeight: outerGeometry.size.height, article: article)
+            }
+            .onPreferenceChange(ContentHeightPreferenceKey.self) { height in
+                scrollContentHeight = height
+            }
+            .onAppear {
+                if article.readingProgress > 0 && !hasRestoredPosition {
+                     hasRestoredPosition = true
                 }
             }
         }
@@ -228,6 +230,8 @@ struct ArticleReaderView: View {
                 .opacity(readingProgress > 0 ? 0.95 : 0.7)
                 .animation(.easeInOut(duration: 0.2), value: readingProgress)
         }
+
+        
         // Floating preferences button - bottom right
         .overlay(alignment: .bottomTrailing) {
             Button(action: { showPreferences = true }) {
@@ -244,10 +248,11 @@ struct ArticleReaderView: View {
             .padding(Spacing.lg)
         }
         .onDisappear {
-            // Cancel pending save task when view disappears
             saveProgressTask?.cancel()
         }
     }
+    
+
     
     // MARK: - Metadata Row
     
@@ -447,6 +452,53 @@ struct ArticleReaderView: View {
         }
     }
     
+
+    
+    private func updateReadingProgress(currentY: CGFloat, viewHeight: CGFloat, article: Article) {
+        guard scrollContentHeight > 0 else { return }
+        
+        if initialScrollOffset == nil {
+            initialScrollOffset = currentY
+        }
+        
+        let initialY = initialScrollOffset ?? currentY
+        
+        // Named Coordinate Space Logic:
+        // Top = 0 (or close to 0)
+        // Scroll Down -> Content moves UP -> Y becomes NEGATIVE
+        // Scrolled Amount = Initial - Current
+        // Example: 0 - (-100) = 100 pixels scrolled
+        let scrolledAmount = initialY - currentY
+        
+        // Adjust content height by view height to get scrollable distance
+        
+        // Adjust content height by view height to get scrollable distance
+        let scrollableDistance = max(1, scrollContentHeight - viewHeight)
+        
+        let progress = min(1.0, max(0.0, scrolledAmount / scrollableDistance))
+        
+        // Only update if change is significant (> 1%)
+        if abs(progress - readingProgress) > 0.01 {
+            readingProgress = progress
+        }
+        
+        let progressPercent = Int(progress * 100)
+        
+        if progressPercent >= 85 && article.readingStatus == .reading {
+            Task { await markAsCompleted() }
+        }
+        
+        saveProgressTask?.cancel()
+        saveProgressTask = Task {
+             try? await Task.sleep(nanoseconds: 2_000_000_000)
+             guard !Task.isCancelled else { return }
+             try? await SupabaseService.shared.updateReadingProgress(
+                 articleId: articleId,
+                 progress: progressPercent
+             )
+         }
+    }
+    
     // MARK: - Actions
     
     private func loadArticle() async {
@@ -456,6 +508,9 @@ struct ArticleReaderView: View {
             article = try await SupabaseService.shared.getArticleById(articleId)
             if let article = article {
                 likeCount = article.likeCount
+                if let userId = authManager.user?.id.uuidString {
+                    hasLiked = try await SupabaseService.shared.checkIfUserLiked(articleId: articleId, userId: userId)
+                }
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -486,13 +541,8 @@ struct ArticleReaderView: View {
     }
     
     private func toggleFavorite() async {
-        guard var currentArticle = article else { return }
+        guard let currentArticle = article else { return }
         let newValue = !currentArticle.isFavorite
-        
-        // Optimistic update using same pattern
-        if let updatedArticle = try? await SupabaseService.shared.getArticleById(articleId) {
-            article = updatedArticle
-        }
         
         do {
             try await SupabaseService.shared.toggleFavorite(articleId: articleId, isFavorite: newValue)
@@ -504,6 +554,16 @@ struct ArticleReaderView: View {
     
     private func toggleLike() async {
         guard let userId = authManager.user?.id.uuidString else { return }
+        let originalState = hasLiked
+        let originalCount = likeCount
+        
+        // Optimistic update
+        hasLiked.toggle()
+        if hasLiked {
+            likeCount += 1
+        } else {
+            likeCount = max(0, likeCount - 1)
+        }
         
         do {
             let result = try await SupabaseService.shared.toggleLike(articleId: articleId, userId: userId)
@@ -511,6 +571,9 @@ struct ArticleReaderView: View {
             likeCount = result.likeCount
         } catch {
             print("Failed to toggle like: \(error)")
+            // Revert
+            hasLiked = originalState
+            likeCount = originalCount
         }
     }
     
@@ -541,48 +604,6 @@ struct ArticleReaderView: View {
         }
     }
     
-    // MARK: - Reading Progress
-    
-    private func updateReadingProgress(offset: CGFloat, viewHeight: CGFloat, article: Article) {
-        // Calculate progress based on scroll offset
-        // offset is the minY of the bottom anchor relative to scroll view
-        // When at top, offset is large (content height)
-        // When at bottom, offset approaches viewHeight
-        
-        let totalScrollableHeight = max(1, contentHeight - viewHeight)
-        let scrolled = max(0, contentHeight - offset - viewHeight)
-        let progress = min(1.0, max(0.0, scrolled / totalScrollableHeight))
-        
-        // Update local progress state
-        readingProgress = progress
-        
-        // Check for status transitions
-        let progressPercent = Int(progress * 100)
-        
-        // Mark as completed when reaching 85%
-        if progressPercent >= 85 && article.readingStatus == .reading {
-            Task {
-                await markAsCompleted()
-            }
-        }
-        
-        // Debounced save to database (2 seconds)
-        saveProgressTask?.cancel()
-        saveProgressTask = Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-            guard !Task.isCancelled else { return }
-            
-            do {
-                try await SupabaseService.shared.updateReadingProgress(
-                    articleId: articleId,
-                    progress: progressPercent
-                )
-            } catch {
-                print("Failed to save reading progress: \(error)")
-            }
-        }
-    }
-    
     private func markAsCompleted() async {
         do {
             try await SupabaseService.shared.updateReadingStatus(articleId: articleId, status: .completed)
@@ -590,6 +611,21 @@ struct ArticleReaderView: View {
         } catch {
             print("Failed to mark as completed: \(error)")
         }
+    }
+    
+    private func generateSummary(length: String) async {
+        guard let currentArticle = article else { return }
+        isGeneratingSummary = true
+        summaryError = nil
+        
+        do {
+            let updated = try await SupabaseService.shared.generateArticleSummary(article: currentArticle, length: length)
+            article = updated
+        } catch {
+            summaryError = error.localizedDescription
+        }
+        
+        isGeneratingSummary = false
     }
 }
 
@@ -611,7 +647,7 @@ struct IdentifiableURL: Identifiable {
 struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+        value = nextValue() // Keep most recent
     }
 }
 
@@ -619,6 +655,6 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 struct ContentHeightPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+        value = max(value, nextValue())
     }
 }
