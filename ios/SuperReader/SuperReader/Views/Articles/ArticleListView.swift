@@ -115,6 +115,8 @@ class ArticleListViewModel: ObservableObject {
                 estimatedReadTime: updatedArticle.estimatedReadTime,
                 isPublic: updatedArticle.isPublic,
                 scrapedAt: updatedArticle.scrapedAt,
+                aiSummary: updatedArticle.aiSummary,
+                aiSummaryGeneratedAt: updatedArticle.aiSummaryGeneratedAt,
                 createdAt: updatedArticle.createdAt,
                 updatedAt: updatedArticle.updatedAt
             )
@@ -147,6 +149,8 @@ class ArticleListViewModel: ObservableObject {
                     estimatedReadTime: updatedArticle.estimatedReadTime,
                     isPublic: updatedArticle.isPublic,
                     scrapedAt: updatedArticle.scrapedAt,
+                    aiSummary: updatedArticle.aiSummary,
+                    aiSummaryGeneratedAt: updatedArticle.aiSummaryGeneratedAt,
                     createdAt: updatedArticle.createdAt,
                     updatedAt: updatedArticle.updatedAt
                 )

@@ -17,6 +17,7 @@ struct ArticleReaderView: View {
     @State private var showPreferences = false
     @State private var showDeleteConfirm = false
     @State private var showShareSheet = false
+    @State private var showSummarySheet = false
     @State private var showComments = false
     @State private var showTagEditor = false
     @State private var readingProgress: Double = 0
@@ -63,12 +64,28 @@ struct ArticleReaderView: View {
             ReadingPreferencesView(preferences: $preferencesManager.preferences)
                 .environmentObject(themeManager)
         }
+        .sheet(isPresented: $showSummarySheet) {
+            if let article = article {
+                AISummaryView(
+                    article: article,
+                    fontFamily: preferences.fontFamily,
+                    onGenerate: { length, format in
+                        Task { await generateSummary(length: length, format: format) }
+                    },
+                    isGenerating: isGeneratingSummary,
+                    error: summaryError
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
+        }
         .sheet(isPresented: $showComments) {
             if let article = article, let userId = authManager.user?.id.uuidString {
                 CommentsView(articleId: article.id, userId: userId)
                     .environmentObject(themeManager)
             }
         }
+
         .sheet(isPresented: $showTagEditor) {
             if let article = article {
                 TagManagementView(
@@ -146,14 +163,34 @@ struct ArticleReaderView: View {
                         metadataRow(article)
                         
                         // AI Summary
-                        AISummaryView(
-                            article: article,
-                            onGenerate: { length in
-                                Task { await generateSummary(length: length) }
-                            },
-                            isGenerating: isGeneratingSummary,
-                            error: summaryError
-                        )
+                        // AI Summary Banner
+                        Button(action: { showSummarySheet = true }) {
+                            HStack {
+                                Image(systemName: "wand.and.stars")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                
+                                Text(article.aiSummary != nil ? "Leggi Riassunto AI" : "Genera Riassunto AI")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .padding()
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.purple, Color.blue]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                            .shadow(color: Color.purple.opacity(0.3), radius: 6, x: 0, y: 3)
+                        }
                         
                         // Action Bar
                         actionBar(article)
@@ -613,13 +650,13 @@ struct ArticleReaderView: View {
         }
     }
     
-    private func generateSummary(length: String) async {
+    private func generateSummary(length: String, format: String) async {
         guard let currentArticle = article else { return }
         isGeneratingSummary = true
         summaryError = nil
         
         do {
-            let updated = try await SupabaseService.shared.generateArticleSummary(article: currentArticle, length: length)
+            let updated = try await SupabaseService.shared.generateArticleSummary(article: currentArticle, length: length, format: format)
             article = updated
         } catch {
             summaryError = error.localizedDescription

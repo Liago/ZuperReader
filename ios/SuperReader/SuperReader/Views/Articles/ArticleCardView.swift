@@ -134,6 +134,8 @@ struct ArticleCardView: View {
             estimatedReadTime: 5,
             isPublic: false,
             scrapedAt: "",
+            aiSummary: nil,
+            aiSummaryGeneratedAt: nil,
             createdAt: "",
             updatedAt: ""
         ),

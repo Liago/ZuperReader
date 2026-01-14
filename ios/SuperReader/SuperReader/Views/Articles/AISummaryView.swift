@@ -2,11 +2,14 @@ import SwiftUI
 
 struct AISummaryView: View {
     let article: Article
-    let onGenerate: (String) -> Void // Passes length
+    let fontFamily: Typography.FontFamily // Use correct type
+    let onGenerate: (String, String) -> Void // Passes length and format
     let isGenerating: Bool
     let error: String?
     
     @State private var selectedLength: String = "medium"
+    @State private var selectedFormat: String = "summary"
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -48,14 +51,23 @@ struct AISummaryView: View {
                 }
                 
                 Spacer()
+                
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.gray.opacity(0.4))
+                }
             }
             
             // Content
             if let summary = article.aiSummary {
-                Text(summary)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
+                ScrollView {
+                    Text(summary)
+                        .font(fontFamily.font(size: 16)) // Use custom font
+                        .lineSpacing(4)
+                        .foregroundColor(.primary)
+                        .padding(.vertical, 4)
+                }
             } else if !isGenerating {
                 VStack(spacing: 12) {
                     Image(systemName: "wand.and.stars")
@@ -79,7 +91,7 @@ struct AISummaryView: View {
                HStack {
                    Spacer()
                    ProgressView()
-                       .padding(.trailing, 8)
+                   .padding(.trailing, 8)
                    Text("Generazione in corso...")
                        .font(.subheadline)
                        .foregroundColor(.secondary)
@@ -100,6 +112,7 @@ struct AISummaryView: View {
             
             // Controls
             HStack {
+                // Length Menu
                 Menu {
                     Button(action: { selectedLength = "short" }) {
                         Label("Breve", systemImage: selectedLength == "short" ? "checkmark" : "")
@@ -122,10 +135,30 @@ struct AISummaryView: View {
                     .cornerRadius(8)
                 }
                 
+                // Format Menu
+                Menu {
+                    Button(action: { selectedFormat = "summary" }) {
+                        Label("Riassunto", systemImage: selectedFormat == "summary" ? "checkmark" : "")
+                    }
+                    Button(action: { selectedFormat = "bullet" }) {
+                        Label("Punti Elenco", systemImage: selectedFormat == "bullet" ? "checkmark" : "")
+                    }
+                } label: {
+                    HStack {
+                        Text(formatLabel(selectedFormat))
+                        Image(systemName: "chevron.down")
+                    }
+                    .font(.subheadline)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                }
+                
                 Spacer()
                 
                 Button(action: {
-                    onGenerate(selectedLength)
+                    onGenerate(selectedLength, selectedFormat)
                 }) {
                     HStack {
                         if isGenerating {
@@ -192,6 +225,14 @@ struct AISummaryView: View {
         case "medium": return "Medio"
         case "long": return "Lungo"
         default: return "Medio"
+        }
+    }
+    
+    private func formatLabel(_ format: String) -> String {
+        switch format {
+        case "summary": return "Riassunto"
+        case "bullet": return "Punti Elenco"
+        default: return "Riassunto"
         }
     }
     
