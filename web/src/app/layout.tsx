@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -90,6 +91,7 @@ export default function RootLayout({
 						</ThemeProvider>
 					</AuthProvider>
 				</QueryProvider>
+				<SpeedInsights />
 			</body>
 		</html>
 	);
