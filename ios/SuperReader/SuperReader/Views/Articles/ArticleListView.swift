@@ -19,6 +19,13 @@ class ArticleListViewModel: ObservableObject {
     private let limit = 10
     private var searchDebounceTask: Task<Void, Never>?
     
+    init() {
+        if let savedStatus = UserDefaults.standard.string(forKey: "savedReadingStatusFilter"),
+           let status = ReadingStatus(rawValue: savedStatus) {
+            filters.readingStatus = status
+        }
+    }
+    
     var filteredArticles: [Article] {
         guard !searchQuery.isEmpty else { return articles }
         
@@ -34,7 +41,9 @@ class ArticleListViewModel: ObservableObject {
         print("🔍 ViewModel: Loading articles for userId: \(userId)")
         self.userId = userId
         offset = 0
-        isLoading = true
+        if articles.isEmpty {
+            isLoading = true
+        }
         errorMessage = nil
         
         do {
@@ -52,10 +61,16 @@ class ArticleListViewModel: ObservableObject {
             offset = articles.count
         } catch {
             print("❌ ViewModel Error: \(error)")
-            errorMessage = error.localizedDescription
+            // Only set error message if we don't have cached articles, to avoid disrupting UX
+            if articles.isEmpty {
+                errorMessage = error.localizedDescription
+            }
         }
         
-        isLoading = false
+        // Always ensuring loading is false at the end
+        if isLoading {
+            isLoading = false
+        }
     }
     
     func loadMore() async {
@@ -170,6 +185,22 @@ class ArticleListViewModel: ObservableObject {
             await refresh()
         }
     }
+    
+    func setReadingStatusFilter(_ status: ReadingStatus?) {
+        filters.readingStatus = status
+        
+        if let status = status {
+            UserDefaults.standard.set(status.rawValue, forKey: "savedReadingStatusFilter")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "savedReadingStatusFilter")
+        }
+        
+        Task {
+            if let userId = userId {
+                await loadArticles(userId: userId)
+            }
+        }
+    }
 }
 
 // MARK: - Article List View
@@ -189,14 +220,14 @@ struct ArticleListView: View {
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.red)
+                    .font(.system(size: 40))
+                    .foregroundColor(.red)
                     Text("Error loading articles")
-                        .font(.headline)
+                    .font(.headline)
                     Text(error)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
                     Button("Retry") {
                         Task { await viewModel.refresh() }
                     }
@@ -240,17 +271,17 @@ struct ArticleListView: View {
     private var emptyView: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "newspaper")
-                .font(.system(size: 60))
-                .foregroundColor(themeManager.colors.textSecondary.opacity(0.5))
+            .font(.system(size: 60))
+            .foregroundColor(themeManager.colors.textSecondary.opacity(0.5))
             
             Text("No articles yet")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(themeManager.colors.textPrimary)
+            .font(.system(size: 20, weight: .semibold))
+            .foregroundColor(themeManager.colors.textPrimary)
             
             Text("Add your first article by tapping the + button above")
-                .font(.system(size: 15))
-                .foregroundColor(themeManager.colors.textSecondary)
-                .multilineTextAlignment(.center)
+            .font(.system(size: 15))
+            .foregroundColor(themeManager.colors.textSecondary)
+            .multilineTextAlignment(.center)
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -275,11 +306,11 @@ struct ArticleListView: View {
                 // Load more trigger
                 if viewModel.hasMore {
                     ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .onAppear {
-                            Task { await viewModel.loadMore() }
-                        }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .onAppear {
+                        Task { await viewModel.loadMore() }
+                    }
                 }
             }
             .padding(Spacing.md)
@@ -292,36 +323,38 @@ struct ArticleListView: View {
     // MARK: - List View
     
     private var listView: some View {
-        List {
-            ForEach(viewModel.filteredArticles) { article in
-                NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
-                    ArticleRowView(
-                        article: article,
-                        onFavorite: { Task { await viewModel.toggleFavorite(article) } }
-                    )
-                }
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) {
-                        Task { await viewModel.deleteArticle(article) }
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+        ScrollView {
+            // Request 2: Ridotto spazio tra card (Spacing.sm o anche 8/10)
+            LazyVStack(spacing: 10) {
+                ForEach(viewModel.filteredArticles) { article in
+                    NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                        ArticleRowView(
+                            article: article,
+                            onFavorite: { Task { await viewModel.toggleFavorite(article) } }
+                        )
+                    }
+                    .buttonStyle(.plain) // Request 1: Togli simbolo > (rimosso stile navigazione List)
+                    .contextMenu {
+                         Button(role: .destructive) {
+                             Task { await viewModel.deleteArticle(article) }
+                         } label: {
+                             Label("Delete", systemImage: "trash")
+                         }
                     }
                 }
-            }
-            
-            // Load more trigger
-            if viewModel.hasMore {
-                ProgressView()
+                
+                // Load more trigger
+                if viewModel.hasMore {
+                    ProgressView()
                     .frame(maxWidth: .infinity)
-                    .listRowSeparator(.hidden)
+                    .padding()
                     .onAppear {
                         Task { await viewModel.loadMore() }
                     }
+                }
             }
+            .padding(10) // Padding uniforme esterno
         }
-        .listStyle(.plain)
         .refreshable {
             await viewModel.refresh()
         }
@@ -331,6 +364,6 @@ struct ArticleListView: View {
 #Preview {
     NavigationStack {
         ArticleListView(viewModel: ArticleListViewModel())
-            .environmentObject(ThemeManager.shared)
+        .environmentObject(ThemeManager.shared)
     }
 }

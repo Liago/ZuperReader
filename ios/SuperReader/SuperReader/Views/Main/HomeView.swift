@@ -23,12 +23,13 @@ struct HomeView: View {
                     // Header
                     headerView
                     
+                    // Filter Bar
+                    filterBar
+                    
                     // Article List
                     ArticleListView(viewModel: viewModel)
                 }
-                .onAppear {
-                    Task { await viewModel.refresh() }
-                }
+
             }
             .sheet(isPresented: $showAddArticle) {
                 AddArticleSheet(onArticleAdded: {
@@ -124,6 +125,71 @@ struct HomeView: View {
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.md)
+    }
+    
+    // MARK: - Filter Bar
+    
+    private var filterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.sm) {
+                // All
+                FilterChip(
+                    title: "Tutti",
+                    isSelected: viewModel.filters.readingStatus == nil,
+                    action: { viewModel.setReadingStatusFilter(nil) }
+                )
+                
+                // Read / Started (Letti use .reading based on elimination)
+                FilterChip(
+                    title: "Letti",
+                    isSelected: viewModel.filters.readingStatus == .reading,
+                    action: { viewModel.setReadingStatusFilter(.reading) }
+                )
+                
+                // Unread (Non Letti)
+                FilterChip(
+                    title: "Non Letti",
+                    isSelected: viewModel.filters.readingStatus == .unread,
+                    action: { viewModel.setReadingStatusFilter(.unread) }
+                )
+                
+                // Completed (Completati)
+                FilterChip(
+                    title: "Completati",
+                    isSelected: viewModel.filters.readingStatus == .completed,
+                    action: { viewModel.setReadingStatusFilter(.completed) }
+                )
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.bottom, Spacing.md)
+        }
+    }
+}
+
+// MARK: - Filter Chip
+
+struct FilterChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(isSelected ? .white : themeManager.colors.textSecondary)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, 8)
+                .background(
+                    isSelected ? AnyShapeStyle(PremiumGradients.primary) : AnyShapeStyle(themeManager.colors.bgSecondary)
+                )
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : themeManager.colors.border, lineWidth: 1)
+                )
+        }
     }
 }
 

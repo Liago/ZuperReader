@@ -9,53 +9,60 @@ struct ArticleCardView: View {
     
     @EnvironmentObject var themeManager: ThemeManager
     @State private var showDeleteConfirm = false
+    @State private var isPressed = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Image Area
-            ZStack(alignment: .topTrailing) {
-                AsyncImageView(url: article.imageUrl, cornerRadius: 0)
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 180)
-                    .clipped()
+            // MARK: - Image Area
+            ZStack(alignment: .topLeading) {
+                // Main Image
+                if let imageUrl = article.imageUrl {
+                    AsyncImageView(url: imageUrl, cornerRadius: 0)
+                        .aspectRatio(1.6, contentMode: .fill)
+                        .clipped()
+                } else {
+                    // Fallback Gradient
+                    LinearGradient(
+                        colors: [
+                            themeManager.colors.accent.opacity(0.1),
+                            themeManager.colors.bgSecondary.opacity(0.5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .aspectRatio(1.6, contentMode: .fill)
+                    .overlay(
+                        Image(systemName: "doc.text.image")
+                            .font(.system(size: 40))
+                            .foregroundColor(themeManager.colors.accent.opacity(0.3))
+                    )
+                }
                 
-                // Gradient Overlay for Text Readability (Bottom)
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.3)],
-                    startPoint: .center,
-                    endPoint: .bottom
-                )
+                // Overlay Gradients
+                ZStack {
+                    // Bottom gradient for text readability (if we had text over image, but kept here for depth)
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.2)],
+                        startPoint: .center,
+                        endPoint: .bottom
+                    )
+                }
                 
-                // Top Gradient for Buttons
-                LinearGradient(
-                    colors: [.black.opacity(0.4), .clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 60)
-                
-                // Action Buttons
-                HStack(spacing: 8) {
+                // Floating Status Badge
+                HStack(spacing: 6) {
+                    StatusBadge(status: article.readingStatus)
+                    
                     Spacer()
                     
+                    // Fav Button (Floating)
                     Button(action: onFavorite) {
                         Image(systemName: article.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(article.isFavorite ? .red : .white)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(article.isFavorite ? .red : .primary)
                             .padding(8)
-                            .background(.ultraThinMaterial)
+                            .background(Material.ultraThin)
                             .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                    }
-                    
-                    Button(action: { showDeleteConfirm = true }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
                 }
                 .padding(12)
@@ -63,29 +70,19 @@ struct ArticleCardView: View {
             .frame(height: 180)
             .clipped()
             
-            // Content Area
+            // MARK: - Content Area
             VStack(alignment: .leading, spacing: 12) {
-                // Meta Header
+                // Domain & Date Row
                 HStack {
                     if let domain = article.domain {
-                        HStack(spacing: 6) {
-                            if let faviconUrl = article.faviconUrl {
-                                AsyncImageView(url: faviconUrl, cornerRadius: 4)
-                                    .frame(width: 16, height: 16)
-                            } else {
-                                Image(systemName: "globe")
-                                    .font(.caption2)
-                                    .foregroundColor(themeManager.colors.accent)
-                            }
-                            
-                            Text(domain.replacingOccurrences(of: "www.", with: "").capitalized)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(themeManager.colors.accent)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(themeManager.colors.accent.opacity(0.1))
-                        .cornerRadius(6)
+                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundColor(themeManager.colors.accent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(themeManager.colors.accent.opacity(0.1))
+                            .cornerRadius(6)
                     }
                     
                     Spacer()
@@ -97,37 +94,58 @@ struct ArticleCardView: View {
                             Text(readTime)
                                 .font(.caption2)
                         }
-                        .foregroundColor(themeManager.colors.textSecondary)
+                        .foregroundColor(.secondary)
                     }
                 }
                 
                 // Title
                 Text(article.title)
-                    .font(Typography.FontFamily.inter.font(size: 17).weight(.bold))
+                    .font(.system(size: 18, weight: .bold)) // Inter-like system font
                     .foregroundColor(themeManager.colors.textPrimary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                 
-                // Footer
+                // Excerpt (Optional)
+                if let excerpt = article.excerpt, !excerpt.isEmpty {
+                    Text(excerpt)
+                        .font(.system(size: 14))
+                        .foregroundColor(themeManager.colors.textSecondary)
+                        .lineLimit(2)
+                        .lineSpacing(2)
+                }
+                
+                Divider()
+                    .opacity(0.5)
+                
+                // Footer: Tags & Actions
                 HStack {
-                    ReadingStatusBadge(status: article.readingStatus)
+                    // Tags
+                    if !article.tags.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(article.tags.prefix(2), id: \.self) { tag in
+                                    Text("#\(tag)")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    } else {
+                        Text("No tags")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary.opacity(0.5))
+                    }
                     
                     Spacer()
                     
-                    // Engagement
-                    if article.likeCount > 0 || article.commentCount > 0 {
-                        HStack(spacing: 12) {
-                            if article.likeCount > 0 {
-                                Label("\(article.likeCount)", systemImage: "heart.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.pink)
-                            }
-                            if article.commentCount > 0 {
-                                Label("\(article.commentCount)", systemImage: "bubble.left.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.blue)
-                            }
-                        }
+                    // Delete Action
+                    Button(action: { showDeleteConfirm = true }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                            .padding(8)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(Circle())
                     }
                 }
             }
@@ -135,17 +153,59 @@ struct ArticleCardView: View {
             .background(themeManager.colors.cardBg)
         }
         .background(themeManager.colors.cardBg)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 8)
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Material.thick, lineWidth: 1).opacity(0.5)
         )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.spring(response: 0.3), value: isPressed)
         .alert("Delete Article", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive, action: onDelete)
         } message: {
             Text("Are you sure you want to delete \"\(article.title)\"?")
+        }
+    }
+}
+
+// Helper Component for Status Badge
+struct StatusBadge: View {
+    let status: ReadingStatus
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(statusColor)
+                .frame(width: 6, height: 6)
+            
+            Text(statusText)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.white)
+                .textCase(.uppercase)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Material.thin)
+        .background(statusColor.opacity(0.8))
+        .clipShape(Capsule())
+        .shadow(color: statusColor.opacity(0.3), radius: 4, x: 0, y: 2)
+    }
+    
+    var statusColor: Color {
+        switch status {
+        case .unread: return .blue
+        case .reading: return .orange
+        case .completed: return .green
+        }
+    }
+    
+    var statusText: String {
+        switch status {
+        case .unread: return "Unread"
+        case .reading: return "Reading"
+        case .completed: return "Done"
         }
     }
 }
@@ -156,21 +216,21 @@ struct ArticleCardView: View {
             id: "1",
             userId: "user1",
             url: "https://example.com",
-            title: "Understanding SwiftUI Navigation",
+            title: "Reimagining the Future of Digital Typography",
             content: nil,
-            excerpt: "A comprehensive guide to navigation in SwiftUI apps",
-            imageUrl: "https://picsum.photos/400/200",
+            excerpt: "How variable fonts and fluid type scales are changing the web.",
+            imageUrl: "https://picsum.photos/400/300",
             faviconUrl: nil,
-            author: "John Doe",
+            author: "Jane Doe",
             publishedDate: "2024-01-15",
-            domain: "example.com",
-            tags: ["SwiftUI", "iOS"],
+            domain: "typography.com",
+            tags: ["Design", "Web"],
             isFavorite: true,
-            likeCount: 5,
-            commentCount: 3,
+            likeCount: 24,
+            commentCount: 8,
             readingStatus: .reading,
-            estimatedReadTime: 5,
-            isPublic: false,
+            estimatedReadTime: 6,
+            isPublic: true,
             scrapedAt: "",
             aiSummary: nil,
             aiSummaryGeneratedAt: nil,
@@ -180,7 +240,7 @@ struct ArticleCardView: View {
         onFavorite: {},
         onDelete: {}
     )
-    .frame(width: 180)
     .padding()
+    .background(Color.gray.opacity(0.1))
     .environmentObject(ThemeManager.shared)
 }
