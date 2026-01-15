@@ -73,6 +73,7 @@
 				53DA16272EEC63AE00508FB7 /* Sources */,
 				53DA16282EEC63AE00508FB7 /* Frameworks */,
 				53DA16292EEC63AE00508FB7 /* Resources */,
+				53DA16992EEC63AE00508FB7 /* Version Bump */,
 			);
 			buildRules = (
 			);
@@ -136,6 +137,27 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		53DA16992EEC63AE00508FB7 /* Version Bump */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Version Bump";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PROJECT_DIR}/scripts/version_bump.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		53DA16272EEC63AE00508FB7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -185,7 +207,7 @@
 				DEVELOPMENT_TEAM = 4WE7VKWWKA;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
