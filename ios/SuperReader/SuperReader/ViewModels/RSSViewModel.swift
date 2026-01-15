@@ -46,6 +46,7 @@ class RSSViewModel: ObservableObject {
     @Published var totalFeedsCount: Int = 0
 
     func refreshFeeds() async {
+        guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
         
         isRefreshing = true
@@ -76,7 +77,11 @@ class RSSViewModel: ObservableObject {
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for feed in batch {
                         group.addTask {
-                            _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
+                            do {
+                                _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
+                            } catch {
+                                print("Error refreshing feed \(feed.title) (\(feed.url)): \(error.localizedDescription)")
+                            }
                         }
                     }
                     // Wait for all in this batch
@@ -96,12 +101,12 @@ class RSSViewModel: ObservableObject {
             await loadFeeds()
             
         } catch {
-            self.errorMessage = "Failed to refresh some feeds: \(error.localizedDescription)"
-            await loadFeeds() // Reload anyway to show what succeeded
+            self.errorMessage = "Failed to refresh feeds: \(error.localizedDescription)"
+            await loadFeeds() 
         }
         
         // Add a small delay to let user see 100%
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1s delay to see the result
         
         refreshProgress = nil
         isRefreshing = false

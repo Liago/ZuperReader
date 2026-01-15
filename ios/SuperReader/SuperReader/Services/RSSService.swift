@@ -170,12 +170,14 @@ class RSSService {
         }
         
         // 1. Fetch Data
+        print("RSSService: Refreshing feed \(url)...")
         var request = URLRequest(url: feedUrl)
         request.timeoutInterval = 30
         // Some feeds block default user agents
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
         
-        let (data, _) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        print("RSSService: Received \(data.count) bytes for \(url). Status code: \((response as? HTTPURLResponse)?.statusCode ?? 0)")
         
         // 2. Parse XML
         let parsedItems = await RSSParserService.shared.parse(data: data)

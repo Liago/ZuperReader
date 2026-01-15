@@ -11,9 +11,21 @@ struct ParsedRSSItem {
     var author: String = ""
 }
 
-class RSSParserService: NSObject, XMLParserDelegate {
+class RSSParserService {
     static let shared = RSSParserService()
     
+    // We strictly use this service as a factory/entry point. 
+    // It does not hold state itself.
+    
+    func parse(data: Data) async -> [ParsedRSSItem] {
+        let parser = FeedParser(data: data)
+        return await parser.parse()
+    }
+}
+
+// Private helper class that handles a SINGLE parsing job
+private class FeedParser: NSObject, XMLParserDelegate {
+    private let data: Data
     private var completion: (([ParsedRSSItem]) -> Void)?
     private var currentItems: [ParsedRSSItem] = []
     private var currentItem: ParsedRSSItem?
@@ -21,31 +33,32 @@ class RSSParserService: NSObject, XMLParserDelegate {
     private var currentCharacters: String = ""
     private var currentAttributes: [String : String] = [:]
     
-    // Namespaces state
-    private var isContentEncoded = false
+    init(data: Data) {
+        self.data = data
+    }
     
-    func parse(data: Data) async -> [ParsedRSSItem] {
+    func parse() async -> [ParsedRSSItem] {
         return await withCheckedContinuation { continuation in
-            self.parse(data: data) { items in
+            self.startParsing { items in
                 continuation.resume(returning: items)
             }
         }
     }
     
-    func parse(data: Data, completion: @escaping ([ParsedRSSItem]) -> Void) {
+    private func startParsing(completion: @escaping ([ParsedRSSItem]) -> Void) {
         self.completion = completion
         self.currentItems = []
         
-        // Robust Encoding Handling:
-        // XMLParser defaults to UTF-8 but can fail or produce broken chars if the encoding is different (e.g. ISO-8859-1)
-        // and not properly declared or handled.
+        print("RSSParserService: Starting parse for data of size \(data.count) bytes")
         
+        // Robust Encoding Handling
         var parserData = data
         
         // 1. Try to detect if it's valid UTF-8
         let utf8String = String(data: data, encoding: .utf8)
         
         if utf8String == nil {
+            print("RSSParserService: Data is NOT valid UTF-8. Attempting fallback decoding.")
             // 2. Fallback to ISO-8859-1 (Latin1)
             if let latin1String = String(data: data, encoding: .isoLatin1) {
                 // Convert to UTF-8 data
@@ -66,7 +79,12 @@ class RSSParserService: NSObject, XMLParserDelegate {
         
         let parser = XMLParser(data: parserData)
         parser.delegate = self
-        parser.parse()
+        let success = parser.parse()
+        if !success {
+            print("RSSParserService: XMLParser.parse() returned false. Error: \(parser.parserError?.localizedDescription ?? "Unknown error")")
+        } else {
+             print("RSSParserService: Parse successful. Found \(currentItems.count) items.")
+        }
     }
     
     // MARK: - XMLParserDelegate
@@ -80,7 +98,7 @@ class RSSParserService: NSObject, XMLParserDelegate {
             currentItem = ParsedRSSItem()
         }
         
-        if let item = currentItem {
+        if let _ = currentItem {
             // Image extraction from enclosure or media:content
             if elementName == "enclosure" {
                 if let type = attributeDict["type"], type.hasPrefix("image/"), let url = attributeDict["url"] {

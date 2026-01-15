@@ -129,6 +129,8 @@ struct SharedInboxView: View {
 
 // MARK: - Shared Article Row
 
+// MARK: - Shared Article Row
+
 struct SharedArticleRow: View {
     let share: ArticleShare
     let article: Article
@@ -137,19 +139,20 @@ struct SharedArticleRow: View {
     
     var body: some View {
         NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
-            HStack(alignment: .top, spacing: Spacing.md) {
+            HStack(alignment: .top, spacing: 12) {
                 // Sharer Avatar
                 AvatarView(
                     imageUrl: share.sharer?.avatarUrl,
                     initials: share.sharer?.initials ?? "??",
-                    size: 40
+                    size: 40,
+                    gradient: PremiumGradients.purple
                 )
                 
-                VStack(alignment: .leading, spacing: Spacing.xs) {
+                VStack(alignment: .leading, spacing: 8) {
                     // Header
-                    HStack {
-                        Text(share.sharer?.displayName ?? "Unknown User")
-                            .font(.system(size: 14, weight: .semibold))
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(share.sharer?.displayName ?? "Unknown")
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundColor(themeManager.colors.textPrimary)
                         
                         Text("shared an article")
@@ -159,61 +162,58 @@ struct SharedArticleRow: View {
                         Spacer()
                         
                         Text(share.formattedDate)
-                            .font(.system(size: 11))
+                            .font(.caption)
                             .foregroundColor(themeManager.colors.textSecondary)
-                        
-                        if !share.isRead {
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 8, height: 8)
-                        }
                     }
                     
                     // Message bubble
                     if let message = share.message, !message.isEmpty {
                         Text(message)
-                            .font(.system(size: 13, weight: .regular))
-                            .padding(Spacing.sm)
+                            .font(.system(size: 15))
+                            .foregroundColor(themeManager.colors.textPrimary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
                             .background(themeManager.colors.bgSecondary)
-                            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                    .stroke(themeManager.colors.border, lineWidth: 0.5)
-                            )
-                            .padding(.bottom, 2)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     
                     // Article Content
-                    HStack(spacing: Spacing.sm) {
-                        AsyncImageView(url: article.imageUrl, cornerRadius: CornerRadius.sm)
-                            .frame(width: 60, height: 60)
+                    HStack(alignment: .top, spacing: 0) {
+                        // Image
+                        AsyncImageView(url: article.imageUrl, cornerRadius: 0)
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 80, height: 80)
+                            .clipped()
                         
-                        VStack(alignment: .leading, spacing: 2) {
+                        // Text Info
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(article.title)
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(themeManager.colors.textPrimary)
                                 .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
                             
                             if let domain = article.domain {
                                 Text(domain)
-                                    .font(.system(size: 11))
+                                    .font(.caption)
                                     .foregroundColor(themeManager.colors.textSecondary)
                             }
                         }
+                        .padding(10)
                     }
-                    .padding(Spacing.sm)
-                    .background(Color.white.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     .overlay(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(themeManager.colors.border, lineWidth: 0.5)
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.1), lineWidth: 1)
                     )
                 }
             }
-            .padding(Spacing.md)
+            .padding(16)
             .background(themeManager.colors.cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }

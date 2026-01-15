@@ -28,7 +28,10 @@ struct RSSListView: View {
                         .padding()
                     }
                     .refreshable {
-                        await viewModel.refreshFeeds()
+                        // Create a detached task to avoid cancellation when view updates
+                        Task {
+                            await viewModel.refreshFeeds()
+                        }
                     }
                 }
                 
