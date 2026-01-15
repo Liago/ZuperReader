@@ -7,9 +7,9 @@ import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
 import { useArticleFilters } from '../contexts/ArticleFiltersContext';
-import { TagList } from './TagBadge';
 import TagManagementModal from './TagManagementModal';
-import OptimizedImage from './OptimizedImage';
+import ArticleCard from './ArticleCard';
+import ArticleRow from './ArticleRow';
 
 interface ArticleListProps {
 	userId: string;
@@ -214,11 +214,6 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	// Funzione per navigare all'articolo
 	const handleArticleClick = (articleId: string) => {
 		router.push(`/articles/${articleId}`);
-	};
-
-	// Previeni la propagazione del click per i link esterni
-	const handleExternalLinkClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
 	};
 
 	// Gestione eliminazione articolo
@@ -541,365 +536,36 @@ export default function ArticleList({ userId }: ArticleListProps) {
 				</div>
 			)}
 
-			{/* Grid View - Card moderne con effetti */}
+			{/* Grid View */}
 			{articles.length > 0 && viewMode === 'grid' && (
-				<div className="grid gap-5 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 					{articles.map((article, index) => (
-						<article
+						<ArticleCard
 							key={article.id}
-							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-700 hover:-translate-y-1 cursor-pointer relative"
-							style={{
-								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-							}}
-						>
-							{/* Delete Button */}
-							<div className="absolute top-3 right-3 z-20 flex gap-2">
-								<button
-									onClick={(e) => handleToggleFavorite(e, article)}
-									className="p-2 bg-white/90 dark:bg-slate-700/90 hover:bg-white dark:hover:bg-slate-600 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
-								>
-									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-									</svg>
-								</button>
-								<button
-									onClick={(e) => handleDeleteClick(e, article)}
-									className="p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-									title="Delete article"
-								>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-									</svg>
-								</button>
-							</div>
-
-							{/* Immagine con overlay gradient */}
-							{article.image_url && (
-								<div className="block relative overflow-hidden">
-									<div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-									{/* Reading Status Badge */}
-									<div className="absolute top-3 left-3 z-20">
-										{article.reading_status === 'unread' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-												</svg>
-												Unread
-											</span>
-										)}
-										{article.reading_status === 'reading' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
-												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-												</svg>
-												Reading
-											</span>
-										)}
-										{article.reading_status === 'completed' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-lg">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-												</svg>
-												Completed
-											</span>
-										)}
-									</div>
-									<OptimizedImage
-										src={article.image_url}
-										alt={article.title}
-										className="w-full h-48 sm:h-52"
-										priority={index < 3}
-									/>
-								</div>
-							)}
-
-							{/* Content */}
-							<div className="p-5">
-								{/* Reading Status Badge - when no image */}
-								{!article.image_url && (
-									<div className="mb-3">
-										{article.reading_status === 'unread' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-												</svg>
-												Unread
-											</span>
-										)}
-										{article.reading_status === 'reading' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-												</svg>
-												Reading
-											</span>
-										)}
-										{article.reading_status === 'completed' && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-												</svg>
-												Completed
-											</span>
-										)}
-									</div>
-								)}
-								<h3 className="text-lg font-bold mb-2 line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
-									{article.title}
-								</h3>
-								<p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
-
-								{/* Meta info - Badge stile moderno */}
-								<div className="flex flex-wrap gap-2 mb-3">
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full border border-indigo-100 dark:border-indigo-800">
-										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-										</svg>
-										{article.domain}
-									</span>
-									{article.estimated_read_time && (
-										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 text-xs font-medium rounded-full border border-pink-100 dark:border-pink-800">
-											<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-											</svg>
-											{article.estimated_read_time} min lettura
-										</span>
-									)}
-								</div>
-
-								{/* Engagement stats */}
-								<div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
-									<span className="flex items-center gap-1">
-										<svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-											<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-										</svg>
-										{article.like_count || 0}
-									</span>
-									<span className="flex items-center gap-1">
-										<svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-										</svg>
-										{article.comment_count || 0}
-									</span>
-								</div>
-
-								{/* Tags */}
-								<div className="mb-3 flex items-center gap-2">
-									{article.tags && article.tags.length > 0 ? (
-										<div onClick={(e) => e.stopPropagation()}>
-											<TagList
-												tags={article.tags}
-												maxVisible={3}
-												size="sm"
-											/>
-										</div>
-									) : null}
-									<button
-										onClick={(e) => handleTagClick(e, article)}
-										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-full transition-colors border border-transparent hover:border-purple-200 dark:hover:border-purple-700"
-										title="Manage tags"
-									>
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-										</svg>
-										{article.tags && article.tags.length > 0 ? 'Edit' : 'Add tags'}
-									</button>
-								</div>
-
-								{/* Link esterno */}
-								<a
-									href={article.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									onClick={handleExternalLinkClick}
-									className="inline-flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 font-medium transition-colors"
-								>
-									View Original
-									<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-									</svg>
-								</a>
-							</div>
-						</article>
+							article={article}
+							index={index}
+							onClick={handleArticleClick}
+							onToggleFavorite={handleToggleFavorite}
+							onDelete={handleDeleteClick}
+							onEditTags={handleTagClick}
+						/>
 					))}
 				</div>
 			)}
 
-			{/* List View - Design moderno */}
+			{/* List View */}
 			{articles.length > 0 && viewMode === 'list' && (
 				<div className="space-y-4">
 					{articles.map((article, index) => (
-						<article
+						<ArticleRow
 							key={article.id}
-							onClick={() => handleArticleClick(article.id)}
-							className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 flex gap-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-700 cursor-pointer relative"
-							style={{
-								animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-							}}
-						>
-							{/* Immagine */}
-							{article.image_url && (
-								<div className="flex-shrink-0 relative">
-									{/* Reading Status Badge */}
-									<div className="absolute -top-2 -left-2 z-10">
-										{article.reading_status === 'unread' && (
-											<span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full shadow-lg" title="Unread">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-												</svg>
-											</span>
-										)}
-										{article.reading_status === 'reading' && (
-											<span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg" title="Reading">
-												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-												</svg>
-											</span>
-										)}
-										{article.reading_status === 'completed' && (
-											<span className="inline-flex items-center justify-center w-6 h-6 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg" title="Completed">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-												</svg>
-											</span>
-										)}
-									</div>
-									<OptimizedImage
-										src={article.image_url}
-										alt={article.title}
-										className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl"
-										priority={index < 5}
-									/>
-								</div>
-							)}
-
-							{/* Content */}
-							<div className="flex-1 min-w-0 flex flex-col">
-								{/* Reading Status Badge - when no image in list view */}
-								{!article.image_url && (
-									<div className="mb-2">
-										{article.reading_status === 'unread' && (
-											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-												</svg>
-												Unread
-											</span>
-										)}
-										{article.reading_status === 'reading' && (
-											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-												</svg>
-												Reading
-											</span>
-										)}
-										{article.reading_status === 'completed' && (
-											<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/90 text-white text-xs font-medium rounded-full">
-												<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-												</svg>
-												Completed
-											</span>
-										)}
-									</div>
-								)}
-								<h3 className="text-base sm:text-lg font-bold mb-1 text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
-									{article.title}
-								</h3>
-								<p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2 flex-1">{article.excerpt}</p>
-
-								{/* Tags in List View */}
-								<div className="mb-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-									{article.tags && article.tags.length > 0 && (
-										<TagList
-											tags={article.tags}
-											maxVisible={4}
-											size="sm"
-										/>
-									)}
-									<button
-										onClick={(e) => handleTagClick(e, article)}
-										className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-full transition-colors"
-										title="Manage tags"
-									>
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-										</svg>
-										{article.tags && article.tags.length > 0 ? '' : 'Add tags'}
-									</button>
-								</div>
-
-								{/* Meta info - Badge stile moderno */}
-								<div className="flex flex-wrap gap-2 items-center text-xs text-gray-500 dark:text-gray-400">
-									<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full border border-indigo-100 dark:border-indigo-800">
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-										</svg>
-										{article.domain}
-									</span>
-									{article.estimated_read_time && (
-										<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 text-xs font-medium rounded-full border border-pink-100 dark:border-pink-800">
-											<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-											</svg>
-											{article.estimated_read_time} min lettura
-										</span>
-									)}
-									{/* Engagement stats */}
-									<span className="flex items-center gap-1">
-										<svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-											<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-										</svg>
-										{article.like_count || 0}
-									</span>
-									<span className="flex items-center gap-1">
-										<svg className="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-										</svg>
-										{article.comment_count || 0}
-									</span>
-									<a
-										href={article.url}
-										target="_blank"
-										rel="noopener noreferrer"
-										onClick={handleExternalLinkClick}
-										className="ml-auto text-purple-600 dark:text-purple-400 hover:text-pink-600 dark:hover:text-pink-400 font-medium inline-flex items-center gap-1"
-									>
-										View Original
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-										</svg>
-									</a>
-								</div>
-							</div>
-
-							{/* Actions */}
-							<div className="flex flex-col gap-2 self-start opacity-0 group-hover:opacity-100 transition-opacity">
-								<button
-									onClick={(e) => handleToggleFavorite(e, article)}
-									className="p-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"
-									title={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
-								>
-									<svg className={`w-4 h-4 ${article.is_favorite ? 'fill-current text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-									</svg>
-								</button>
-								<button
-									onClick={(e) => handleDeleteClick(e, article)}
-									className="p-2 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-									title="Delete article"
-								>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-									</svg>
-								</button>
-							</div>
-						</article>
+							article={article}
+							index={index}
+							onClick={handleArticleClick}
+							onToggleFavorite={handleToggleFavorite}
+							onDelete={handleDeleteClick}
+							onEditTags={handleTagClick}
+						/>
 					))}
 				</div>
 			)}
