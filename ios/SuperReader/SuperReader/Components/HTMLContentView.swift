@@ -100,7 +100,7 @@ struct HTMLContentView: UIViewRepresentable {
                     color: \(textColor);
                     background-color: transparent; /* Let SwiftUI background show */
                     margin: 0;
-                    padding: 0; /* Padding is handled by SwiftUI container */
+                    padding: 0 0 40px 0; /* Add bottom padding to prevent clipping */
                     word-wrap: break-word;
                     overflow-wrap: break-word;
                 }

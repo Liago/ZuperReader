@@ -65,19 +65,30 @@ struct RSSArticleListView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .refreshable {
                         await refreshFeed()
                     }
                 }
             }
         }
+
         .navigationTitle(feed.title)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showReadArticles.toggle() }) {
-                    Image(systemName: showReadArticles ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                HStack {
+                    AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
+                         switch phase {
+                         case .success(let image):
+                             image.resizable().aspectRatio(contentMode: .fit).frame(width: 24, height: 24).clipShape(Circle())
+                         default: EmptyView()
+                         }
+                    }
+                    Button(action: { showReadArticles.toggle() }) {
+                        Image(systemName: showReadArticles ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                    }
+                    .help(showReadArticles ? "Show Unread Only" : "Show All")
                 }
-                .help(showReadArticles ? "Show Unread Only" : "Show All")
             }
         }
         .task {
@@ -155,9 +166,9 @@ struct RSSArticleRow: View {
                     .fixedSize(horizontal: false, vertical: true) // Prevents truncation issues
                 
                 if let snippet = article.contentSnippet {
-                    Text(snippet)
+                    Text(snippet.strippingHTML())
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(themeManager.colors.textSecondary)
                         .lineLimit(2)
                 }
                 
@@ -172,6 +183,8 @@ struct RSSArticleRow: View {
             }
         }
         .padding(.vertical, 4)
+        .listRowBackground(Color.clear)
+        .listRowSeparatorTint(themeManager.colors.border)
     }
 }
 
@@ -398,6 +411,8 @@ struct RSSArticleDetailView: View {
     let displayedContent: String
     let themeManager: ThemeManager
     let loadContentAction: () -> Void
+    @State private var showSafariView = false
+
 
     var body: some View {
         GeometryReader { geometry in
@@ -501,7 +516,7 @@ struct RSSArticleDetailView: View {
                         
                         // Primary Action
                         if let originalUrl = URL(string: article.link) {
-                            Link(destination: originalUrl) {
+                            Button(action: { showSafariView = true }) {
                                 HStack {
                                     Text("Read Original")
                                         .fontWeight(.semibold)
@@ -515,6 +530,10 @@ struct RSSArticleDetailView: View {
                                 .foregroundColor(.white)
                                 .cornerRadius(16)
                                 .shadow(color: themeManager.colors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
+                            }
+                            .fullScreenCover(isPresented: $showSafariView) {
+                                SafariView(url: originalUrl)
+                                    .edgesIgnoringSafeArea(.all)
                             }
                             .padding(.top, 10)
                             .padding(.bottom, 20)

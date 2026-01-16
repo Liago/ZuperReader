@@ -24,6 +24,7 @@ struct ArticleReaderView: View {
     @State private var hasLiked = false
     @State private var likeCount = 0
     @State private var selectedLink: IdentifiableURL? // For link preview
+    @State private var showSafariView = false // For "Read Original" in-app browser
     @State private var saveProgressTask: Task<Void, Never>? // For debouncing progress saves
     @State private var hasRestoredPosition = false // Track if we've restored scroll position
     @State private var scrollContentHeight: CGFloat = 0 // Total height of scroll content
@@ -111,6 +112,12 @@ struct ArticleReaderView: View {
             if let userId = authManager.user?.id.uuidString {
                 ArticleLinkPreviewView(url: item.url)
                     .environmentObject(themeManager)
+            }
+        }
+        .fullScreenCover(isPresented: $showSafariView) {
+            if let urlStr = article?.url, let url = URL(string: urlStr) {
+                SafariView(url: url)
+                    .edgesIgnoringSafeArea(.all)
             }
         }
         .alert("Delete Article", isPresented: $showDeleteConfirm) {
@@ -206,22 +213,23 @@ struct ArticleReaderView: View {
                         // Content
                         if let content = article.content {
                             articleTextContent(content)
+                                .padding(.bottom, 40)
                         }
                         
                         // Original Link
                         if let url = URL(string: article.url) {
-                            Link(destination: url) {
+                            Button(action: { showSafariView = true }) {
                                 HStack {
                                     Text("Read Original")
                                         .font(.system(size: 16, weight: .semibold))
-                                        Image(systemName: "arrow.up.right")
-                                    }
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, Spacing.md)
-                                    .background(Color.black)
-                                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                                    Image(systemName: "arrow.up.right")
                                 }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, Spacing.md)
+                                .background(Color.black)
+                                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                            }
                             }
                             
                             // Comments button

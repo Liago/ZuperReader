@@ -375,7 +375,7 @@ actor SupabaseService {
             
             // Decrement count
             try await client
-                .rpc("decrement_like_count", params: ["article_id_param": articleId])
+                .rpc("decrement_like_count", params: ["article_id": articleId])
                 .execute()
             
             let count = try await getLikesCount(articleId: articleId)
@@ -392,7 +392,7 @@ actor SupabaseService {
             
             // Increment count
             try await client
-                .rpc("increment_like_count", params: ["article_id_param": articleId])
+                .rpc("increment_like_count", params: ["article_id": articleId])
                 .execute()
             
             let count = try await getLikesCount(articleId: articleId)
@@ -445,7 +445,7 @@ actor SupabaseService {
         
         // Increment comment count
         try await client
-            .rpc("increment_comment_count", params: ["article_id_param": articleId])
+            .rpc("increment_comment_count", params: ["article_id": articleId])
             .execute()
         
         return comment
@@ -472,7 +472,15 @@ actor SupabaseService {
         
         // Decrement comment count
         try await client
-            .rpc("decrement_comment_count", params: ["article_id_param": articleId])
+            .rpc("decrement_comment_count", params: ["article_id": articleId])
+            .execute()
+    }
+    
+    func updateComment(commentId: String, content: String) async throws {
+        try await client
+            .from("comments")
+            .update(["content": content])
+            .eq("id", value: commentId)
             .execute()
     }
     

@@ -9,6 +9,7 @@ struct AISummaryView: View {
     
     @State private var selectedLength: String = "medium"
     @State private var selectedFormat: String = "summary"
+    @State private var fontSize: CGFloat = 16
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -52,10 +53,35 @@ struct AISummaryView: View {
                 
                 Spacer()
                 
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray.opacity(0.4))
+                HStack(spacing: 16) {
+                    
+                    HStack(spacing: 0) {
+                        Button(action: {
+                            if fontSize > 12 { fontSize -= 2 }
+                        }) {
+                            Image(systemName: "textformat.size.smaller")
+                                .padding(8)
+                                .contentShape(Rectangle())
+                        }
+                        
+                        Divider().frame(height: 16)
+                        
+                        Button(action: {
+                            if fontSize < 32 { fontSize += 2 }
+                        }) {
+                            Image(systemName: "textformat.size.larger")
+                                .padding(8)
+                                .contentShape(Rectangle())
+                        }
+                    }
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                    
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.gray.opacity(0.4))
+                    }
                 }
             }
             
@@ -63,7 +89,7 @@ struct AISummaryView: View {
             if let summary = article.aiSummary {
                 ScrollView {
                     Text(summary)
-                        .font(fontFamily.font(size: 16)) // Use custom font
+                        .font(fontFamily.font(size: fontSize)) // Use custom font
                         .lineSpacing(4)
                         .foregroundColor(.primary)
                         .padding(.vertical, 4)
