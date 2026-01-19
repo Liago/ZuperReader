@@ -19,13 +19,24 @@ struct ArticleRowView: View {
                         .clipped()
                         .cornerRadius(16)
                 } else {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(themeManager.colors.bgSecondary)
-                        .frame(width: 100, height: 100)
-                        .overlay(
-                            Image(systemName: "doc.text")
-                                .foregroundColor(themeManager.colors.accent.opacity(0.4))
-                        )
+                    Group {
+                         if let appIcon = Bundle.main.appIcon {
+                             Image(uiImage: appIcon)
+                                 .resizable()
+                                 .aspectRatio(contentMode: .fill)
+                                 .background(themeManager.colors.bgSecondary)
+                         } else {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(themeManager.colors.bgSecondary)
+                                .overlay(
+                                    Image(systemName: "doc.text")
+                                        .foregroundColor(themeManager.colors.accent.opacity(0.4))
+                                )
+                         }
+                    }
+                    .frame(width: 100, height: 100)
+                    .clipped() // Ensure it doesn't overflow
+                    .cornerRadius(16)
                 }
                 
                 // Mini Status Dot

@@ -21,21 +21,25 @@ struct ArticleCardView: View {
                         .aspectRatio(1.6, contentMode: .fill)
                         .clipped()
                 } else {
-                    // Fallback Gradient
-                    LinearGradient(
-                        colors: [
-                            themeManager.colors.accent.opacity(0.1),
-                            themeManager.colors.bgSecondary.opacity(0.5)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    // Fallback: App Icon
+                    // Users request: Se non ci sono immagini per il thumbnail dell'articolo salvato, proponi un fallback che abbia come immagine di default uguale identica alla icona della app
+                    ZStack {
+                        Color(themeManager.colors.bgSecondary)
+                        
+                        if let appIcon = Bundle.main.appIcon {
+                            Image(uiImage: appIcon)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill) // Fill the frame
+                                .frame(width: nil, height: nil) // Allow standard fill
+                                .clipped()
+                        } else {
+                            // Ultimate fallback if app icon fails loading
+                             Image(systemName: "doc.text.image")
+                                .font(.system(size: 40))
+                                .foregroundColor(themeManager.colors.accent.opacity(0.3))
+                        }
+                    }
                     .aspectRatio(1.6, contentMode: .fill)
-                    .overlay(
-                        Image(systemName: "doc.text.image")
-                            .font(.system(size: 40))
-                            .foregroundColor(themeManager.colors.accent.opacity(0.3))
-                    )
                 }
                 
                 // Overlay Gradients
