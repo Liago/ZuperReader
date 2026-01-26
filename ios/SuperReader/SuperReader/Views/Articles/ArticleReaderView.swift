@@ -29,6 +29,10 @@ struct ArticleReaderView: View {
     @State private var hasRestoredPosition = false // Track if we've restored scroll position
     @State private var scrollContentHeight: CGFloat = 0 // Total height of scroll content
     
+    // Parsed Content
+    @State private var contentBlocks: [ContentBlock] = []
+    @State private var selectedVideoUrl: IdentifiableString?
+    
     // Debug state
     @State private var initialScrollOffset: CGFloat? = nil
 
@@ -113,6 +117,10 @@ struct ArticleReaderView: View {
                 ArticleLinkPreviewView(url: item.url)
                     .environmentObject(themeManager)
             }
+        }
+        .fullScreenCover(item: $selectedVideoUrl) { item in
+            MediaPlayerView(videoUrl: item.value)
+                .edgesIgnoringSafeArea(.all)
         }
         .fullScreenCover(isPresented: $showSafariView) {
             if let urlStr = article?.url, let url = URL(string: urlStr) {
@@ -211,9 +219,37 @@ struct ArticleReaderView: View {
                         }
                         
                         // Content
-                        if let content = article.content {
-                            articleTextContent(content)
-                                .padding(.bottom, 40)
+                        if contentBlocks.isEmpty {
+                            if let content = article.content {
+                                // Fallback/Loading
+                                articleTextContent(content)
+                                    .padding(.bottom, 40)
+                            }
+                        } else {
+                            ForEach(contentBlocks) { block in
+                                switch block.type {
+                                case .html(let html):
+                                    SelfSizingHTMLView(
+                                        htmlContent: html,
+                                        preferences: preferences,
+                                        onLinkTap: { url in
+                                            selectedLink = IdentifiableURL(url: url)
+                                        }
+                                    )
+                                    // Use stable ID based on block ID (UUID) + prefs, not content hash
+                                    .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(block.id)")
+                                    
+                                case .video(let url):
+                                    VideoPreviewView(
+                                        videoUrl: url,
+                                        onPlay: {
+                                            selectedVideoUrl = IdentifiableString(value: url)
+                                        }
+                                    )
+                                    .padding(.vertical, 8)
+                                }
+                            }
+                            .padding(.bottom, 40)
                         }
                         
                         // Original Link
@@ -397,7 +433,7 @@ struct ArticleReaderView: View {
     
     // MARK: - Text Content
     
-    @State private var contentHeight: CGFloat = 100 // Initial estimate
+    @State private var contentHeight: CGFloat = 100 // Legacy single-block height
 
     private func articleTextContent(_ content: String) -> some View {
         HTMLContentView(
@@ -411,6 +447,26 @@ struct ArticleReaderView: View {
         .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(preferences.lineHeight)") // Force view recreation when preferences change
         .frame(height: contentHeight)
         .frame(maxWidth: .infinity)
+    }
+    
+    // Wrapper for list usage that manages its own height
+    struct SelfSizingHTMLView: View {
+        let htmlContent: String
+        let preferences: ReadingPreferences
+        let onLinkTap: ((URL) -> Void)?
+        
+        @State private var height: CGFloat = 100
+        
+        var body: some View {
+            HTMLContentView(
+                htmlContent: htmlContent,
+                preferences: preferences,
+                dynamicHeight: $height,
+                onLinkTap: onLinkTap
+            )
+            .frame(height: height)
+            .frame(maxWidth: .infinity)
+        }
     }
     
     // MARK: - Comments Button
@@ -552,6 +608,11 @@ struct ArticleReaderView: View {
         do {
             article = try await SupabaseService.shared.getArticleById(articleId)
             if let article = article {
+                // Parse Content
+                if let content = article.content {
+                    self.contentBlocks = ContentParser.shared.parse(content: content)
+                }
+                
                 likeCount = article.likeCount
                 if let userId = authManager.user?.id.uuidString {
                     hasLiked = try await SupabaseService.shared.checkIfUserLiked(articleId: articleId, userId: userId)
@@ -703,3 +764,10 @@ struct ContentHeightPreferenceKey: PreferenceKey {
         value = max(value, nextValue())
     }
 }
+
+// Extension to make String identifiable for sheets
+struct IdentifiableString: Identifiable {
+    let id = UUID()
+    let value: String
+}
+
