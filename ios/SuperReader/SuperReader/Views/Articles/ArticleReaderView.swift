@@ -28,6 +28,8 @@ struct ArticleReaderView: View {
     @State private var saveProgressTask: Task<Void, Never>? // For debouncing progress saves
     @State private var hasRestoredPosition = false // Track if we've restored scroll position
     @State private var scrollContentHeight: CGFloat = 0 // Total height of scroll content
+    @State private var showMediaGallery = false // For media gallery
+    @State private var mediaGalleryInitialIndex = 0 // Initial media index for gallery
     
     // Parsed Content
     @State private var contentBlocks: [ContentBlock] = []
@@ -44,6 +46,24 @@ struct ArticleReaderView: View {
 
     private var preferences: ReadingPreferences {
         preferencesManager.preferences
+    }
+
+    // Get all media items from article
+    private var mediaItems: [MediaItem] {
+        var items: [MediaItem] = []
+
+        // Add hero image first
+        if let heroUrl = article?.imageUrl {
+            items.append(MediaItem(url: heroUrl, type: .image))
+        }
+
+        // Add inline images from content
+        if let content = article?.content {
+            let imageUrls = HTMLContentView.extractImageUrls(from: content)
+            items.append(contentsOf: imageUrls.map { MediaItem(url: $0, type: .image) })
+        }
+
+        return items
     }
     
     var body: some View {
@@ -128,6 +148,13 @@ struct ArticleReaderView: View {
                     .edgesIgnoringSafeArea(.all)
             }
         }
+        .fullScreenCover(isPresented: $showMediaGallery) {
+            MediaGalleryView(
+                mediaItems: mediaItems,
+                initialIndex: mediaGalleryInitialIndex,
+                onClose: { showMediaGallery = false }
+            )
+        }
         .alert("Delete Article", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
@@ -164,6 +191,11 @@ struct ArticleReaderView: View {
                                     endPoint: .bottom
                                 )
                             )
+                            .onTapGesture {
+                                // Open media gallery with hero image as first item
+                                mediaGalleryInitialIndex = 0
+                                showMediaGallery = true
+                            }
                     }
                     
                     // Content section with padding
@@ -442,6 +474,13 @@ struct ArticleReaderView: View {
             dynamicHeight: $contentHeight,
             onLinkTap: { url in
                 selectedLink = IdentifiableURL(url: url)
+            },
+            onImageTap: { url, index in
+                // Open media gallery with the tapped image
+                // Add 1 to index if hero image exists (it's at index 0)
+                let adjustedIndex = article?.imageUrl != nil ? index + 1 : index
+                mediaGalleryInitialIndex = adjustedIndex
+                showMediaGallery = true
             }
         )
         .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(preferences.lineHeight)") // Force view recreation when preferences change

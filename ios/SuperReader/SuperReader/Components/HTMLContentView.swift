@@ -6,22 +6,24 @@ struct HTMLContentView: UIViewRepresentable {
     let preferences: ReadingPreferences
     @Binding var dynamicHeight: CGFloat
     var onLinkTap: ((URL) -> Void)? = nil
+    var onImageTap: ((String, Int) -> Void)? = nil  // URL and index
     
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         // Disable data detectors to prevent unwanted links (phone numbers etc) unless they are actual links
         config.dataDetectorTypes = [.link]
-        
-        // Register script message handler for height updates
+
+        // Register script message handlers
         config.userContentController.add(context.coordinator, name: "heightObserver")
-        
+        config.userContentController.add(context.coordinator, name: "imageTapHandler")
+
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.bounces = false
         webView.backgroundColor = .clear
         webView.isOpaque = false // Important for background color to show through
-        
+
         return webView
     }
     
@@ -114,6 +116,10 @@ struct HTMLContentView: UIViewRepresentable {
                     height: auto;
                     border-radius: 8px;
                     margin: 10px 0;
+                    cursor: pointer;
+                }
+                img:active {
+                    opacity: 0.8;
                 }
                 p {
                     margin-bottom: 1em;
@@ -151,6 +157,21 @@ struct HTMLContentView: UIViewRepresentable {
         </head>
         <body>
             \(content)
+            <script>
+                // Make all images clickable and track their index
+                document.addEventListener('DOMContentLoaded', function() {
+                    const images = document.querySelectorAll('img');
+                    images.forEach((img, index) => {
+                        img.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            window.webkit.messageHandlers.imageTapHandler.postMessage({
+                                url: img.src,
+                                index: index
+                            });
+                        });
+                    });
+                });
+            </script>
         </body>
         </html>
         """
@@ -200,6 +221,28 @@ struct HTMLContentView: UIViewRepresentable {
         }
     }
     
+    // Helper function to extract image URLs from HTML
+    static func extractImageUrls(from html: String) -> [String] {
+        var imageUrls: [String] = []
+
+        // Simple regex pattern to find img src attributes
+        let pattern = "<img[^>]+src=\"([^\"]+)\""
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+            let nsString = html as NSString
+            let matches = regex.matches(in: html, options: [], range: NSRange(location: 0, length: nsString.length))
+
+            for match in matches {
+                if match.numberOfRanges > 1 {
+                    let range = match.range(at: 1)
+                    let url = nsString.substring(with: range)
+                    imageUrls.append(url)
+                }
+            }
+        }
+
+        return imageUrls
+    }
+
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         var parent: HTMLContentView
         
@@ -214,6 +257,12 @@ struct HTMLContentView: UIViewRepresentable {
                     if abs(self.parent.dynamicHeight - height) > 1 {
                         self.parent.dynamicHeight = height
                     }
+                }
+            } else if message.name == "imageTapHandler", let body = message.body as? [String: Any],
+                      let url = body["url"] as? String,
+                      let index = body["index"] as? Int {
+                DispatchQueue.main.async {
+                    self.parent.onImageTap?(url, index)
                 }
             }
         }
