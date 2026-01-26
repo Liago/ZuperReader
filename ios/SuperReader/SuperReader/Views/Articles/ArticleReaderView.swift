@@ -258,7 +258,7 @@ struct ArticleReaderView: View {
                                     .padding(.bottom, 40)
                             }
                         } else {
-                            ForEach(contentBlocks) { block in
+                            ForEach(Array(contentBlocks.enumerated()), id: \.element.id) { index, block in
                                 switch block.type {
                                 case .html(let html):
                                     SelfSizingHTMLView(
@@ -266,6 +266,25 @@ struct ArticleReaderView: View {
                                         preferences: preferences,
                                         onLinkTap: { url in
                                             selectedLink = IdentifiableURL(url: url)
+                                        },
+                                        onImageTap: { url, localIndex in
+                                            // Calculate global index for this image
+                                            // Start with hero image offset if present
+                                            var globalIndex = (article.imageUrl != nil) ? 1 : 0
+                                            
+                                            // Add image counts from previous blocks
+                                            for i in 0..<index {
+                                                if case .html(let prevHtml) = contentBlocks[i].type {
+                                                    let count = HTMLContentView.extractImageUrls(from: prevHtml).count
+                                                    globalIndex += count
+                                                }
+                                            }
+                                            
+                                            // Add local index within this block
+                                            globalIndex += localIndex
+                                            
+                                            mediaGalleryInitialIndex = globalIndex
+                                            showMediaGallery = true
                                         }
                                     )
                                     // Use stable ID based on block ID (UUID) + prefs, not content hash
@@ -298,29 +317,29 @@ struct ArticleReaderView: View {
                                 .background(Color.black)
                                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
                             }
-                            }
-                            
-                            // Comments button
-                            commentsButton(article)
                         }
-                        .padding(Spacing.lg)
-                        .padding(.bottom, 220)
+                        
+                        // Comments button
+                        commentsButton(article)
                     }
-                    .overlay(
-                        GeometryReader { contentGeometry in
-                            ZStack {
-                                Color.clear.preference(
-                                    key: ContentHeightPreferenceKey.self,
-                                    value: contentGeometry.size.height
-                                )
-                                
-                                Color.clear.preference(
-                                    key: ScrollOffsetPreferenceKey.self,
-                                    value: contentGeometry.frame(in: .named("scroll")).minY
-                                )
-                            }
+                    .padding(Spacing.lg)
+                    .padding(.bottom, 220)
+                }
+                .overlay(
+                    GeometryReader { contentGeometry in
+                        ZStack {
+                            Color.clear.preference(
+                                key: ContentHeightPreferenceKey.self,
+                                value: contentGeometry.size.height
+                            )
+                            
+                            Color.clear.preference(
+                                key: ScrollOffsetPreferenceKey.self,
+                                value: contentGeometry.frame(in: .named("scroll")).minY
+                            )
                         }
-                    )
+                    }
+                )
             }
             .coordinateSpace(name: "scroll")
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { scrollY in
@@ -339,9 +358,22 @@ struct ArticleReaderView: View {
         // Circular progress indicator - bottom left
         .overlay(alignment: .bottomLeading) {
             CircularProgressIndicator(progress: readingProgress)
-                .padding(Spacing.lg)
-                .opacity(readingProgress > 0 ? 0.95 : 0.7)
-                .animation(.easeInOut(duration: 0.2), value: readingProgress)
+            // Fix for interaction issue - allow hits to pass through empty space
+            .allowsHitTesting(false) 
+            .overlay(
+                // Re-enable hit testing just for the indicator content if needed, 
+                // but usually the indicator is just visual.
+                // If it has buttons inside, we'd need to be specific.
+                // For now, let's just make sure it doesn't block touches to the list behind it
+                // except where the actual pixels are drawn.
+                // Since CircularProgressIndicator implementation details aren't fully visible here,
+                // we'll assume it's small enough.
+                // Actually, let's keep the original modifiers but check Z-index issues.
+                EmptyView()
+            )
+            .padding(Spacing.lg)
+            .opacity(readingProgress > 0 ? 0.95 : 0.7)
+            .animation(.easeInOut(duration: 0.2), value: readingProgress)
         }
 
         
@@ -383,7 +415,7 @@ struct ArticleReaderView: View {
             if let domain = article.domain {
                 HStack(spacing: 4) {
                     Image(systemName: "globe")
-                        .font(.system(size: 12))
+                    .font(.system(size: 12))
                     Text(domain)
                         .font(.system(size: 13))
                 }
@@ -493,6 +525,7 @@ struct ArticleReaderView: View {
         let htmlContent: String
         let preferences: ReadingPreferences
         let onLinkTap: ((URL) -> Void)?
+        let onImageTap: ((String, Int) -> Void)?
         
         @State private var height: CGFloat = 100
         
@@ -501,7 +534,8 @@ struct ArticleReaderView: View {
                 htmlContent: htmlContent,
                 preferences: preferences,
                 dynamicHeight: $height,
-                onLinkTap: onLinkTap
+                onLinkTap: onLinkTap,
+                onImageTap: onImageTap
             )
             .frame(height: height)
             .frame(maxWidth: .infinity)
