@@ -262,6 +262,40 @@ input[type="range"].slider::-moz-range-thumb:hover {
   margin: 1.5rem 0;
 }
 
+
 .opacity-0 {
 	opacity: 1;
+}
+
+/* ============================================
+   MODERN IMAGE CARD STYLES
+   ============================================ */
+
+/* Target common WordPress/CMS caption structures */
+.html-chunk figure,
+.html-chunk .wp-caption,
+.html-chunk div[id^="attachment_"] {
+  @apply rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg my-8 transition-all duration-300 hover:shadow-xl mx-auto max-w-full;
+  break-inside: avoid;
+}
+
+/* Ensure image takes full width of the card and resets default margins */
+.html-chunk figure img,
+.html-chunk .wp-caption img,
+.html-chunk div[id^="attachment_"] img {
+  @apply w-full h-auto m-0 p-0 block !important;
+  border-radius: 0 !important; /* Override prose defaults */
+}
+
+/* Styling for the caption */
+.html-chunk figcaption,
+.html-chunk .wp-caption-text,
+.html-chunk div[id^="attachment_"] > p:not(:first-child) { /* Targeting paragraph after image */
+  @apply p-4 text-sm text-gray-600 dark:text-gray-300 text-center font-medium leading-relaxed bg-gray-50/50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-700/50 m-0 !important;
+}
+
+/* Specific fix for the user's screenshot structure where explicit height/width might interfere */
+.html-chunk div[id^="attachment_"] {
+    width: auto !important;
+    height: auto !important;
 }

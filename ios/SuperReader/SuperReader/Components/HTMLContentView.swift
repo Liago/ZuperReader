@@ -135,13 +135,49 @@ struct HTMLContentView: UIViewRepresentable {
                     padding-left: 20px;
                     margin-bottom: 1em;
                 }
-                blockquote {
-                    margin-left: 0;
                     padding-left: 15px;
                     border-left: 4px solid \(linkColor);
                     opacity: 0.8;
                     font-style: italic;
                 }
+                
+                /* Modern Image Card Styles */
+                figure, .wp-caption, div[id^="attachment_"] {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid \(preferences.colorTheme == .dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)");
+                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgba(255, 255, 255, 0.8)");
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    margin: 2em 0;
+                    page-break-inside: avoid;
+                }
+                
+                figure img, .wp-caption img, div[id^="attachment_"] img {
+                    width: 100%;
+                    height: auto;
+                    margin: 0;
+                    padding: 0;
+                    display: block;
+                    border-radius: 0; /* Reset border radius as the container has it */
+                }
+                
+                figcaption, .wp-caption-text, div[id^="attachment_"] > p {
+                    padding: 12px 16px;
+                    font-size: 0.9em;
+                    text-align: center;
+                    color: \(textColor);
+                    opacity: 0.8;
+                    background-color: \(preferences.colorTheme == .dark ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.02)");
+                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)");
+                    margin: 0;
+                    font-family: \(fontFamily); /* Ensure caption matches font */
+                }
+                
+                /* Adjust prose default overrides */
+                div[id^="attachment_"] {
+                   width: auto !important; 
+                }
+
                 pre, code {
                     font-family: "SF Mono", Menlo, monospace;
                     background-color: rgba(128, 128, 128, 0.1);
