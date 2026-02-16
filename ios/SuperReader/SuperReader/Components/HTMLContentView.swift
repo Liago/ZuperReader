@@ -141,18 +141,19 @@ struct HTMLContentView: UIViewRepresentable {
                     font-style: italic;
                 }
                 
-                /* Modern Image Card Styles */
-                figure, .wp-caption, div[id^="attachment_"] {
+                /* Modern Image Card Styles - Matching Web Version */
+                figure, .wp-caption, div[id^="attachment_"], .wp-block-image {
                     border-radius: 12px;
                     overflow: hidden;
-                    border: 1px solid \(preferences.colorTheme == .dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)");
-                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgba(255, 255, 255, 0.8)");
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                    margin: 2em 0;
+                    border: 1px solid \(preferences.colorTheme == .dark ? "rgb(51, 65, 85)" : "#E5E7EB"); /* slate-700 / gray-200 */
+                    background-color: \(preferences.colorTheme == .dark ? "rgb(30, 41, 59)" : "#ffffff"); /* slate-800 / white */
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+                    margin: 24px 0;
                     page-break-inside: avoid;
+                    max-width: 100%;
                 }
                 
-                figure img, .wp-caption img, div[id^="attachment_"] img {
+                figure img, .wp-caption img, div[id^="attachment_"] img, .wp-block-image img {
                     width: 100%;
                     height: auto;
                     margin: 0;
@@ -161,21 +162,23 @@ struct HTMLContentView: UIViewRepresentable {
                     border-radius: 0; /* Reset border radius as the container has it */
                 }
                 
-                figcaption, .wp-caption-text, div[id^="attachment_"] > p {
-                    padding: 12px 16px;
+                figcaption, .wp-caption-text, div[id^="attachment_"] > p, .wp-block-image figcaption {
+                    padding: 16px;
                     font-size: 0.9em;
                     text-align: center;
-                    color: \(textColor);
-                    opacity: 0.8;
-                    background-color: \(preferences.colorTheme == .dark ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.02)");
-                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)");
+                    font-weight: 500;
+                    color: \(preferences.colorTheme == .dark ? "rgb(209, 213, 219)" : "#4B5563"); /* gray-300 / gray-600 */
+                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgb(249, 250, 251)"); /* slate-800/50 / gray-50 */
+                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(51, 65, 85, 0.5)" : "#F3F4F6"); /* slate-700/50 / gray-100 */
                     margin: 0;
-                    font-family: \(fontFamily); /* Ensure caption matches font */
+                    font-family: \(fontFamily);
+                    line-height: 1.6;
                 }
                 
                 /* Adjust prose default overrides */
                 div[id^="attachment_"] {
                    width: auto !important; 
+                   height: auto !important;
                 }
 
                 pre, code {
