@@ -283,7 +283,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
 .html-chunk figure img,
 .html-chunk .wp-caption img,
 .html-chunk div[id^="attachment_"] img {
-  @apply w-full h-auto m-0 p-0 block !important;
+  @apply !w-full !h-auto !m-0 !p-0 !block;
   border-radius: 0 !important; /* Override prose defaults */
 }
 
@@ -291,7 +291,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
 .html-chunk figcaption,
 .html-chunk .wp-caption-text,
 .html-chunk div[id^="attachment_"] > p:not(:first-child) { /* Targeting paragraph after image */
-  @apply p-4 text-sm text-gray-600 dark:text-gray-300 text-center font-medium leading-relaxed bg-gray-50/50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-700/50 m-0 !important;
+  @apply !p-4 !text-sm !text-gray-600 dark:!text-gray-300 !text-center !font-medium !leading-relaxed !bg-gray-50/50 dark:!bg-slate-800/50 !border-t !border-gray-100 dark:!border-slate-700/50 !m-0;
 }
 
 /* Specific fix for the user's screenshot structure where explicit height/width might interfere */
