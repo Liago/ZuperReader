@@ -143,39 +143,40 @@ struct HTMLContentView: UIViewRepresentable {
                 
                 /* Modern Image Card Styles - Matching Web Version */
                 figure, .wp-caption, div[id^="attachment_"], .wp-block-image {
-                    border-radius: 12px;
-                    overflow: hidden;
-                    border: 1px solid \(preferences.colorTheme == .dark ? "rgb(51, 65, 85)" : "#E5E7EB"); /* slate-700 / gray-200 */
-                    background-color: \(preferences.colorTheme == .dark ? "rgb(30, 41, 59)" : "#ffffff"); /* slate-800 / white */
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
-                    margin: 24px 0;
-                    page-break-inside: avoid;
-                    max-width: 100%;
+                    border-radius: 12px !important;
+                    overflow: hidden !important;
+                    border: 1px solid \(preferences.colorTheme == .dark ? "rgb(51, 65, 85)" : "#E5E7EB") !important; /* slate-700 / gray-200 */
+                    background-color: \(preferences.colorTheme == .dark ? "rgb(30, 41, 59)" : "#ffffff") !important; /* slate-800 / white */
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; /* shadow-lg */
+                    margin: 24px auto !important;
+                    page-break-inside: avoid !important;
+                    max-width: 100% !important;
+                    display: block !important;
                 }
                 
                 figure img, .wp-caption img, div[id^="attachment_"] img, .wp-block-image img {
-                    width: 100%;
-                    height: auto;
-                    margin: 0;
-                    padding: 0;
-                    display: block;
-                    border-radius: 0; /* Reset border radius as the container has it */
+                    width: 100% !important;
+                    height: auto !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    display: block !important;
+                    border-radius: 0 !important; /* Reset border radius as the container has it */
                 }
                 
                 figcaption, .wp-caption-text, div[id^="attachment_"] > p, .wp-block-image figcaption {
-                    padding: 16px;
-                    font-size: 0.9em;
-                    text-align: center;
-                    font-weight: 500;
-                    color: \(preferences.colorTheme == .dark ? "rgb(209, 213, 219)" : "#4B5563"); /* gray-300 / gray-600 */
-                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgb(249, 250, 251)"); /* slate-800/50 / gray-50 */
-                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(51, 65, 85, 0.5)" : "#F3F4F6"); /* slate-700/50 / gray-100 */
-                    margin: 0;
-                    font-family: \(fontFamily);
-                    line-height: 1.6;
+                    padding: 16px !important;
+                    font-size: 0.9em !important;
+                    text-align: center !important;
+                    font-weight: 500 !important;
+                    color: \(preferences.colorTheme == .dark ? "rgb(209, 213, 219)" : "#4B5563") !important; /* gray-300 / gray-600 */
+                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgb(249, 250, 251)") !important; /* slate-800/50 / gray-50 */
+                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(51, 65, 85, 0.5)" : "#F3F4F6") !important; /* slate-700/50 / gray-100 */
+                    margin: 0 !important;
+                    font-family: \(fontFamily) !important;
+                    line-height: 1.6 !important;
                 }
                 
-                /* Adjust prose default overrides */
+                /* Specific fix for the user's screenshot structure where explicit height/width might interfere */
                 div[id^="attachment_"] {
                    width: auto !important; 
                    height: auto !important;
