@@ -1,0 +1,5 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild archive -workspace /Users/andreazampierolo/Projects/SuperReader/ios/SuperReader.xcworkspace -scheme SuperReader -destination generic/platform=iOS
+
+2026-02-20 17:05:00.794 xcodebuild[56999:750506] Writing error result bundle to /var/folders/kj/ssg607w96vq148f56sthws480000gn/T/ResultBundle_2026-20-02_17-05-0000.xcresult
+xcodebuild: error: '/Users/andreazampierolo/Projects/SuperReader/ios/SuperReader.xcworkspace' does not exist.

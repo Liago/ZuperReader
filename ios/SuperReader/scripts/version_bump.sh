@@ -8,7 +8,7 @@
 
 set -e
 
-echo "Starting Configurable Version Bump..."
+echo "Starting Configurable Version Bump..."; env | grep INFO
 
 # 1. Get the Git Commit Count (Build Number)
 # Use 'git rev-list --count HEAD' to get a monotonically increasing integer.
@@ -22,13 +22,18 @@ BUILD_NUMBER="$git_count"
 echo "Detected Build Number (Git Step): $BUILD_NUMBER"
 
 # 2. Locate the Info.plist in the build product
-# Xcode exposes ${TARGET_BUILD_DIR} and ${INFOPLIST_PATH}
+# Xcode expands RUN scripts concurrently. We must wait for ProcessInfoPlistFile.
+# It is now sequenced correctly via Xcode inputPaths dependency.
 APP_INFO_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+
+if [ ! -f "${APP_INFO_PLIST}" ]; then
+    APP_INFO_PLIST="${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
+fi
 
 echo "Target Info.plist path: ${APP_INFO_PLIST}"
 
-if [ ! -f "${APP_INFO_PLIST}" ]; then
-    echo "error: Info.plist not found at ${APP_INFO_PLIST}"
+if [ -z "${APP_INFO_PLIST}" ] || [ ! -f "${APP_INFO_PLIST}" ]; then
+    echo "error: Info.plist not found at ${TARGET_BUILD_DIR}/${INFOPLIST_PATH} nor ${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
     exit 1
 fi
 

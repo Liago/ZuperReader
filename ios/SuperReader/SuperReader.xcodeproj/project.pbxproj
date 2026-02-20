@@ -135,8 +135,8 @@
 				53DA16272EEC63AE00508FB7 /* Sources */,
 				53DA16282EEC63AE00508FB7 /* Frameworks */,
 				53DA16292EEC63AE00508FB7 /* Resources */,
-				53DA16992EEC63AE00508FB7 /* Version Bump */,
 				537483202F48A9B300E4B2D4 /* Embed Foundation Extensions */,
+				53DA16992EEC63AE00508FB7 /* Version Bump */,
 			);
 			buildRules = (
 			);
@@ -215,12 +215,14 @@
 /* Begin PBXShellScriptBuildPhase section */
 		53DA16992EEC63AE00508FB7 /* Version Bump */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "Version Bump";
 			outputFileListPaths = (
