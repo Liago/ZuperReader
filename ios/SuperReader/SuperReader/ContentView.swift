@@ -1,4 +1,5 @@
 import SwiftUI
+import Auth
 
 struct ContentView: View {
     @StateObject private var authManager = AuthManager.shared
