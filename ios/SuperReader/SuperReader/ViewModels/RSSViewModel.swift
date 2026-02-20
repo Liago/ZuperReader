@@ -129,4 +129,24 @@ class RSSViewModel: ObservableObject {
             self.errorMessage = "Failed to delete feed: \(error.localizedDescription)"
         }
     }
+    
+    func markFeedAsRead(_ feed: RSSFeed) async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        
+        // Optimistic update
+        let previousCount = unreadCounts[feed.id]
+        unreadCounts[feed.id] = 0
+        
+        do {
+            try await rssService.markFeedAsRead(feedId: feed.id, userId: userId)
+        } catch {
+            // Rollback
+            unreadCounts[feed.id] = previousCount
+            self.errorMessage = "Failed to mark feed as read: \(error.localizedDescription)"
+        }
+    }
+    
+    var totalUnreadCount: Int {
+        unreadCounts.values.reduce(0, +)
+    }
 }

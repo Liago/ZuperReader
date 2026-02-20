@@ -17,18 +17,29 @@ struct RSSListView: View {
                     emptyState
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(viewModel.feeds) { feed in
-                                NavigationLink(destination: RSSArticleListView(feed: feed)) {
-                                    RSSFeedRow(feed: feed, unreadCount: viewModel.unreadCounts[feed.id] ?? 0)
-                                }
-                                .buttonStyle(ScaleButtonStyle())
+                        VStack(spacing: 24) {
+                            // Stats Header
+                            HStack(spacing: 16) {
+                                RSSStatCard(title: "Channels", value: "\(viewModel.feeds.count)", icon: "antenna.radiowaves.left.and.right", color: .purple)
+                                RSSStatCard(title: "To Read", value: "\(viewModel.totalUnreadCount)", icon: "tray.full.fill", color: .blue)
                             }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            
+                            // Feed List
+                            LazyVStack(spacing: 16) {
+                                ForEach(viewModel.feeds) { feed in
+                                    NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: viewModel)) {
+                                        RSSFeedRow(feed: feed, unreadCount: viewModel.unreadCounts[feed.id] ?? 0)
+                                    }
+                                    .buttonStyle(ScaleButtonStyle())
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.bottom, 20)
                         }
-                        .padding()
                     }
                     .refreshable {
-                        // Create a detached task to avoid cancellation when view updates
                         Task {
                             await viewModel.refreshFeeds()
                         }
@@ -39,19 +50,16 @@ struct RSSListView: View {
                     RSSRefreshLoaderView(viewModel: viewModel)
                 }
             }
-            .navigationTitle("Feeds")
+            .navigationTitle("Your Feeds")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingDiscovery = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color.purple, Color.blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(themeManager.colors.accent))
+                            .shadow(color: themeManager.colors.accent.opacity(0.4), radius: 4, y: 2)
                     }
                 }
             }
@@ -117,6 +125,45 @@ struct RSSListView: View {
     }
 }
 
+struct RSSStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.colors.textPrimary)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(themeManager.colors.textSecondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(color)
+                .padding(10)
+                .background(color.opacity(0.1))
+                .clipShape(Circle())
+        }
+        .padding(16)
+        .background(themeManager.colors.cardBg)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+}
+
 struct RSSFeedRow: View {
     let feed: RSSFeed
     let unreadCount: Int
@@ -131,9 +178,8 @@ struct RSSFeedRow: View {
             // Favicon with glow
             ZStack {
                 Circle()
-                    .fill(Color.white)
-                    .frame(width: 44, height: 44)
-                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .fill(themeManager.colors.bgSecondary)
+                    .frame(width: 48, height: 48)
                 
                 AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
                     switch phase {
@@ -178,28 +224,33 @@ struct RSSFeedRow: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(.white)
                     .frame(minWidth: 24, minHeight: 24)
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, 8)
                     .background(
                         LinearGradient(
-                            colors: [Color.red, Color.orange],
+                            colors: [Color.purple, Color.blue],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .clipShape(Capsule())
+                    .shadow(color: Color.purple.opacity(0.3), radius: 4, x: 0, y: 2)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(Color.green.opacity(0.6))
+                    .font(.system(size: 16))
             }
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(themeManager.colors.textSecondary.opacity(0.5))
+                .foregroundColor(themeManager.colors.textSecondary.opacity(0.3))
         }
         .padding(16)
         .background(themeManager.colors.cardBg)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
 }

@@ -3,104 +3,165 @@ import Supabase
 import Auth
 
 struct RSSArticleListView: View {
-    let feed: RSSFeed
+    @State private var currentFeed: RSSFeed
+    @ObservedObject var viewModel: RSSViewModel
     @State private var articles: [RSSArticle] = []
     @State private var isLoading = true
+    @State private var isMarkingRead = false
     @State private var errorMessage: String?
     @State private var showReadArticles = false // Default: hide read articles
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.dismiss) var dismiss
+    
+    init(feed: RSSFeed, viewModel: RSSViewModel) {
+        self._currentFeed = State(initialValue: feed)
+        self.viewModel = viewModel
+    }
+    
+    private var currentIndex: Int? {
+        viewModel.feeds.firstIndex(where: { $0.id == currentFeed.id })
+    }
+    
+    private var hasPrev: Bool {
+        guard let idx = currentIndex else { return false }
+        return idx > 0
+    }
+    
+    private var hasNext: Bool {
+        guard let idx = currentIndex else { return false }
+        return idx < viewModel.feeds.count - 1
+    }
     
     var body: some View {
         ZStack {
             themeManager.colors.backgroundGradient
                 .ignoresSafeArea()
             
-                if isLoading {
-                ProgressView()
-            } else if let error = errorMessage {
-                Text(error).foregroundColor(.red)
-            } else {
-                let displayedArticles = articles.filter { showReadArticles || !$0.isRead }
+            VStack(spacing: 0) {
+                // Custom Header
+                RSSFeedHeader(
+                    feed: currentFeed,
+                    unreadCount: articles.filter { !$0.isRead }.count,
+                    isMarkingRead: isMarkingRead,
+                    hasPrev: hasPrev,
+                    hasNext: hasNext,
+                    onMarkAllRead: {
+                        Task {
+                            await markAllAsRead()
+                        }
+                    },
+                    onPrev: {
+                        if let idx = currentIndex, idx > 0 {
+                            currentFeed = viewModel.feeds[idx - 1]
+                        }
+                    },
+                    onNext: {
+                        if let idx = currentIndex, idx < viewModel.feeds.count - 1 {
+                            currentFeed = viewModel.feeds[idx + 1]
+                        }
+                    }
+                )
                 
-                if displayedArticles.isEmpty {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            if articles.isEmpty {
-                                Text("No articles found.").foregroundColor(.gray)
-                            } else {
-                                Text("All articles read.").foregroundColor(.gray)
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else if let error = errorMessage {
+                    Spacer()
+                    Text(error).foregroundColor(.red)
+                    Spacer()
+                } else {
+                    let displayedArticles = articles.filter { showReadArticles || !$0.isRead }
+                    
+                    if displayedArticles.isEmpty {
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                if articles.isEmpty {
+                                    Text("No articles found.").foregroundColor(.gray)
+                                } else {
+                                    Text("All articles read.").foregroundColor(.gray)
+                                        .padding()
+                                    
+                                    Button("Show Read Articles") {
+                                        showReadArticles = true
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundColor(.blue)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, 100)
+                        }
+                        .refreshable {
+                            await refreshFeed()
+                        }
+                    } else {
+                        List {
+                            ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
+                                let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? index
+                                
+                                RSSArticleRow(article: article)
+                                    .background(
+                                        NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex))
+                                            .opacity(0)
+                                    )
+                                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                        Button {
+                                            Task {
+                                                await markAsRead(article: article, at: originalIndex)
+                                            }
+                                        } label: {
+                                            Label("Mark as Read", systemImage: "envelope.open")
+                                        }
+                                        .tint(.blue)
+                                    }
                             }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 100) // Give some space
-                    }
-                    .refreshable {
-                        await refreshFeed()
-                    }
-                } else {
-                    List {
-                        ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
-                            // Find original index for binding if needed, or just pass value and handle updates via store
-                            // For simplicity with array state, we need careful index management if we pass binding
-                            // But RSSArticleReader marks as read via service and local update.
-                            // Let's pass the correct binding from the main array.
-                            
-                            let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? index
-                            
-                            RSSArticleRow(article: article)
-                                .background(
-                                    NavigationLink("", destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex))
-                                        .opacity(0)
-                                )
-                                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                    Button {
-                                        Task {
-                                            await markAsRead(article: article, at: originalIndex)
-                                        }
-                                    } label: {
-                                        Label("Mark as Read", systemImage: "envelope.open")
-                                    }
-                                    .tint(.blue)
-                                }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .refreshable {
+                            await refreshFeed()
                         }
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .refreshable {
-                        await refreshFeed()
-                    }
                 }
             }
         }
-
-        .navigationTitle(feed.title)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack {
-                    AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
-                         switch phase {
-                         case .success(let image):
-                             image.resizable().aspectRatio(contentMode: .fit).frame(width: 24, height: 24).clipShape(Circle())
-                         default: EmptyView()
-                         }
-                    }
-                    Button(action: { showReadArticles.toggle() }) {
-                        Image(systemName: showReadArticles ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                    }
-                    .help(showReadArticles ? "Show Unread Only" : "Show All")
-                }
-            }
-        }
+        .navigationBarHidden(true) // Hide default nav bar to use custom one
         .task {
             // Reset to unread only on load if that's the desired default behavior every time
             showReadArticles = false
             await loadArticles(showLoadingIndicator: true)
         }
+        .onChange(of: currentFeed.id) { _ in
+            Task {
+                showReadArticles = false
+                await loadArticles(showLoadingIndicator: true)
+            }
+        }
+    }
+    
+    // ... markAllAsRead implementation below ...
+    
+    private func markAllAsRead() async {
+        isMarkingRead = true
+        await viewModel.markFeedAsRead(currentFeed)
+        
+        // Optimistic local update
+        await MainActor.run {
+            for i in articles.indices {
+                articles[i].isRead = true
+                articles[i].readAt = Date()
+            }
+        }
+        
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        isMarkingRead = false
+        dismiss()
     }
     
     private func refreshFeed() async {
         do {
-            _ = try await RSSService.shared.refreshFeed(feedId: feed.id, url: feed.url)
+            _ = try await RSSService.shared.refreshFeed(feedId: currentFeed.id, url: currentFeed.url)
             await loadArticles(showLoadingIndicator: false) // Don't show full screen loader on refresh
         } catch {
             print("Failed to refresh feed: \(error)")
@@ -114,7 +175,7 @@ struct RSSArticleListView: View {
         errorMessage = nil
         do {
             guard let userId = AuthManager.shared.user?.id.uuidString else { return }
-            self.articles = try await RSSService.shared.getArticles(userId: userId, feedId: feed.id, includeRead: true)
+            self.articles = try await RSSService.shared.getArticles(userId: userId, feedId: currentFeed.id, includeRead: true)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -133,6 +194,130 @@ struct RSSArticleListView: View {
         } catch {
             print("Failed to mark article as read: \(error)")
         }
+    }
+}
+
+// Header Component
+struct RSSFeedHeader: View {
+    let feed: RSSFeed
+    let unreadCount: Int
+    let isMarkingRead: Bool
+    let hasPrev: Bool
+    let hasNext: Bool
+    let onMarkAllRead: () -> Void
+    let onPrev: () -> Void
+    let onNext: () -> Void
+    @Environment(\.dismiss) var dismiss
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        ZStack {
+            // Center Content
+            VStack(spacing: 4) {
+                AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 28, height: 28)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    default:
+                        Image(systemName: "rss")
+                            .font(.system(size: 14))
+                            .foregroundColor(.purple)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
+                    }
+                }
+                
+                Text(feed.title)
+                    .font(.title2)
+                    .fontWeight(.black)
+                    .foregroundColor(themeManager.colors.textPrimary)
+                    .lineLimit(1)
+                
+                Text("\(unreadCount) articles unread")
+                    .font(.subheadline)
+                    .foregroundColor(themeManager.colors.textSecondary)
+            }
+            .padding(.horizontal, 90) // Safe padding for side buttons
+            
+            // Side Buttons
+            HStack(alignment: .center) {
+                // Left
+                HStack(spacing: 8) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(themeManager.colors.textPrimary)
+                            .frame(width: 40, height: 40)
+                            .background(themeManager.colors.bgSecondary.opacity(0.8))
+                            .clipShape(Circle())
+                    }
+                    
+                    if hasPrev {
+                        Button(action: onPrev) {
+                            Image(systemName: "arrow.left")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(themeManager.colors.accent)
+                                .frame(width: 40, height: 40)
+                                .background(themeManager.colors.accent.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                    } else {
+                        Color.clear.frame(width: 40, height: 40)
+                    }
+                }
+                
+                Spacer()
+                
+                // Right
+                HStack(spacing: 8) {
+                    if hasNext {
+                        Button(action: onNext) {
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(themeManager.colors.accent)
+                                .frame(width: 40, height: 40)
+                                .background(themeManager.colors.accent.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                    } else {
+                        Color.clear.frame(width: 40, height: 40)
+                    }
+                    
+                    if unreadCount > 0 {
+                        Button(action: onMarkAllRead) {
+                            if isMarkingRead {
+                                ProgressView()
+                                    .frame(width: 40, height: 40)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(.blue)
+                                    .background(Color.white.clipShape(Circle()))
+                                    .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                                    .frame(width: 40, height: 40)
+                            }
+                        }
+                        .disabled(isMarkingRead)
+                    } else {
+                        Color.clear.frame(width: 40, height: 40)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 50) // Safe area compensation
+        .padding(.bottom, 12)
+        .background(
+            themeManager.colors.cardBg
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
+        )
+        .zIndex(10)
     }
 }
 

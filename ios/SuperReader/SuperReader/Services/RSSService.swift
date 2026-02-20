@@ -290,4 +290,23 @@ class RSSService {
             .eq("user_id", value: userId) // Security check
             .execute()
     }
+    
+    func markFeedAsRead(feedId: UUID, userId: String) async throws {
+         struct UpdatePayload: Encodable {
+             let is_read: Bool
+             let read_at: String
+         }
+         
+         let payload = UpdatePayload(
+             is_read: true,
+             read_at: ISO8601DateFormatter().string(from: Date())
+         )
+         
+         try await SupabaseService.shared.client
+             .from("rss_articles")
+             .update(payload)
+             .eq("feed_id", value: feedId)
+             .eq("user_id", value: userId)
+             .execute()
+    }
 }
