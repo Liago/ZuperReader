@@ -62,9 +62,9 @@ class ShareViewController: UIViewController {
         var foundUrl: URL?
 
         for attachment in attachments {
-            if attachment.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+            if attachment.canLoadObject(ofClass: NSURL.self) {
                 groupItem.enter()
-                attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { (item, error) in
+                _ = attachment.loadObject(ofClass: NSURL.self) { (item, error) in
                     if let url = item as? URL {
                         foundUrl = url
                     }
@@ -89,9 +89,9 @@ class ShareViewController: UIViewController {
         var foundText: String?
         
         for attachment in attachments {
-            if attachment.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+            if attachment.canLoadObject(ofClass: NSString.self) {
                 groupItem.enter()
-                attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { (item, error) in
+                _ = attachment.loadObject(ofClass: NSString.self) { (item, error) in
                     if let text = item as? String {
                         foundText = text
                     }
