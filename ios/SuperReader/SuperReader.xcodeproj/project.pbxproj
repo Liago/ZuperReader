@@ -7,14 +7,58 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5374831F2F48A9B300E4B2D4 /* SuperReaderShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 537483152F48A9B300E4B2D4 /* SuperReaderShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		53DA163B2EEC6AA900508FB7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 53DA163A2EEC6AA900508FB7 /* Supabase */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5374831D2F48A9B300E4B2D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 53DA16232EEC63AE00508FB7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 537483142F48A9B300E4B2D4;
+			remoteInfo = SuperReaderShareExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		537483202F48A9B300E4B2D4 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5374831F2F48A9B300E4B2D4 /* SuperReaderShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		537483152F48A9B300E4B2D4 /* SuperReaderShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SuperReaderShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		53DA162B2EEC63AE00508FB7 /* SuperReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SuperReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		537483232F48A9B300E4B2D4 /* Exceptions for "SuperReaderShareExtension" folder in "SuperReaderShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 537483142F48A9B300E4B2D4 /* SuperReaderShareExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		537483162F48A9B300E4B2D4 /* SuperReaderShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				537483232F48A9B300E4B2D4 /* Exceptions for "SuperReaderShareExtension" folder in "SuperReaderShareExtension" target */,
+			);
+			path = SuperReaderShareExtension;
+			sourceTree = "<group>";
+		};
 		53DA162D2EEC63AE00508FB7 /* SuperReader */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = SuperReader;
@@ -23,6 +67,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		537483122F48A9B300E4B2D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53DA16282EEC63AE00508FB7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -38,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				53DA162D2EEC63AE00508FB7 /* SuperReader */,
+				537483162F48A9B300E4B2D4 /* SuperReaderShareExtension */,
 				53DA162C2EEC63AE00508FB7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				53DA162B2EEC63AE00508FB7 /* SuperReader.app */,
+				537483152F48A9B300E4B2D4 /* SuperReaderShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,6 +106,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		537483142F48A9B300E4B2D4 /* SuperReaderShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 537483242F48A9B300E4B2D4 /* Build configuration list for PBXNativeTarget "SuperReaderShareExtension" */;
+			buildPhases = (
+				537483112F48A9B300E4B2D4 /* Sources */,
+				537483122F48A9B300E4B2D4 /* Frameworks */,
+				537483132F48A9B300E4B2D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				537483162F48A9B300E4B2D4 /* SuperReaderShareExtension */,
+			);
+			name = SuperReaderShareExtension;
+			packageProductDependencies = (
+			);
+			productName = SuperReaderShareExtension;
+			productReference = 537483152F48A9B300E4B2D4 /* SuperReaderShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		53DA162A2EEC63AE00508FB7 /* SuperReader */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 53DA16362EEC63B100508FB7 /* Build configuration list for PBXNativeTarget "SuperReader" */;
@@ -61,10 +136,12 @@
 				53DA16282EEC63AE00508FB7 /* Frameworks */,
 				53DA16292EEC63AE00508FB7 /* Resources */,
 				53DA16992EEC63AE00508FB7 /* Version Bump */,
+				537483202F48A9B300E4B2D4 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				5374831E2F48A9B300E4B2D4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				53DA162D2EEC63AE00508FB7 /* SuperReader */,
@@ -84,9 +161,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					537483142F48A9B300E4B2D4 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					53DA162A2EEC63AE00508FB7 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -110,11 +190,19 @@
 			projectRoot = "";
 			targets = (
 				53DA162A2EEC63AE00508FB7 /* SuperReader */,
+				537483142F48A9B300E4B2D4 /* SuperReaderShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		537483132F48A9B300E4B2D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53DA16292EEC63AE00508FB7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -146,6 +234,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		537483112F48A9B300E4B2D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53DA16272EEC63AE00508FB7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -155,7 +250,78 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		5374831E2F48A9B300E4B2D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 537483142F48A9B300E4B2D4 /* SuperReaderShareExtension */;
+			targetProxy = 5374831D2F48A9B300E4B2D4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		537483212F48A9B300E4B2D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4WE7VKWWKA;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SuperReaderShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SuperReaderShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = liagosoft.SuperReader.SuperReaderShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		537483222F48A9B300E4B2D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4WE7VKWWKA;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SuperReaderShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SuperReaderShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = liagosoft.SuperReader.SuperReaderShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		53DA16342EEC63B100508FB7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -369,6 +535,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		537483242F48A9B300E4B2D4 /* Build configuration list for PBXNativeTarget "SuperReaderShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				537483212F48A9B300E4B2D4 /* Debug */,
+				537483222F48A9B300E4B2D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		53DA16262EEC63AE00508FB7 /* Build configuration list for PBXProject "SuperReader" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
