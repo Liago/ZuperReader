@@ -71,7 +71,7 @@ struct HomeView: View {
                 HStack(spacing: Spacing.sm) {
                     // Theme Button
                     Button(action: { showThemeSelector = true }) {
-                        Image(systemName: themeManager.currentTheme == .dark ? "moon.fill" : "sun.max.fill")
+                        Image(systemName: themeManager.currentTheme.iconName)
                             .font(.system(size: 18))
                             .foregroundColor(themeManager.colors.textSecondary)
                             .frame(width: 40, height: 40)
@@ -198,7 +198,15 @@ struct FilterChip: View {
 struct ThemeSelectorSheet: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
-    
+    @Environment(\.colorScheme) private var colorScheme
+
+    private func previewTheme(_ theme: ColorTheme) -> ColorTheme {
+        if theme == .auto {
+            return colorScheme == .dark ? .dark : .light
+        }
+        return theme
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -209,32 +217,57 @@ struct ThemeSelectorSheet: View {
                     }) {
                         HStack {
                             // Theme preview
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            theme.colors.bgGradientFrom,
-                                            theme.colors.bgGradientVia,
-                                            theme.colors.bgGradientTo
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                            if theme == .auto {
+                                ZStack {
+                                    HStack(spacing: 0) {
+                                        Rectangle()
+                                            .fill(ColorTheme.light.colors.bgPrimary)
+                                        Rectangle()
+                                            .fill(ColorTheme.dark.colors.bgPrimary)
+                                    }
+                                    Image(systemName: "circle.lefthalf.filled")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.gray)
+                                }
                                 .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(theme.colors.border, lineWidth: 1)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                                 )
-                            
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                theme.colors.bgGradientFrom,
+                                                theme.colors.bgGradientVia,
+                                                theme.colors.bgGradientTo
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 50, height: 50)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(theme.colors.border, lineWidth: 1)
+                                    )
+                            }
+
                             VStack(alignment: .leading) {
                                 Text(theme.displayName)
                                     .font(.headline)
                                     .foregroundColor(themeManager.colors.textPrimary)
+                                if theme == .auto {
+                                    Text("Follows system setting")
+                                        .font(.caption)
+                                        .foregroundColor(themeManager.colors.textSecondary)
+                                }
                             }
-                            
+
                             Spacer()
-                            
+
                             if themeManager.currentTheme == theme {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.purple)

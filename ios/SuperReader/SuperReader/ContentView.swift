@@ -3,19 +3,27 @@ import Auth
 
 struct ContentView: View {
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var themeManager = ThemeManager.shared
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isProcessingSharedURLs = false
 
     var body: some View {
         Group {
             if authManager.isLoading {
                 FullScreenLoadingView(message: "Starting up...")
-                    .environmentObject(ThemeManager.shared)
+                    .environmentObject(themeManager)
             } else if authManager.isAuthenticated {
                 MainTabView()
             } else {
                 LoginView()
             }
+        }
+        .onChange(of: colorScheme) { _, newValue in
+            themeManager.updateSystemColorScheme(newValue)
+        }
+        .onAppear {
+            themeManager.updateSystemColorScheme(colorScheme)
         }
         .onOpenURL { url in
             Task {

@@ -8,6 +8,7 @@ export default function ThemeSelector() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const themes: { value: AppTheme; label: string; icon: string; colors: string }[] = [
+		{ value: 'auto', label: 'Auto', icon: '💻', colors: 'from-gray-100 to-slate-300' },
 		{ value: 'light', label: 'Light', icon: '☀️', colors: 'from-purple-100 to-pink-100' },
 		{ value: 'dark', label: 'Dark', icon: '🌙', colors: 'from-slate-700 to-slate-900' },
 		{ value: 'ocean', label: 'Ocean', icon: '🌊', colors: 'from-cyan-100 to-sky-200' },

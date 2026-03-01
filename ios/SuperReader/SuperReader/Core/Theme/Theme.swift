@@ -3,14 +3,16 @@ import SwiftUI
 // MARK: - Color Theme
 
 enum ColorTheme: String, CaseIterable, Codable {
+    case auto
     case light
     case dark
     case ocean
     case forest
     case sunset
-    
+
     var displayName: String {
         switch self {
+        case .auto: return "Auto"
         case .light: return "Light"
         case .dark: return "Dark"
         case .ocean: return "Ocean"
@@ -18,9 +20,29 @@ enum ColorTheme: String, CaseIterable, Codable {
         case .sunset: return "Sunset"
         }
     }
-    
+
+    var iconName: String {
+        switch self {
+        case .auto: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        case .ocean: return "water.waves"
+        case .forest: return "leaf.fill"
+        case .sunset: return "sunset.fill"
+        }
+    }
+
+    func resolvedTheme(for colorScheme: ColorScheme) -> ColorTheme {
+        if self == .auto {
+            return colorScheme == .dark ? .dark : .light
+        }
+        return self
+    }
+
     var colors: ThemeColors {
         switch self {
+        case .auto:
+            return ColorTheme.light.colors
         case .light:
             return ThemeColors(
                 bgPrimary: Color(hex: "#FFFFFF"),
