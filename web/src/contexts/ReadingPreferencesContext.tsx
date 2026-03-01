@@ -40,7 +40,7 @@ const ReadingPreferencesContext = createContext<ReadingPreferencesContextType | 
 
 export function ReadingPreferencesProvider({ children }: { children: ReactNode }) {
 	const { user } = useAuth();
-	const { theme: globalTheme } = useTheme();
+	const { resolvedTheme: globalTheme } = useTheme();
 	const [preferences, setPreferences] = useState<ReadingPreferences>(defaultPreferences);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);

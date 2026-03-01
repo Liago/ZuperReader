@@ -53,6 +53,7 @@ struct MainTabView: View {
         }
         .tint(themeManager.colors.accent)
         .environmentObject(themeManager)
+        .observeSystemColorScheme()
         .task {
             await loadBadgeCounts()
         }
