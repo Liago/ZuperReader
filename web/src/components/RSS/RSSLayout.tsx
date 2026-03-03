@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import RSSSidebar from './RSSSidebar';
 import FeedList from './FeedList';
 import ImportModal from './ImportModal';
 import DiscoveryModal from './DiscoveryModal';
+import { markAllFeedArticlesAsRead } from '@/lib/api';
 
 interface Feed {
 	id: string;
@@ -47,6 +48,16 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 	// I should probably pass a refresh callback or let Sidebar handle router refresh?
 	// I didn't add router.refresh() in Sidebar. I should probably add it there.
 
+	// Handle marking all articles in a feed as read
+	const handleMarkFeedAsRead = useCallback(async (feedId: string) => {
+		try {
+			await markAllFeedArticlesAsRead(feedId, userId);
+			if (onFeedUpdated) onFeedUpdated();
+		} catch (err) {
+			console.error('Failed to mark feed as read:', err);
+		}
+	}, [userId, onFeedUpdated]);
+
 	// Handle back to feeds on mobile
 	const handleBackToFeeds = () => {
 		setSelectedFeed(null);
@@ -70,6 +81,7 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 						onSelectFeed={setSelectedFeed}
 						onOpenImportModal={() => setShowImportModal(true)}
 						onOpenDiscoveryModal={() => setShowDiscoveryModal(true)}
+						onMarkFeedAsRead={handleMarkFeedAsRead}
 					/>
 				</div>
 
