@@ -26,9 +26,10 @@ interface RSSSidebarProps {
   onSelectFeed: (feed: Feed | null) => void;
   onOpenImportModal: () => void;
   onOpenDiscoveryModal: () => void;
+  onMarkFeedAsRead?: (feedId: string) => void;
 }
 
-export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed, onOpenImportModal, onOpenDiscoveryModal }: RSSSidebarProps) {
+export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFeed, onOpenImportModal, onOpenDiscoveryModal, onMarkFeedAsRead }: RSSSidebarProps) {
   const router = useRouter();
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -36,7 +37,7 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
   const [newFeedUrl, setNewFeedUrl] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [movingFeedId, setMovingFeedId] = useState<string | null>(null);
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(folders.map(f => f.id)));
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
   
   // Confirmation Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -341,6 +342,17 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                                     </div>
                                 )}
                             </div>
+                            {onMarkFeedAsRead && feed.unread_count !== undefined && feed.unread_count > 0 && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onMarkFeedAsRead(feed.id); }}
+                                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-green-500 hover:text-green-700 w-5 h-5 flex items-center justify-center rounded hover:bg-green-100 transition-all flex-shrink-0"
+                                    title="Mark all as read"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            )}
                             <button
                                 onClick={(e) => handleDeleteFeed(feed.id, feed.title, e)}
                                 className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-red-500 hover:text-red-700 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 transition-all flex-shrink-0"
@@ -420,6 +432,17 @@ export default function RSSSidebar({ folders, feeds, selectedFeedId, onSelectFee
                                     </div>
                                 )}
                             </div>
+                            {onMarkFeedAsRead && feed.unread_count !== undefined && feed.unread_count > 0 && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onMarkFeedAsRead(feed.id); }}
+                                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-green-500 hover:text-green-700 w-5 h-5 flex items-center justify-center rounded hover:bg-green-100 transition-all flex-shrink-0"
+                                    title="Mark all as read"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            )}
                             <button
                                 onClick={(e) => handleDeleteFeed(feed.id, feed.title, e)}
                                 className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-red-500 hover:text-red-700 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 transition-all flex-shrink-0"

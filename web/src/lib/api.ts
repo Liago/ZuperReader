@@ -1044,6 +1044,23 @@ export async function markMultipleRSSArticlesAsRead(articleIds: string[], userId
 }
 
 /**
+ * Mark all articles in a feed as read
+ */
+export async function markAllFeedArticlesAsRead(feedId: string, userId: string): Promise<void> {
+	const { error } = await supabase
+		.from('rss_articles')
+		.update({
+			is_read: true,
+			read_at: new Date().toISOString()
+		})
+		.eq('feed_id', feedId)
+		.eq('user_id', userId)
+		.eq('is_read', false);
+
+	if (error) throw new Error(error.message);
+}
+
+/**
  * Get unread count for a specific feed
  */
 export async function getFeedUnreadCount(userId: string, feedId: string, supabaseClient?: any): Promise<number> {
