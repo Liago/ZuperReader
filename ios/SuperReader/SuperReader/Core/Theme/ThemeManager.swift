@@ -83,7 +83,7 @@ extension EnvironmentValues {
 
 struct SystemColorSchemeObserver: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
-    @EnvironmentObject var themeManager: ThemeManager
+    private let themeManager = ThemeManager.shared
 
     func body(content: Content) -> some View {
         content
