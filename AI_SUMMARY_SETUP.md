@@ -32,7 +32,7 @@ Add the following environment variables to your project:
 
 #### For Local Development (parser-api/.env)
 ```bash
-COHERE_API_KEY=O2pO7lIlFe6nfZqyX4WhxTFE3Zgr79TCHtlVA6Vq
+COHERE_API_KEY=your-cohere-api-key-here
 ```
 
 #### For Netlify Deployment
@@ -40,7 +40,7 @@ Go to your Netlify dashboard:
 1. Navigate to **Site configuration > Environment variables**
 2. Add the following variable:
    - Key: `COHERE_API_KEY`
-   - Value: `O2pO7lIlFe6nfZqyX4WhxTFE3Zgr79TCHtlVA6Vq`
+   - Value: `<your-cohere-api-key>`
 
 #### For Web App
 
