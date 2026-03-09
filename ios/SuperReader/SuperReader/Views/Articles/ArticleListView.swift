@@ -106,7 +106,7 @@ class ArticleListViewModel: ObservableObject {
     
     func toggleFavorite(_ article: Article) async {
         let newValue = !article.isFavorite
-        
+
         // Optimistic update
         if let index = articles.firstIndex(where: { $0.id == article.id }) {
             var updatedArticle = articles[index]

@@ -723,19 +723,58 @@ actor SupabaseService {
     // MARK: - Statistics
     
     func getUserStatistics(userId: String) async throws -> UserStatistics {
-        // Get article counts
-        let articles: [Article] = try await client
+        let userIdLower = userId.lowercased()
+
+        // Use COUNT queries instead of fetching all articles (avoids 1000 row limit)
+
+        // Total articles count
+        let totalResponse = try await client
             .from("articles")
-            .select()
-            .eq("user_id", value: userId.lowercased())
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userIdLower)
+            .execute()
+        let totalArticles = totalResponse.count ?? 0
+
+        // Favorites count
+        let favoritesResponse = try await client
+            .from("articles")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userIdLower)
+            .eq("is_favorite", value: true)
+            .execute()
+        let favoriteArticles = favoritesResponse.count ?? 0
+
+        // Completed (read) articles count
+        let completedResponse = try await client
+            .from("articles")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userIdLower)
+            .eq("reading_status", value: "completed")
+            .execute()
+        let readArticles = completedResponse.count ?? 0
+
+        // For likes and comments, we need to sum - fetch only those fields
+        struct ArticleStats: Codable {
+            let likeCount: Int
+            let commentCount: Int
+
+            enum CodingKeys: String, CodingKey {
+                case likeCount = "like_count"
+                case commentCount = "comment_count"
+            }
+        }
+
+        let statsArticles: [ArticleStats] = try await client
+            .from("articles")
+            .select("like_count, comment_count")
+            .eq("user_id", value: userIdLower)
             .execute()
             .value
-        
-        let totalArticles = articles.count
-        let readArticles = articles.filter { $0.readingStatus == .completed }.count
-        let favoriteArticles = articles.filter { $0.isFavorite }.count
-        let totalLikesReceived = articles.reduce(0) { $0 + $1.likeCount }
-        let totalCommentsReceived = articles.reduce(0) { $0 + $1.commentCount }
+
+        let totalLikesReceived = statsArticles.reduce(0) { $0 + $1.likeCount }
+        let totalCommentsReceived = statsArticles.reduce(0) { $0 + $1.commentCount }
+
+        print("📊 [Stats] Total: \(totalArticles), Favorites: \(favoriteArticles), Read: \(readArticles), Likes: \(totalLikesReceived), Comments: \(totalCommentsReceived)")
         
         // Get friends count
         let friends = try await getFriends(userId: userId)
