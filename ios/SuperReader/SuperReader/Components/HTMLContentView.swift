@@ -43,9 +43,6 @@ struct HTMLContentView: UIViewRepresentable {
     private func generateHtml(content: String, preferences: ReadingPreferences) -> String {
         let fontFamily = getCSSFontFamily(for: preferences.fontFamily)
         let fontSize = Int(preferences.fontSize)
-        // Convert ColorTheme to CSS hex colors
-        let colors = preferences.colorTheme.colors
-        
         // Map ColorTheme to CSS values
         let (textColor, linkColor) = getThemeColors(theme: preferences.colorTheme)
         
@@ -219,7 +216,7 @@ struct HTMLContentView: UIViewRepresentable {
     
     private func getThemeColors(theme: ColorTheme) -> (text: String, link: String) {
         switch theme {
-        case .light:
+        case .light, .auto:
             return ("#111827", "#9333EA") // textPrimary, accent
         case .dark:
             return ("#F1F5F9", "#818CF8")

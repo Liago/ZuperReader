@@ -156,7 +156,12 @@ struct RSSArticleListView: View {
         
         try? await Task.sleep(nanoseconds: 500_000_000)
         isMarkingRead = false
-        dismiss()
+        
+        if let idx = currentIndex, idx < viewModel.feeds.count - 1 {
+            currentFeed = viewModel.feeds[idx + 1]
+        } else {
+            dismiss()
+        }
     }
     
     private func refreshFeed() async {
