@@ -48,6 +48,13 @@ struct ArticleReaderView: View {
         preferencesManager.preferences
     }
 
+    /// Reading preferences with colorTheme overridden by the app theme
+    private var themedPreferences: ReadingPreferences {
+        var prefs = preferences
+        prefs.colorTheme = themeManager.resolvedTheme
+        return prefs
+    }
+
     // Get all media items from article
     private var mediaItems: [MediaItem] {
         var items: [MediaItem] = []
@@ -204,7 +211,7 @@ struct ArticleReaderView: View {
                         Text(article.title)
                             .font(preferences.fontFamily.font(size: preferences.fontSize * 1.6))
                             .fontWeight(.bold)
-                            .foregroundColor(preferences.colorTheme.colors.textPrimary)
+                            .foregroundColor(themeManager.colors.textPrimary)
                         
                         // Metadata
                         metadataRow(article)
@@ -243,7 +250,7 @@ struct ArticleReaderView: View {
                         actionBar(article)
                         
                         Divider()
-                            .background(preferences.colorTheme.colors.border)
+                            .background(themeManager.colors.border)
                         
                         // Tags
                         if !article.tags.isEmpty {
@@ -263,7 +270,7 @@ struct ArticleReaderView: View {
                                 case .html(let html):
                                     SelfSizingHTMLView(
                                         htmlContent: html,
-                                        preferences: preferences,
+                                        preferences: themedPreferences,
                                         onLinkTap: { url in
                                             selectedLink = IdentifiableURL(url: url)
                                         },
@@ -288,7 +295,7 @@ struct ArticleReaderView: View {
                                         }
                                     )
                                     // Use stable ID based on block ID (UUID) + prefs, not content hash
-                                    .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(block.id)")
+                                    .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(themeManager.resolvedTheme)-\(block.id)")
                                     
                                 case .video(let url):
                                     VideoPreviewView(
@@ -354,7 +361,7 @@ struct ArticleReaderView: View {
                 }
             }
         }
-        .background(preferences.colorTheme.colors.bgPrimary)
+        .background(themeManager.colors.bgPrimary)
         // Circular progress indicator - bottom left
         .overlay(alignment: .bottomLeading) {
             CircularProgressIndicator(progress: readingProgress)
@@ -409,7 +416,7 @@ struct ArticleReaderView: View {
                     Text(author)
                         .font(.system(size: 14, weight: .medium))
                 }
-                .foregroundColor(preferences.colorTheme.colors.textPrimary)
+                .foregroundColor(themeManager.colors.textPrimary)
             }
             
             if let domain = article.domain {
@@ -419,7 +426,7 @@ struct ArticleReaderView: View {
                     Text(domain)
                         .font(.system(size: 13))
                 }
-                .foregroundColor(preferences.colorTheme.colors.textSecondary)
+                .foregroundColor(themeManager.colors.textSecondary)
             }
             
             if let readTime = article.formattedReadTime {
@@ -429,7 +436,7 @@ struct ArticleReaderView: View {
                     Text(readTime)
                         .font(.system(size: 13))
                 }
-                .foregroundColor(preferences.colorTheme.colors.textSecondary)
+                .foregroundColor(themeManager.colors.textSecondary)
             }
         }
     }
@@ -457,7 +464,7 @@ struct ArticleReaderView: View {
             Button(action: { Task { await toggleFavorite() } }) {
                 Image(systemName: article.isFavorite ? "heart.fill" : "heart")
                     .font(.system(size: 20))
-                    .foregroundColor(article.isFavorite ? .red : preferences.colorTheme.colors.textSecondary)
+                    .foregroundColor(article.isFavorite ? .red : themeManager.colors.textSecondary)
             }
             
             // Like
@@ -469,7 +476,7 @@ struct ArticleReaderView: View {
                     }
                 }
                 .font(.system(size: 16))
-                .foregroundColor(hasLiked ? .blue : preferences.colorTheme.colors.textSecondary)
+                .foregroundColor(hasLiked ? .blue : themeManager.colors.textSecondary)
                 .padding(.horizontal, Spacing.sm)
                 .padding(.vertical, Spacing.xs)
                 .background(
@@ -482,14 +489,14 @@ struct ArticleReaderView: View {
             Button(action: { showShareSheet = true }) {
                 Image(systemName: "paperplane")
                     .font(.system(size: 18))
-                    .foregroundColor(preferences.colorTheme.colors.textSecondary)
+                    .foregroundColor(themeManager.colors.textSecondary)
             }
             
             // Tags
             Button(action: { showTagEditor = true }) {
                 Image(systemName: "tag")
                     .font(.system(size: 18))
-                    .foregroundColor(preferences.colorTheme.colors.textSecondary)
+                    .foregroundColor(themeManager.colors.textSecondary)
             }
         }
         .padding(.vertical, Spacing.sm)
@@ -502,7 +509,7 @@ struct ArticleReaderView: View {
     private func articleTextContent(_ content: String) -> some View {
         HTMLContentView(
             htmlContent: content,
-            preferences: preferences,
+            preferences: themedPreferences,
             dynamicHeight: $contentHeight,
             onLinkTap: { url in
                 selectedLink = IdentifiableURL(url: url)
@@ -515,7 +522,7 @@ struct ArticleReaderView: View {
                 showMediaGallery = true
             }
         )
-        .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(preferences.colorTheme)-\(preferences.lineHeight)") // Force view recreation when preferences change
+        .id("\(preferences.fontFamily)-\(preferences.fontSize)-\(themeManager.resolvedTheme)-\(preferences.lineHeight)") // Force view recreation when preferences change
         .frame(height: contentHeight)
         .frame(maxWidth: .infinity)
     }
@@ -563,9 +570,9 @@ struct ArticleReaderView: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
             }
-            .foregroundColor(preferences.colorTheme.colors.textPrimary)
+            .foregroundColor(themeManager.colors.textPrimary)
             .padding()
-            .background(preferences.colorTheme.colors.bgSecondary)
+            .background(themeManager.colors.bgSecondary)
             .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
         }
     }
