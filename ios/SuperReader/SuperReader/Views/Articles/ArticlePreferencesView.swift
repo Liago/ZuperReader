@@ -44,22 +44,6 @@ struct ReadingPreferencesView: View {
                     }
                 }
                 
-                // Theme Section
-                Section(header: Text("Article Theme")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(ColorTheme.allCases, id: \.self) { theme in
-                                ThemeCircle(theme: theme, isSelected: preferences.colorTheme == theme) {
-                                    withAnimation {
-                                        preferences.colorTheme = theme
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical, 8)
-                    }
-                }
-                
                 // Line Height Section
                 Section(header: Text("Line Height")) {
                     Picker("Line Height", selection: $preferences.lineHeight) {
@@ -76,11 +60,11 @@ struct ReadingPreferencesView: View {
                         Text("The quick brown fox jumps over the lazy dog.")
                             .font(preferences.fontFamily.font(size: preferences.fontSize))
                             .lineSpacing(preferences.fontSize * (preferences.lineHeight.multiplier - 1))
-                            .foregroundColor(preferences.colorTheme.colors.textPrimary)
+                            .foregroundColor(themeManager.colors.textPrimary)
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(preferences.colorTheme.colors.bgPrimary)
+                    .background(themeManager.colors.bgPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
@@ -93,31 +77,6 @@ struct ReadingPreferencesView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
-}
-
-struct ThemeCircle: View {
-    let theme: ColorTheme
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(theme.colors.bgPrimary)
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
-                
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundColor(theme.colors.textPrimary)
                 }
             }
         }
