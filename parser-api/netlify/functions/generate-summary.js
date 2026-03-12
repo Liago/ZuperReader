@@ -6,8 +6,8 @@ const CORS_HEADERS = {
 
 // Cohere API configuration
 const COHERE_API_KEY = process.env.COHERE_API_KEY;
-const COHERE_API_URL = 'https://api.cohere.ai/v1/chat';
-const COHERE_MODEL = 'command-r-08-2024'; // Recommended model for summarization
+const COHERE_API_URL = 'https://api.cohere.ai/v2/chat';
+const COHERE_MODEL = 'command-a-03-2025'; // Latest recommended model for summarization
 
 // Retry configuration for rate limiting
 const MAX_RETRIES = 3;
@@ -105,7 +105,12 @@ ${truncatedText}`;
 
 	const requestBody = JSON.stringify({
 		model: COHERE_MODEL,
-		message: prompt,
+		messages: [
+			{
+				role: 'user',
+				content: prompt,
+			},
+		],
 		temperature: 0.3,
 		max_tokens: 500,
 	});
@@ -149,7 +154,7 @@ ${truncatedText}`;
 			}
 
 			const data = await response.json();
-			return data.text;
+			return data.message.content[0].text;
 		} catch (error) {
 			// Only retry on rate limit errors
 			if (error.isRateLimited && attempt < MAX_RETRIES) {
