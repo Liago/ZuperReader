@@ -6,7 +6,7 @@ const CORS_HEADERS = {
 
 // Cohere API configuration
 const COHERE_API_KEY = process.env.COHERE_API_KEY;
-const COHERE_API_URL = 'https://api.cohere.ai/v2/chat';
+const COHERE_API_URL = 'https://api.cohere.com/v2/chat';
 const COHERE_MODEL = 'command-a-03-2025'; // Latest recommended model for summarization
 
 // Retry configuration for rate limiting
@@ -267,7 +267,7 @@ exports.handler = async (event) => {
 			statusCode: 500,
 			headers: CORS_HEADERS,
 			body: JSON.stringify({
-				error: 'Failed to generate summary',
+				error: `Errore nella generazione del riassunto: ${error.message}`,
 				details: error.message,
 			}),
 		};
