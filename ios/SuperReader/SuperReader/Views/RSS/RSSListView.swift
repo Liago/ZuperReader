@@ -53,13 +53,27 @@ struct RSSListView: View {
             .navigationTitle("Your Feeds")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingDiscovery = true }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Circle().fill(themeManager.colors.accent))
-                            .shadow(color: themeManager.colors.accent.opacity(0.4), radius: 4, y: 2)
+                    HStack(spacing: 12) {
+                        Button {
+                            Task { await viewModel.refreshFeeds() }
+                        } label: {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(Color.orange))
+                                .shadow(color: Color.orange.opacity(0.4), radius: 4, y: 2)
+                        }
+                        .disabled(viewModel.isRefreshing)
+
+                        Button(action: { showingDiscovery = true }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(themeManager.colors.accent))
+                                .shadow(color: themeManager.colors.accent.opacity(0.4), radius: 4, y: 2)
+                        }
                     }
                 }
             }

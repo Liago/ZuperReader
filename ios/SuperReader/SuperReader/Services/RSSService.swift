@@ -103,6 +103,41 @@ class RSSService {
         }
     }
     
+    /// Refresh all feeds via the web API endpoint (same as the web app).
+    /// The server fetches, parses, and upserts articles to Supabase.
+    /// Returns the result with stats about added/existing articles.
+    func refreshFeedsViaAPI() async throws -> FeedRefreshResult {
+        guard let url = URL(string: "\(webApiUrl)/api/rss/refresh") else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 120 // feeds refresh can take a while
+        try await attachAuthHeader(to: &request)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        if httpResponse.statusCode == 401 {
+            throw NSError(domain: "RSSService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Unauthorized"])
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                throw NSError(domain: "RSSService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.error])
+            }
+            throw URLError(.badServerResponse)
+        }
+
+        let result = try JSONDecoder().decode(FeedRefreshResult.self, from: data)
+        return result
+    }
+
     func addFeed(url: String) async throws {
         try await performFeedAction(action: "add", url: url)
     }
