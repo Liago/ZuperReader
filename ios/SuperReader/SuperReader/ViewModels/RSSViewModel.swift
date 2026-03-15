@@ -48,66 +48,47 @@ class RSSViewModel: ObservableObject {
     func refreshFeeds() async {
         guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
-        
+
         isRefreshing = true
         errorMessage = nil
         refreshProgress = "Starting update..."
         progressPercentage = 0.0
         processedFeedsCount = 0
-        
-        // 1. Get current feeds to refresh
-        let feedsToRefresh = self.feeds
-        if feedsToRefresh.isEmpty {
+        totalFeedsCount = feeds.count
+
+        if feeds.isEmpty {
             isRefreshing = false
             refreshProgress = nil
             return
         }
-        
-        totalFeedsCount = feedsToRefresh.count
-        var completed = 0
-        
-        // 2. Refresh in batches of 5
-        let batchSize = 5
-        
+
         do {
-            for i in stride(from: 0, to: totalFeedsCount, by: batchSize) {
-                let end = min(i + batchSize, totalFeedsCount)
-                let batch = feedsToRefresh[i..<end]
-                
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    for feed in batch {
-                        group.addTask {
-                            do {
-                                _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
-                            } catch {
-                                print("Error refreshing feed \(feed.title) (\(feed.url)): \(error.localizedDescription)")
-                            }
-                        }
-                    }
-                    // Wait for all in this batch
-                    try await group.waitForAll()
-                }
-                
-                completed += batch.count
-                processedFeedsCount = completed
-                progressPercentage = Double(completed) / Double(totalFeedsCount)
-                refreshProgress = "Updating \(completed)/\(totalFeedsCount)..."
-            }
-            
+            // Call the web API endpoint (same as the web app)
+            refreshProgress = "Updating feeds via server..."
+            progressPercentage = 0.3
+
+            let result = try await rssService.refreshFeedsViaAPI()
+
+            progressPercentage = 0.9
             refreshProgress = "Finalizing..."
+
+            if !result.success {
+                let errorMsg = result.errors?.joined(separator: ", ") ?? "Unknown error"
+                self.errorMessage = "Refresh failed: \(errorMsg)"
+            }
+
+            // Reload feeds and unread counts from Supabase
             progressPercentage = 1.0
-            
-            // 3. Reload everything
             await loadFeeds()
-            
+
         } catch {
             self.errorMessage = "Failed to refresh feeds: \(error.localizedDescription)"
-            await loadFeeds() 
+            await loadFeeds()
         }
-        
-        // Add a small delay to let user see 100%
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1s delay to see the result
-        
+
+        // Small delay to let user see 100%
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+
         refreshProgress = nil
         isRefreshing = false
         progressPercentage = 0.0
