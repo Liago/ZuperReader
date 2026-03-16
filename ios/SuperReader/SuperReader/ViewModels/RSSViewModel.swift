@@ -54,31 +54,48 @@ class RSSViewModel: ObservableObject {
         refreshProgress = "Starting update..."
         progressPercentage = 0.0
         processedFeedsCount = 0
-        totalFeedsCount = feeds.count
 
-        if feeds.isEmpty {
+        let feedsToRefresh = self.feeds
+        if feedsToRefresh.isEmpty {
             isRefreshing = false
             refreshProgress = nil
             return
         }
 
+        totalFeedsCount = feedsToRefresh.count
+        var completed = 0
+
         do {
-            // Call the web API endpoint (same as the web app)
-            refreshProgress = "Updating feeds via server..."
-            progressPercentage = 0.3
+            // Refresh feeds in batches of 5 with real progress tracking
+            let batchSize = 5
 
-            let result = try await rssService.refreshFeedsViaAPI()
+            for i in stride(from: 0, to: totalFeedsCount, by: batchSize) {
+                let end = min(i + batchSize, totalFeedsCount)
+                let batch = feedsToRefresh[i..<end]
 
-            progressPercentage = 0.9
-            refreshProgress = "Finalizing..."
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    for feed in batch {
+                        group.addTask {
+                            do {
+                                _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
+                            } catch {
+                                print("Error refreshing feed \(feed.title) (\(feed.url)): \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                    try await group.waitForAll()
+                }
 
-            if !result.success {
-                let errorMsg = result.errors?.joined(separator: ", ") ?? "Unknown error"
-                self.errorMessage = "Refresh failed: \(errorMsg)"
+                completed += batch.count
+                processedFeedsCount = completed
+                progressPercentage = Double(completed) / Double(totalFeedsCount)
+                refreshProgress = "Updating \(completed)/\(totalFeedsCount)..."
             }
 
-            // Reload feeds and unread counts from Supabase
+            refreshProgress = "Finalizing..."
             progressPercentage = 1.0
+
+            // Reload feeds and unread counts from Supabase
             await loadFeeds()
 
         } catch {
