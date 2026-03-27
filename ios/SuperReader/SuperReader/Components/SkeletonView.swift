@@ -22,15 +22,15 @@ struct SkeletonView: View {
     
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color.gray.opacity(0.2))
+            .fill(themeManager.colors.textSecondary.opacity(0.2))
             .frame(width: width, height: height)
             .overlay(
                 GeometryReader { geometry in
                     LinearGradient(
                         colors: [
-                            Color.gray.opacity(0),
-                            Color.white.opacity(0.3),
-                            Color.gray.opacity(0)
+                            themeManager.colors.textSecondary.opacity(0),
+                            themeManager.colors.textPrimary.opacity(0.15),
+                            themeManager.colors.textSecondary.opacity(0)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
