@@ -41,10 +41,12 @@ class ArticleListViewModel: ObservableObject {
         print("🔍 ViewModel: Loading articles for userId: \(userId)")
         self.userId = userId
         offset = 0
-        if articles.isEmpty {
+        if articles.isEmpty && !isLoading {
             isLoading = true
         }
-        errorMessage = nil
+        if errorMessage != nil {
+            errorMessage = nil
+        }
         
         do {
             let result = try await SupabaseService.shared.getArticles(
@@ -62,8 +64,11 @@ class ArticleListViewModel: ObservableObject {
         } catch {
             print("❌ ViewModel Error: \(error)")
             // Only set error message if we don't have cached articles, to avoid disrupting UX
-            if articles.isEmpty {
-                errorMessage = error.localizedDescription
+            let nsError = error as NSError
+            if !(error is CancellationError) && nsError.code != URLError.cancelled.rawValue {
+                if articles.isEmpty {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
         
