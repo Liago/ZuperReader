@@ -78,7 +78,7 @@ struct ArticleCardSkeleton: View {
             .padding(.horizontal, Spacing.sm)
             .padding(.bottom, Spacing.sm)
         }
-        .background(Color.white)
+        .background(themeManager.colors.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
         .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
     }
@@ -109,7 +109,7 @@ struct ArticleRowSkeleton: View {
             }
         }
         .padding(Spacing.sm)
-        .background(Color.white)
+        .background(themeManager.colors.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
     }
 }
