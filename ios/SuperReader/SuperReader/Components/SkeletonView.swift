@@ -8,6 +8,7 @@ struct SkeletonView: View {
     let cornerRadius: CGFloat
     
     @State private var isAnimating = false
+    @EnvironmentObject private var themeManager: ThemeManager
     
     init(
         width: CGFloat? = nil,
@@ -55,6 +56,8 @@ struct SkeletonView: View {
 // MARK: - Article Card Skeleton
 
 struct ArticleCardSkeleton: View {
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Image placeholder
@@ -84,6 +87,8 @@ struct ArticleCardSkeleton: View {
 // MARK: - Article Row Skeleton
 
 struct ArticleRowSkeleton: View {
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Thumbnail
@@ -112,6 +117,8 @@ struct ArticleRowSkeleton: View {
 // MARK: - Profile Skeleton
 
 struct ProfileSkeleton: View {
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Avatar
