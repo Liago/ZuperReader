@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { fetchFeed, parseOPML, OpmlOutline, FeedData } from '@/lib/rssService';
+import { fetchFeed, parseFeedString, parseOPML, OpmlOutline, FeedData } from '@/lib/rssService';
 import { syncRSSArticles } from '@/lib/api';
 // cheerio import removed
 
@@ -426,17 +426,25 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
 
 			if (response.ok) {
 				const contentType = response.headers.get('content-type') || '';
+				const text = await response.text();
 
-				// If the URL itself IS the feed (XML/RSS/Atom)
-				if (contentType.includes('xml') || contentType.includes('rss') || contentType.includes('atom')) {
+				const isLikelyFeed = contentType.includes('xml') || 
+                                     contentType.includes('rss') || 
+                                     contentType.includes('atom') || 
+                                     text.trim().startsWith('<?xml') || 
+                                     text.trim().startsWith('<rss') || 
+                                     text.trim().startsWith('<feed');
+
+				// If the URL itself IS the feed
+				if (isLikelyFeed) {
 					// Verify it works
 					try {
-						const feedData = await fetchFeed(normalizedUrl);
+						const feedData = await parseFeedString(text, normalizedUrl);
 						return {
 							feeds: [{
 								url: normalizedUrl,
 								title: feedData.title || 'Feed',
-								type: 'rss', // simplified
+								type: contentType.includes('atom') || text.includes('<feed') ? 'atom' : 'rss',
 								siteUrl: feedData.link || origin
 							}]
 						};
@@ -445,7 +453,7 @@ export async function discoverFeeds(input: string): Promise<{ feeds?: Discovered
 					}
 				}
 
-				const html = await response.text();
+				const html = text;
 				// @ts-ignore
 				const cheerio = await import('cheerio');
 				const $ = cheerio.load(html);
