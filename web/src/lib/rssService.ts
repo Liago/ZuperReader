@@ -46,6 +46,7 @@ const parser = new Parser({
       ['enclosure', 'enclosure'],
     ],
   },
+  timeout: 10000,
 });
 
 /**
@@ -107,30 +108,44 @@ function extractImageUrl(item: any): string | undefined {
 export async function fetchFeed(url: string): Promise<FeedData> {
   try {
     const feed = await parser.parseURL(url);
-
-    // Transform to our interface if needed, or just return as is
-    // rss-parser output is very similar to our FeedData interface
-    return {
-      title: feed.title,
-      description: feed.description,
-      link: feed.link,
-      feedUrl: url,
-      items: feed.items.map(item => ({
-        title: item.title,
-        link: item.link,
-        pubDate: item.pubDate,
-        author: item.creator || (item as any).author,
-        content: item['content:encoded'] || item.content,
-        contentSnippet: item.contentSnippet,
-        isoDate: item.isoDate,
-        imageUrl: extractImageUrl(item),
-      })),
-      image: feed.image,
-    };
+    return mapParserOutputToFeedData(feed, url);
   } catch (error) {
     console.error(`Error fetching feed ${url}:`, error);
     throw new Error(`Failed to fetch feed: ${(error as Error).message}`);
   }
+}
+
+/**
+ * Parses an RSS feed from an XML string
+ */
+export async function parseFeedString(xml: string, url: string): Promise<FeedData> {
+  try {
+    const feed = await parser.parseString(xml);
+    return mapParserOutputToFeedData(feed, url);
+  } catch (error) {
+    console.error(`Error parsing feed string for ${url}:`, error);
+    throw new Error(`Failed to parse feed string: ${(error as Error).message}`);
+  }
+}
+
+function mapParserOutputToFeedData(feed: any, url: string): FeedData {
+  return {
+    title: feed.title,
+    description: feed.description,
+    link: feed.link,
+    feedUrl: url,
+    items: feed.items.map((item: any) => ({
+      title: item.title,
+      link: item.link,
+      pubDate: item.pubDate,
+      author: item.creator || item.author,
+      content: item['content:encoded'] || item.content,
+      contentSnippet: item.contentSnippet,
+      isoDate: item.isoDate,
+      imageUrl: extractImageUrl(item),
+    })),
+    image: feed.image,
+  };
 }
 
 /**
