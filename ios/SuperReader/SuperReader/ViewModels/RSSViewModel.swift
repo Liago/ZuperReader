@@ -14,6 +14,12 @@ class RSSViewModel: ObservableObject {
     
     private let rssService = RSSService.shared
     private let authManager = AuthManager.shared
+    private var lastRefreshDate: Date?
+
+    func shouldAutoRefresh() -> Bool {
+        guard let last = lastRefreshDate else { return true }
+        return Date().timeIntervalSince(last) > 300 // 5 minutes
+    }
     
     func loadFeeds() async {
         guard let userId = authManager.user?.id.uuidString else { return }
@@ -113,6 +119,16 @@ class RSSViewModel: ObservableObject {
         totalFeedsCount = 0
     }
     
+    /// Refresh all feeds with auto-refresh tracking.
+    /// Uses client-side refresh (reliable) with lastRefreshDate gating.
+    func refreshFeedsViaAPI() async {
+        guard !isRefreshing else { return }
+        guard authManager.isAuthenticated else { return }
+
+        await refreshFeeds()
+        lastRefreshDate = Date()
+    }
+
     func deleteFeed(_ feed: RSSFeed) async {
         guard let index = feeds.firstIndex(where: { $0.id == feed.id }) else { return }
         

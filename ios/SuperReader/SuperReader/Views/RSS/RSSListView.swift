@@ -41,7 +41,7 @@ struct RSSListView: View {
                     }
                     .refreshable {
                         Task {
-                            await viewModel.refreshFeeds()
+                            await viewModel.refreshFeedsViaAPI()
                         }
                     }
                 }
@@ -55,7 +55,7 @@ struct RSSListView: View {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 12) {
                         Button {
-                            Task { await viewModel.refreshFeeds() }
+                            Task { await viewModel.refreshFeedsViaAPI() }
                         } label: {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .font(.system(size: 16, weight: .bold))
@@ -85,6 +85,9 @@ struct RSSListView: View {
             }
             .task {
                 await viewModel.loadFeeds()
+                if viewModel.shouldAutoRefresh() {
+                    await viewModel.refreshFeedsViaAPI()
+                }
             }
         }
     }

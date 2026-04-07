@@ -236,9 +236,10 @@ struct RSSFeedHeader: View {
     let onPrev: () -> Void
     let onNext: () -> Void
     @Environment(\.dismiss) var dismiss
-    
+    @State private var showSafariView = false
+
     @EnvironmentObject var themeManager: ThemeManager
-    
+
     var body: some View {
         ZStack {
             // Center Content
@@ -278,7 +279,18 @@ struct RSSFeedHeader: View {
             }
             .padding(.horizontal, 90) // Safe padding for side buttons
             .animation(.easeInOut(duration: 0.3), value: feed.id)
-            
+            .onTapGesture {
+                if feed.siteUrl != nil {
+                    showSafariView = true
+                }
+            }
+            .fullScreenCover(isPresented: $showSafariView) {
+                if let siteUrlString = feed.siteUrl, let url = URL(string: siteUrlString) {
+                    SafariView(url: url)
+                        .edgesIgnoringSafeArea(.all)
+                }
+            }
+
             // Side Buttons
             HStack(alignment: .center) {
                 // Left
@@ -349,6 +361,20 @@ struct RSSFeedHeader: View {
         .padding(.bottom, 12)
         .background(
             themeManager.colors.cardBg
+                .overlay(
+                    AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .interpolation(.none)
+                                .aspectRatio(contentMode: .fill)
+                                .scaleEffect(3.0)
+                                .blur(radius: 30)
+                                .opacity(0.15)
+                        }
+                    }
+                )
+                .clipped()
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
         )
         .zIndex(10)
