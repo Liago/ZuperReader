@@ -74,6 +74,36 @@ Key entities defined in `web/src/lib/supabase.ts`:
 - `UserProfile`, `Friendship`, `ArticleShare` - user and social features
 - `UserPreferences` - font, theme, line_height, content_width, view_mode settings
 
+## Adding new Supabase tables
+
+Supabase stops auto-granting `public.*` to the Data API roles on 2026-10-30. The repo
+runs two SQL scripts (idempotent) to standardize the project:
+
+- `web/supabase-grants.sql` — grants for `authenticated` + `service_role` on all
+  current and future objects in `public` (via `ALTER DEFAULT PRIVILEGES`).
+- `web/supabase-anon-hardening.sql` — REVOKE ALL from `anon` on `public.*`. SuperReader
+  has no public anonymous flow; anon is granted by exception only.
+
+Template for every new table migration:
+
+```sql
+create table public.your_table (...);
+
+alter table public.your_table enable row level security;
+
+create policy "..." on public.your_table for select to authenticated using (auth.uid() = user_id);
+-- ... additional policies as needed
+
+grant select, insert, update, delete on public.your_table to authenticated;
+grant all on public.your_table to service_role;
+-- DO NOT grant to anon unless the table is intentionally read without an
+-- auth session (e.g. public share tokens). If you do, also remember that
+-- supabase-anon-hardening.sql has stripped anon's default grants on public.
+
+-- For RPC functions:
+grant execute on function public.your_function(...) to authenticated, service_role;
+```
+
 ## iOS App
 
 Located in `ios/SuperReader/SuperReader/` with MVVM architecture:

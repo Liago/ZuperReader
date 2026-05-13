@@ -223,7 +223,7 @@ export async function toggleLike(articleId: string, userId: string): Promise<{ l
 		.select('*')
 		.eq('article_id', articleId)
 		.eq('user_id', userId)
-		.single();
+		.maybeSingle();
 
 	if (existingLike) {
 		// Unlike: remove the like
@@ -276,7 +276,7 @@ export async function checkIfUserLiked(articleId: string, userId: string): Promi
 		.select('*')
 		.eq('article_id', articleId)
 		.eq('user_id', userId)
-		.single();
+		.maybeSingle();
 
 	return !!data;
 }

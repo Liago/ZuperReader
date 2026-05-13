@@ -11,7 +11,6 @@ import ReadingPreferencesModal from '../../../components/ReadingPreferencesModal
 import LinkPreviewModal from '../../../components/LinkPreviewModal';
 import VideoModal from '../../../components/VideoModal';
 import VideoPlaceholder, { VideoInfo, extractVideoInfo } from '../../../components/VideoPlaceholder';
-import LikeButton from '../../../components/LikeButton';
 import CommentsSection from '../../../components/CommentsSection';
 import ShareButton from '../../../components/ShareButton';
 import InternalShareButton from '../../../components/InternalShareButton';
@@ -816,13 +815,6 @@ export default function ArticleReaderPage() {
 								</svg>
 							</button>
 
-							{/* Like button - compact version */}
-							<LikeButton
-								articleId={article.id}
-								userId={user!.id}
-								initialLikeCount={article.like_count}
-							/>
-
 							{/* Internal Share button - compact version */}
 							<InternalShareButton
 								articleId={article.id}
@@ -1067,12 +1059,6 @@ export default function ArticleReaderPage() {
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
 								</svg>
 							</button>
-
-							<LikeButton
-								articleId={article.id}
-								userId={user!.id}
-								initialLikeCount={article.like_count}
-							/>
 
 							<InternalShareButton
 								articleId={article.id}
