@@ -17,25 +17,30 @@ class ArticleListViewModel: ObservableObject {
     private var userId: String?
     private var offset = 0
     private let limit = 10
-    private var searchDebounceTask: Task<Void, Never>?
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         if let savedStatus = UserDefaults.standard.string(forKey: "savedReadingStatusFilter"),
            let status = ReadingStatus(rawValue: savedStatus) {
             filters.readingStatus = status
         }
+
+        $searchQuery
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .sink { [weak self] query in
+                guard let self = self else { return }
+                self.filters.searchQuery = query
+                Task { @MainActor in
+                    if let userId = self.userId {
+                        await self.loadArticles(userId: userId)
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
-    var filteredArticles: [Article] {
-        guard !searchQuery.isEmpty else { return articles }
-        
-        let query = searchQuery.lowercased()
-        return articles.filter { article in
-            article.title.lowercased().contains(query) ||
-            (article.excerpt?.lowercased().contains(query) ?? false) ||
-            (article.domain?.lowercased().contains(query) ?? false)
-        }
-    }
+    var filteredArticles: [Article] { articles }
     
     func loadArticles(userId: String) async {
         print("🔍 ViewModel: Loading articles for userId: \(userId)")
