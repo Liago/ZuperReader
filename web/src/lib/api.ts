@@ -1081,17 +1081,13 @@ export async function getFeedUnreadCount(userId: string, feedId: string, supabas
  */
 export async function getAllFeedsUnreadCounts(userId: string, supabaseClient?: any): Promise<Map<string, number>> {
 	const db = supabaseClient || supabase;
-	const { data, error } = await db
-		.from('rss_articles')
-		.select('feed_id')
-		.eq('user_id', userId)
-		.eq('is_read', false);
+	const { data, error } = await db.rpc('get_all_feeds_unread_counts', { p_user_id: userId });
 
 	if (error) throw new Error(error.message);
 
 	const counts = new Map<string, number>();
-	(data || []).forEach((item: { feed_id: string }) => {
-		counts.set(item.feed_id, (counts.get(item.feed_id) || 0) + 1);
+	(data || []).forEach((item: { feed_id: string; unread_count: number }) => {
+		counts.set(item.feed_id, Number(item.unread_count));
 	});
 
 	return counts;
