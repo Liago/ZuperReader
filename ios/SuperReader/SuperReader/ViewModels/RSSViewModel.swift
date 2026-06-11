@@ -14,11 +14,18 @@ class RSSViewModel: ObservableObject {
     
     private let rssService = RSSService.shared
     private let authManager = AuthManager.shared
-    private var lastRefreshDate: Date?
+
+    private static let lastAutoRefreshKey = "rss.lastAutoRefreshDate"
+    private static let autoRefreshInterval: TimeInterval = 15 * 60
+
+    private var lastRefreshDate: Date? {
+        get { UserDefaults.standard.object(forKey: Self.lastAutoRefreshKey) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: Self.lastAutoRefreshKey) }
+    }
 
     func shouldAutoRefresh() -> Bool {
         guard let last = lastRefreshDate else { return true }
-        return Date().timeIntervalSince(last) > 300 // 5 minutes
+        return Date().timeIntervalSince(last) > Self.autoRefreshInterval
     }
     
     func loadFeeds() async {

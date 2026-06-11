@@ -256,29 +256,26 @@ class RSSService {
     }
     
     func getUnreadCounts(userId: String) async throws -> [UUID: Int] {
-        struct UnreadItem: Decodable {
+        struct UnreadAggregate: Decodable {
             let feedId: UUID
-            
+            let unreadCount: Int
+
             enum CodingKeys: String, CodingKey {
                 case feedId = "feed_id"
+                case unreadCount = "unread_count"
             }
         }
-        
-        // Correct order: filter then select usually, but select then filter works if builder supports it.
-        // here sequence is select -> eq -> eq -> execute. This is Filters.
-        let items: [UnreadItem] = try await SupabaseService.shared.client
-            .from("rss_articles")
-            .select("feed_id")
-            .eq("user_id", value: userId)
-            .eq("is_read", value: false)
+
+        let rows: [UnreadAggregate] = try await SupabaseService.shared.client
+            .rpc("get_all_feeds_unread_counts", params: ["p_user_id": userId])
             .execute()
             .value
-            
+
         var counts = [UUID: Int]()
-        for item in items {
-            counts[item.feedId, default: 0] += 1
+        for row in rows {
+            counts[row.feedId] = row.unreadCount
         }
-        
+
         return counts
     }
     
@@ -342,6 +339,7 @@ class RSSService {
              .update(payload)
              .eq("feed_id", value: feedId)
              .eq("user_id", value: userId)
+             .eq("is_read", value: false)
              .execute()
     }
 }
