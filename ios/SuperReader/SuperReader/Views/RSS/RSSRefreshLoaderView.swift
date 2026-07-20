@@ -3,7 +3,11 @@ import SwiftUI
 struct RSSRefreshLoaderView: View {
     @ObservedObject var viewModel: RSSViewModel
     @EnvironmentObject var themeManager: ThemeManager
-    
+
+    // Drives the indeterminate progress bar sweep. Real per-feed progress isn't
+    // available because the refresh runs as a single server-side request.
+    @State private var animateBar = false
+
     var body: some View {
         if viewModel.isRefreshing {
             ZStack {
@@ -12,7 +16,7 @@ struct RSSRefreshLoaderView: View {
                     .transition(.opacity)
                 
                 VStack(spacing: 20) {
-                    // Header with Icon and Percentage
+                    // Header with Icon and Title
                     HStack(spacing: 16) {
                         Circle()
                             .fill(LinearGradient(colors: [.orange, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -29,46 +33,38 @@ struct RSSRefreshLoaderView: View {
                             Text("Updating RSS feeds")
                                 .font(.headline)
                                 .foregroundColor(themeManager.colors.textPrimary)
-                            
-                            // Redundant text removed
-
                         }
-                        
+
                         Spacer()
-                        
-                        Text("\(Int(viewModel.progressPercentage * 100))%")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.orange)
                     }
-                    
-                    // Progress Bar
+
+                    // Indeterminate Progress Bar (server-side refresh has no granular progress)
                     GeometryReader { geometry in
+                        let barWidth = geometry.size.width
+                        let segment = barWidth * 0.4
                         ZStack(alignment: .leading) {
                             Capsule()
                                 .fill(Color.gray.opacity(0.2))
                                 .frame(height: 8)
-                            
+
                             Capsule()
                                 .fill(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing))
-                                .frame(width: max(0, min(geometry.size.width * CGFloat(viewModel.progressPercentage), geometry.size.width)), height: 8)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.progressPercentage)
+                                .frame(width: segment, height: 8)
+                                .offset(x: animateBar ? barWidth : -segment)
+                                .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: false), value: animateBar)
                         }
+                        .clipShape(Capsule())
                     }
                     .frame(height: 8)
-                    
+
                     // Status
-                    VStack(spacing: 8) {
-                        Text(viewModel.refreshProgress ?? "Retrieving latest articles...")
-                            .font(.caption)
-                            .foregroundColor(themeManager.colors.textSecondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("You can continue reading while we update")
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                            .multilineTextAlignment(.center)
-                    }
+                    Text(viewModel.refreshProgress ?? "Retrieving latest articles...")
+                        .font(.caption)
+                        .foregroundColor(themeManager.colors.textSecondary)
+                        .multilineTextAlignment(.center)
                 }
+                .onAppear { animateBar = true }
+                .onDisappear { animateBar = false }
                 .padding(24)
                 .background(themeManager.colors.bgPrimary)
                 .cornerRadius(20)
