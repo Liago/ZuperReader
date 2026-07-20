@@ -15,17 +15,26 @@ class RSSViewModel: ObservableObject {
     private let rssService = RSSService.shared
     private let authManager = AuthManager.shared
 
-    private static let lastAutoRefreshKey = "rss.lastAutoRefreshDate"
-    private static let autoRefreshInterval: TimeInterval = 15 * 60
+    static let lastAutoRefreshKey = "rss.lastAutoRefreshDate"
+    static let autoRefreshIntervalKey = "rss.autoRefreshInterval"
 
     private var lastRefreshDate: Date? {
         get { UserDefaults.standard.object(forKey: Self.lastAutoRefreshKey) as? Date }
         set { UserDefaults.standard.set(newValue, forKey: Self.lastAutoRefreshKey) }
     }
 
+    static var autoRefreshInterval: RSSRefreshInterval {
+        guard let raw = UserDefaults.standard.string(forKey: autoRefreshIntervalKey),
+              let value = RSSRefreshInterval(rawValue: raw) else {
+            return .fifteenMinutes
+        }
+        return value
+    }
+
     func shouldAutoRefresh() -> Bool {
+        guard let seconds = Self.autoRefreshInterval.seconds else { return false }
         guard let last = lastRefreshDate else { return true }
-        return Date().timeIntervalSince(last) > Self.autoRefreshInterval
+        return Date().timeIntervalSince(last) >= seconds
     }
     
     func loadFeeds() async {
@@ -126,14 +135,37 @@ class RSSViewModel: ObservableObject {
         totalFeedsCount = 0
     }
     
-    /// Refresh all feeds with auto-refresh tracking.
-    /// Uses client-side refresh (reliable) with lastRefreshDate gating.
+    /// Refresh all feeds through the web API (server-side, same path as the web app,
+    /// which parses feeds with the robust `rss-parser` library). Falls back to the
+    /// on-device client parser if the server is unreachable (offline resilience).
     func refreshFeedsViaAPI() async {
         guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
 
-        await refreshFeeds()
-        lastRefreshDate = Date()
+        do {
+            isRefreshing = true
+            errorMessage = nil
+            refreshProgress = "Aggiornamento feed..."
+            progressPercentage = 0.0
+
+            _ = try await rssService.refreshFeedsViaAPI()   // server-side, come il web
+            lastRefreshDate = Date()
+            await loadFeeds()                               // ricarica feed + unread counts
+
+            refreshProgress = nil
+            isRefreshing = false
+            progressPercentage = 0.0
+        } catch {
+            // Fallback offline / server non raggiungibile → parser client on-device.
+            // Release the guard first so refreshFeeds() can run its own lifecycle.
+            print("refreshFeedsViaAPI server failed, falling back to client parser: \(error.localizedDescription)")
+            refreshProgress = nil
+            isRefreshing = false
+            progressPercentage = 0.0
+
+            await refreshFeeds()
+            lastRefreshDate = Date()
+        }
     }
 
     func deleteFeed(_ feed: RSSFeed) async {

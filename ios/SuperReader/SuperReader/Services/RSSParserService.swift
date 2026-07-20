@@ -161,7 +161,7 @@ private class FeedParser: NSObject, XMLParserDelegate {
                 currentItem?.guid = currentCharacters.trimmingCharacters(in: .whitespacesAndNewlines)
             case "pubDate", "dc:date", "published", "updated":
                 let dateStr = currentCharacters.trimmingCharacters(in: .whitespacesAndNewlines)
-                currentItem?.pubDate = DateFormatter.rssDateFormatter.date(from: dateStr) ?? ISO8601DateFormatter().date(from: dateStr)
+                currentItem?.pubDate = Date.fromRSSString(dateStr)
             case "description":
                 let text = currentCharacters.trimmingCharacters(in: .whitespacesAndNewlines)
                 currentItem?.contentSnippet = text
@@ -204,13 +204,50 @@ private class FeedParser: NSObject, XMLParserDelegate {
     }
 }
 
-extension DateFormatter {
-    static let rssDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+extension Date {
+    /// Parse a date string from an RSS/Atom feed, tolerating the many formats feeds use in the wild:
+    /// RFC-822 with numeric offset (`+0000`), RFC-822 with a named timezone (`PDT`, `EST`, ...),
+    /// ISO-8601 with and without fractional seconds, and RFC-822 without seconds.
+    static func fromRSSString(_ string: String) -> Date? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        for formatter in Self.rssDateFormatters {
+            if let date = formatter.date(from: trimmed) {
+                return date
+            }
+        }
+        // ISO-8601 fallbacks (handle both with and without fractional seconds).
+        if let date = Self.iso8601WithFractional.date(from: trimmed) { return date }
+        if let date = Self.iso8601Plain.date(from: trimmed) { return date }
+        return nil
+    }
+
+    private static let rssDateFormatters: [DateFormatter] = {
+        // `Z` matches numeric offsets/GMT; `zzz` matches named abbreviations like PDT/EST.
+        let patterns = [
+            "E, d MMM yyyy HH:mm:ss Z",     // RFC-822, numeric offset
+            "E, d MMM yyyy HH:mm:ss zzz",   // RFC-822, named timezone (PDT, EST, ...)
+            "E, d MMM yyyy HH:mm Z",        // RFC-822, no seconds, numeric offset
+            "E, d MMM yyyy HH:mm zzz",      // RFC-822, no seconds, named timezone
+            "yyyy-MM-dd'T'HH:mm:ssZ",       // ISO-8601 basic
+            "yyyy-MM-dd HH:mm:ss",          // occasional non-standard variant
+        ]
+        return patterns.map { pattern in
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = pattern
+            return formatter
+        }
+    }()
+
+    private static let iso8601WithFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+
+    private static let iso8601Plain = ISO8601DateFormatter()
 }
 
 

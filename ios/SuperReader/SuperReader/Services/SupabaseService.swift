@@ -8,7 +8,16 @@ enum SupabaseConfig {
     static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqb3R2ZmF3aG5pYm5qZ29hcXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA0NDMxMDcsImV4cCI6MjAwNjAxOTEwN30.xtirkUL9f4ciRcJNvwtkGuWGTMcTfRKD3KW9kdZWBpo"
     static let parseFunctionUrl = "https://parser-api.netlify.app/.netlify/functions/parse"
     static let generateSummaryUrl = "https://parser-api.netlify.app/.netlify/functions/generate-summary"
-    static let webApiUrl = "http://192.168.1.24:3000" // Configure for local development (Use local IP for Simulator)
+    // Web API base URL. Debug points at the local dev server (use your machine's LAN IP
+    // for the Simulator); Release must point at the deployed web app on Vercel so that
+    // RSS refresh/discover/add/delete go through the same server-side path as the web app.
+    static let webApiUrl: String = {
+        #if DEBUG
+        return "http://192.168.1.24:3000"            // Simulator / dev (LAN IP)
+        #else
+        return "https://zuper-reader.vercel.app"     // Production web app (Vercel)
+        #endif
+    }()
 }
 
 // MARK: - Supabase Service

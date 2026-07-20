@@ -4,6 +4,7 @@ struct RSSListView: View {
     @StateObject private var viewModel = RSSViewModel()
     @EnvironmentObject var themeManager: ThemeManager
     @State private var showingDiscovery = false
+    @State private var showingSettings = false
     
     var body: some View {
         NavigationStack {
@@ -54,6 +55,15 @@ struct RSSListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 12) {
+                        Button(action: { showingSettings = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(Color.gray))
+                                .shadow(color: Color.gray.opacity(0.4), radius: 4, y: 2)
+                        }
+
                         Button {
                             Task { await viewModel.refreshFeedsViaAPI() }
                         } label: {
@@ -82,6 +92,10 @@ struct RSSListView: View {
                     Task { await viewModel.loadFeeds() }
                 }
                 .environmentObject(themeManager)
+            }
+            .sheet(isPresented: $showingSettings) {
+                RSSSettingsView()
+                    .environmentObject(themeManager)
             }
             .task {
                 await viewModel.loadFeeds()
