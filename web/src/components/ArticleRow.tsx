@@ -1,4 +1,4 @@
-import { Bookmark, BookOpen, Trash2, ListPlus } from 'lucide-react';
+import { Bookmark, BookOpen, Trash2, ListPlus, Check } from 'lucide-react';
 import { Article } from '../lib/supabase';
 import OptimizedImage from './OptimizedImage';
 import { TagList } from './TagBadge';
@@ -11,6 +11,7 @@ interface ArticleRowProps {
 	onDelete: (e: React.MouseEvent, article: Article) => void;
 	onEditTags: (e: React.MouseEvent, article: Article) => void;
 	onAddToQueue?: (e: React.MouseEvent, article: Article) => void;
+	queueState?: 'saving' | 'done';
 	index?: number;
 }
 
@@ -27,6 +28,7 @@ export default function ArticleRow({
 	onDelete,
 	onEditTags,
 	onAddToQueue,
+	queueState,
 	index = 0,
 }: ArticleRowProps) {
 	const finished = article.reading_status === 'completed';
@@ -105,10 +107,21 @@ export default function ArticleRow({
 					<button
 						type="button"
 						onClick={(e) => onAddToQueue(e, article)}
-						title="Add to Up next"
-						className="opacity-45 transition-opacity hover:text-accent hover:opacity-100"
+						disabled={queueState === 'saving' || queueState === 'done'}
+						title={queueState === 'done' ? 'Added to Up next' : 'Add to Up next'}
+						className={`transition-opacity ${
+							queueState === 'done'
+								? 'text-accent opacity-100'
+								: 'opacity-45 hover:text-accent hover:opacity-100'
+						}`}
 					>
-						<ListPlus size={18} strokeWidth={2.75} />
+						{queueState === 'saving' ? (
+							<span className="block h-[18px] w-[18px] animate-spin rounded-full border-2 border-app-line border-t-accent" />
+						) : queueState === 'done' ? (
+							<Check size={18} strokeWidth={2.75} />
+						) : (
+							<ListPlus size={18} strokeWidth={2.75} />
+						)}
 					</button>
 				)}
 				<button

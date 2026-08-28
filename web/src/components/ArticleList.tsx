@@ -67,6 +67,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	const [showTagModal, setShowTagModal] = useState(false);
 	const [articleForTags, setArticleForTags] = useState<Article | null>(null);
 	const [sortOpen, setSortOpen] = useState(false);
+	const [queueStatus, setQueueStatus] = useState<Record<string, 'saving' | 'done'>>({});
 
 	const router = useRouter();
 	const { openSummary } = useShell();
@@ -212,10 +213,18 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 	const handleAddToQueue = async (e: React.MouseEvent, article: Article) => {
 		e.stopPropagation();
+		if (queueStatus[article.id]) return; // already saving or queued
+		setQueueStatus((prev) => ({ ...prev, [article.id]: 'saving' }));
 		try {
 			await addToQueue(userId, article.id);
+			setQueueStatus((prev) => ({ ...prev, [article.id]: 'done' }));
 		} catch (err) {
 			console.error('Failed to add to queue:', err);
+			setQueueStatus((prev) => {
+				const next = { ...prev };
+				delete next[article.id];
+				return next;
+			});
 		}
 	};
 
@@ -399,6 +408,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							onDelete={handleDeleteClick}
 							onEditTags={handleTagClick}
 							onAddToQueue={handleAddToQueue}
+							queueState={queueStatus[article.id]}
 						/>
 					))}
 				</div>
