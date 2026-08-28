@@ -65,9 +65,9 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 
 	return (
 		<>
-			<div className="flex h-[calc(100vh-73px)] overflow-hidden">
+			<div className="flex h-full overflow-hidden">
 				{/* Sidebar - Hidden on mobile if feed is selected */}
-				<div 
+				<div
 					className={`
 						h-full
 						${selectedFeed ? 'hidden md:block' : 'w-full md:w-auto'}

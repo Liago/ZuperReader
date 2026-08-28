@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FeedData, FeedItem } from '@/lib/rssService';
-import { parseArticle, saveArticle, getRSSArticles, markRSSArticleAsRead } from '@/lib/api';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { FeedItem } from '@/lib/rssService';
+import { parseArticle, saveArticle, getRSSArticles, markRSSArticleAsRead, markAllFeedArticlesAsRead } from '@/lib/api';
 import type { RSSArticle } from '@/lib/supabase';
+import { ArrowLeft, Bookmark, ExternalLink, CheckCheck } from 'lucide-react';
 import ReaderModal from './ReaderModal';
 import OptimizedImage from '@/components/OptimizedImage';
 
@@ -41,36 +42,20 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 			setError(null);
 			try {
 				const { getFeedContent } = await import('@/app/actions/rss');
-
-				console.log('🔄 Loading feed:', { feedUrl, feedId });
-
-				// Pass feedId to sync articles to database
 				const data = await getFeedContent(feedUrl, feedId || undefined);
-
-				console.log('📦 Feed data received:', {
-					hasError: !!data.error,
-					itemsCount: data.feed?.items?.length || 0,
-					syncStats: data.syncStats
-				});
 
 				if (data.error) throw new Error(data.error);
 				if (data.feed) {
 					setFeedTitle(data.feed.title || 'Untitled Feed');
 					setItems(data.feed.items);
 
-					if (data.syncStats) {
-						console.log('✅ Synced to database:', data.syncStats);
-
-						if (data.syncStats.added > 0 && onFeedUpdated) {
-							onFeedUpdated();
-						}
+					if (data.syncStats && data.syncStats.added > 0 && onFeedUpdated) {
+						onFeedUpdated();
 					}
 				}
 
-				// Load tracked articles from database
 				if (feedId) {
 					const trackedArticles = await getRSSArticles(userId, feedId);
-					console.log('📊 Tracked articles loaded:', trackedArticles.length);
 					setRssArticles(trackedArticles);
 				}
 			} catch (err) {
@@ -90,7 +75,6 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 
 		try {
 			const parsed = await parseArticle(item.link);
-
 			await saveArticle({
 				url: item.link,
 				title: parsed.title || item.title || 'Untitled',
@@ -99,9 +83,8 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 				lead_image_url: parsed.lead_image_url || null,
 				author: parsed.author || item.author || null,
 				date_published: parsed.date_published || item.pubDate || null,
-				word_count: parsed.word_count || 0
+				word_count: parsed.word_count || 0,
 			}, userId);
-
 		} catch (err) {
 			console.error('Failed to save', err);
 			alert('Failed to save article to library');
@@ -110,20 +93,19 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 		}
 	};
 
-	// Mark an article as read (extracted to reusable function)
+	// Mark an article as read (reusable)
 	const markArticleAsRead = useCallback(async (item: FeedItem) => {
 		if (!feedId) return;
 
 		const articleGuid = item.guid || item.link || item.title;
-		const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
+		const trackedArticle = rssArticles.find((a) => a.guid === articleGuid);
 
 		if (trackedArticle && !trackedArticle.is_read) {
 			try {
 				await markRSSArticleAsRead(trackedArticle.id, userId);
-				// Update local state
-				setRssArticles(prev => prev.map(a =>
-					a.id === trackedArticle.id ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
-				));
+				setRssArticles((prev) =>
+					prev.map((a) => (a.id === trackedArticle.id ? { ...a, is_read: true, read_at: new Date().toISOString() } : a))
+				);
 			} catch (err) {
 				console.error('Failed to mark article as read:', err);
 			}
@@ -134,20 +116,28 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 		if (!item.link) return;
 		setReaderUrl(item.link);
 		setIsReaderOpen(true);
-
-		// Also mark as read when opening in modal
 		await markArticleAsRead(item);
 	};
 
-	// Helper function to check if an article is read
+	const handleMarkAllRead = async () => {
+		if (!feedId) return;
+		try {
+			await markAllFeedArticlesAsRead(feedId, userId);
+			setRssArticles((prev) => prev.map((a) => ({ ...a, is_read: true, read_at: a.read_at || new Date().toISOString() })));
+			if (onFeedUpdated) onFeedUpdated();
+		} catch (err) {
+			console.error('Failed to mark all as read:', err);
+		}
+	};
+
 	const isArticleRead = (item: FeedItem): boolean => {
 		if (!feedId || rssArticles.length === 0) return false;
 		const articleGuid = item.guid || item.link || item.title;
-		const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
+		const trackedArticle = rssArticles.find((a) => a.guid === articleGuid);
 		return trackedArticle?.is_read || false;
 	};
 
-	// Filter articles: show only unread by default, or all if showReadArticles is true
+	// Filter: show only unread by default, or all if showReadArticles is true
 	const { filteredItems, readCount } = useMemo(() => {
 		if (!feedId || rssArticles.length === 0) {
 			return { filteredItems: items, readCount: 0 };
@@ -156,294 +146,195 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 		const readArticles: FeedItem[] = [];
 		const unreadArticles: FeedItem[] = [];
 
-		items.forEach(item => {
+		items.forEach((item) => {
 			const articleGuid = item.guid || item.link || item.title;
-			const trackedArticle = rssArticles.find(a => a.guid === articleGuid);
-			if (trackedArticle?.is_read) {
-				readArticles.push(item);
-			} else {
-				unreadArticles.push(item);
-			}
+			const trackedArticle = rssArticles.find((a) => a.guid === articleGuid);
+			if (trackedArticle?.is_read) readArticles.push(item);
+			else unreadArticles.push(item);
 		});
 
 		return {
 			filteredItems: showReadArticles ? items : unreadArticles,
-			readCount: readArticles.length
+			readCount: readArticles.length,
 		};
 	}, [items, rssArticles, feedId, showReadArticles]);
 
-	// Intersection Observer to mark articles as read when scrolled past
+	// Mark articles as read when scrolled past
 	useEffect(() => {
 		if (!feedId || items.length === 0) return;
 
 		const observerCallback: IntersectionObserverCallback = (entries) => {
 			entries.forEach((entry) => {
-				// Mark as read when article exits viewport from top (scrolling down)
 				if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
 					const articleIndex = parseInt(entry.target.getAttribute('data-article-index') || '-1');
 					if (articleIndex >= 0 && articleIndex < items.length) {
-						const item = items[articleIndex];
-						// Debounce: only mark if article has been scrolled past completely
-						markArticleAsRead(item);
+						markArticleAsRead(items[articleIndex]);
 					}
 				}
 			});
 		};
 
 		const observer = new IntersectionObserver(observerCallback, {
-			root: null, // viewport
-			rootMargin: '-80px 0px 0px 0px', // Trigger when article is 80px past top (after header)
-			threshold: 0
+			root: null,
+			rootMargin: '-80px 0px 0px 0px',
+			threshold: 0,
 		});
 
-		// Observe all article elements
 		const articleElements = document.querySelectorAll('[data-article-index]');
-		articleElements.forEach(el => observer.observe(el));
+		articleElements.forEach((el) => observer.observe(el));
 
-		return () => {
-			observer.disconnect();
-		};
+		return () => observer.disconnect();
 	}, [items, feedId, markArticleAsRead]);
 
 	if (loading) {
 		return (
-			<div className="flex-1 p-8 flex items-center justify-center">
-				<div className="flex flex-col items-center gap-4">
-					<div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
-					<p className="text-orange-600 font-medium">Loading feed...</p>
-				</div>
+			<div className="flex h-full flex-1 items-center justify-center">
+				<div className="h-10 w-10 animate-spin rounded-full border-2 border-app-line border-t-accent" />
 			</div>
 		);
 	}
 
 	if (error) {
 		return (
-			<div className="flex-1 p-8 flex items-center justify-center">
-				<div className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl shadow-lg text-center">
-					<p className="text-red-600 font-semibold">Error: {error}</p>
-				</div>
+			<div className="flex h-full flex-1 items-center justify-center px-4 text-center">
+				<p className="font-semibold text-accent">Error: {error}</p>
 			</div>
 		);
 	}
 
 	if (!feedUrl) {
 		return (
-			<div className="flex-1 p-8 flex items-center justify-center">
-				<div className="text-center">
-					<div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center">
-						<svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-							<path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" />
-							<path d="M5 9a1 1 0 000 2 4.002 4.002 0 014 4 1 1 0 102 0 6.002 6.002 0 00-6-6z" />
-							<path d="M5 15a1 1 0 100 2 1 1 0 000-2z" />
-						</svg>
-					</div>
-					<p className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">Select a feed to start reading</p>
-				</div>
+			<div className="flex h-full flex-1 items-center justify-center px-4 text-center">
+				<p className="font-heading text-[24px] text-app-muted">Select a feed to start reading</p>
 			</div>
 		);
 	}
 
+	const unreadCount = feedId ? Math.max(0, items.length - readCount) : items.length;
+
 	return (
-		<div className="flex-1 overflow-y-auto p-4 sm:p-6">
-			<div className="flex items-center gap-2 mb-4 border-b border-gray-200 pb-3">
-				{onBack && (
-					<button
-						onClick={onBack}
-						className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-						title="Back to feeds"
-					>
-						<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-						</svg>
-					</button>
-				)}
-				<h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent truncate flex-1">
-					{feedTitle}
-				</h1>
+		<div className="mx-auto h-full w-full max-w-[820px] overflow-y-auto px-8 py-7">
+			{/* Header */}
+			<div className="mb-6 border-b border-app-line pb-5">
+				<div className="flex items-center gap-2">
+					{onBack && (
+						<button
+							onClick={onBack}
+							className="-ml-1 flex h-8 w-8 items-center justify-center rounded-full text-app-muted transition-colors hover:bg-app-hover hover:text-ink md:hidden"
+							title="Back to feeds"
+						>
+							<ArrowLeft size={18} strokeWidth={2.75} />
+						</button>
+					)}
+					<span className="text-[11px] font-bold uppercase tracking-[0.12em] text-app-muted">{unreadCount} unread</span>
+				</div>
+				<div className="mt-1 flex items-center justify-between gap-4">
+					<h1 className="truncate font-heading text-[34px] leading-none text-ink">{feedTitle}</h1>
+					{feedId && unreadCount > 0 && (
+						<button
+							onClick={handleMarkAllRead}
+							className="flex flex-none items-center gap-1.5 rounded-full border border-app-line px-3.5 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-app-hover"
+						>
+							<CheckCheck size={15} strokeWidth={2.75} />
+							Mark all read
+						</button>
+					)}
+				</div>
 			</div>
 
-			{/* List View - Compact */}
-			<div className="max-w-5xl mx-auto">
+			{/* List */}
+			<div>
 				{filteredItems.map((item, idx) => {
 					const isRead = isArticleRead(item);
 					return (
 						<div
 							key={idx}
 							data-article-index={idx}
-							className={`
-                    border-b border-gray-200 py-3 px-2
-                    hover:bg-orange-50/50 transition-colors cursor-pointer
-                    ${isRead ? 'bg-gray-50/50' : 'bg-white'}
-                  `}
 							onClick={() => handleRead(item)}
+							className={`group flex cursor-pointer gap-4 border-b border-app-line py-4 transition-opacity ${isRead ? 'opacity-55' : ''}`}
 						>
-							<div className="flex gap-3">
-								{/* Thumbnail Image */}
-								{item.imageUrl && (
-									<div className="flex-shrink-0">
-										<OptimizedImage
-											src={item.imageUrl}
-											alt={item.title || 'Article thumbnail'}
-											className="rounded-lg"
-											width={120}
-											height={80}
-										/>
-									</div>
-								)}
+							<span className={`mt-2 h-2 w-2 flex-none rounded-full ${isRead ? 'bg-accent/35' : 'bg-accent'}`} />
 
-								{/* Content Container */}
-								<div className="flex-1 min-w-0">
-											{/* Header Row: Title + Status */}
-							<div className="flex items-start gap-3 mb-1">
-								{/* Unread Indicator Dot */}
-								{!isRead && (
-									<div className="flex-shrink-0 mt-1.5">
-										<div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
-									</div>
-								)}
-								{isRead && (
-									<div className="flex-shrink-0 mt-1.5">
-										<div className="w-2 h-2 rounded-full bg-gray-300"></div>
-									</div>
-								)}
-
-								{/* Title */}
-								<div className="flex-1 min-w-0">
-									<h3 className={`
-                              text-base font-semibold leading-tight
-                              ${isRead ? 'text-gray-500' : 'text-gray-900'}
-                              hover:text-orange-600 transition-colors
-                          `}>
-										{item.title}
-									</h3>
-								</div>
-
-								{/* Read Badge */}
-								{isRead && (
-									<span className="flex-shrink-0 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-										Read
+							<div className="min-w-0 flex-1">
+								<h3 className={`text-pretty text-[17px] font-bold leading-[1.3] ${isRead ? 'text-app-muted' : 'text-ink'}`}>
+									{item.title}
+								</h3>
+								<div className="mt-1 flex items-center gap-3 text-[12.5px] text-app-muted">
+									{item.author && <span className="truncate">{item.author}</span>}
+									{(item.pubDate || item.isoDate) && (
+										<span>
+											{new Date(item.pubDate || item.isoDate!).toLocaleDateString('en-US', {
+												day: 'numeric',
+												month: 'short',
+												year: 'numeric',
+											})}
+										</span>
+									)}
+									<span className="ml-auto flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+										<button
+											onClick={(e) => {
+												e.stopPropagation();
+												handleSaveToLibrary(item);
+											}}
+											disabled={savingId === item.link}
+											className="p-1 text-app-muted transition-colors hover:text-accent"
+											title="Save to Library"
+										>
+											<Bookmark size={15} strokeWidth={2.75} className={savingId === item.link ? 'animate-pulse' : ''} />
+										</button>
+										<a
+											href={item.link}
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={(e) => e.stopPropagation()}
+											className="p-1 text-app-muted transition-colors hover:text-accent"
+											title="Open original"
+										>
+											<ExternalLink size={15} strokeWidth={2.75} />
+										</a>
 									</span>
-								)}
-							</div>
-
-							{/* Metadata Row */}
-							<div className="flex items-center gap-4 text-xs text-gray-500 ml-5">
-								{item.author && (
-									<span className="flex items-center gap-1">
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-										</svg>
-										{item.author}
-									</span>
-								)}
-								{(item.pubDate || item.isoDate) && (
-									<span className="flex items-center gap-1">
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-										</svg>
-										{new Date(item.pubDate || item.isoDate!).toLocaleDateString('it-IT', {
-											day: 'numeric',
-											month: 'short',
-											year: 'numeric'
-										})}
-									</span>
-								)}
-
-								{/* Quick Actions */}
-								<div className="ml-auto flex items-center gap-2">
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											handleSaveToLibrary(item);
-										}}
-										disabled={savingId === item.link}
-										className="text-gray-400 hover:text-orange-600 transition-colors p-1"
-										title="Save to Library"
-									>
-										{savingId === item.link ? (
-											<svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
-												<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-												<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-											</svg>
-										) : (
-											<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-											</svg>
-										)}
-									</button>
-
-									<a
-										href={item.link}
-										target="_blank"
-										rel="noopener noreferrer"
-										onClick={(e) => e.stopPropagation()}
-										className="text-gray-400 hover:text-orange-600 transition-colors p-1"
-										title="Open original"
-									>
-										<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-										</svg>
-									</a>
 								</div>
 							</div>
-							</div>
-						</div>
+
+							{item.imageUrl && (
+								<div className="hidden h-[68px] w-[104px] flex-none overflow-hidden rounded-[14px] bg-app-surface sm:block">
+									<OptimizedImage
+										src={item.imageUrl}
+										alt={item.title || 'Article thumbnail'}
+										className="washed h-full w-full object-cover"
+										width={104}
+										height={68}
+									/>
+								</div>
+							)}
 						</div>
 					);
 				})}
 
-				{/* Show Read Articles Button */}
+				{/* Show / hide read */}
 				{readCount > 0 && filteredItems.length > 0 && (
-					<div className="py-6 flex justify-center">
+					<div className="flex justify-center py-6">
 						<button
 							onClick={() => setShowReadArticles(!showReadArticles)}
-							className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+							className="rounded-full border border-app-line px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-app-hover"
 						>
-							{showReadArticles ? (
-								<>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-									</svg>
-									Hide read articles
-								</>
-							) : (
-								<>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-									</svg>
-									Show read ({readCount})
-								</>
-							)}
+							{showReadArticles ? 'Hide read articles' : `Show ${readCount} read articles`}
 						</button>
 					</div>
 				)}
 			</div>
-			
+
 			{/* Empty State */}
 			{filteredItems.length === 0 && (
-				<div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-					<div className="mb-6 relative w-48 h-48">
-						<OptimizedImage
-							src="/no-articles.png"
-							alt="No articles found"
-							className="object-contain"
-							width={192}
-							height={192}
-						/>
-					</div>
-					<h3 className="text-xl font-semibold text-gray-900 mb-2">
-						No new articles
-					</h3>
-					<p className="text-gray-500 max-w-sm">
-						{showReadArticles 
-							? "You've read everything in this feed." 
-							: "There are no unread articles in this feed."}
+				<div className="rounded-[28px] border border-app-line bg-app-card px-6 py-16 text-center">
+					<p className="font-heading text-[21px] text-ink">No new articles</p>
+					<p className="mt-1.5 text-[13.5px] text-app-muted">
+						{showReadArticles ? "You've read everything in this feed." : 'There are no unread articles in this feed.'}
 					</p>
 					{!showReadArticles && readCount > 0 && (
 						<button
 							onClick={() => setShowReadArticles(true)}
-							className="mt-6 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-orange-600 transition-colors shadow-sm"
+							className="mt-6 rounded-full border border-app-line px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-app-hover"
 						>
 							Show {readCount} read articles
 						</button>
@@ -457,7 +348,7 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 				url={readerUrl}
 				userId={userId}
 				onNext={() => {
-					const currentIndex = filteredItems.findIndex(item => item.link === readerUrl);
+					const currentIndex = filteredItems.findIndex((item) => item.link === readerUrl);
 					if (currentIndex < filteredItems.length - 1) {
 						const nextItem = filteredItems[currentIndex + 1];
 						setReaderUrl(nextItem.link || null);
@@ -465,15 +356,15 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 					}
 				}}
 				onPrevious={() => {
-					const currentIndex = filteredItems.findIndex(item => item.link === readerUrl);
+					const currentIndex = filteredItems.findIndex((item) => item.link === readerUrl);
 					if (currentIndex > 0) {
 						const prevItem = filteredItems[currentIndex - 1];
 						setReaderUrl(prevItem.link || null);
 						markArticleAsRead(prevItem);
 					}
 				}}
-				hasNext={!!readerUrl && filteredItems.findIndex(item => item.link === readerUrl) < filteredItems.length - 1}
-				hasPrevious={!!readerUrl && filteredItems.findIndex(item => item.link === readerUrl) > 0}
+				hasNext={!!readerUrl && filteredItems.findIndex((item) => item.link === readerUrl) < filteredItems.length - 1}
+				hasPrevious={!!readerUrl && filteredItems.findIndex((item) => item.link === readerUrl) > 0}
 			/>
 		</div>
 	);
