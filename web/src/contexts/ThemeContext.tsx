@@ -3,7 +3,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 // import { useAuth } from './AuthContext';
 
-export type AppTheme = 'auto' | 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
+// The revamp ships only Light + Dark (+ Auto = follow system).
+// Legacy Ocean/Forest/Sunset are migrated to Light on load.
+export type AppTheme = 'auto' | 'light' | 'dark';
+type LegacyTheme = AppTheme | 'ocean' | 'forest' | 'sunset';
 
 interface ThemeContextType {
 	theme: AppTheme;
@@ -46,8 +49,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 		const loadTheme = async () => {
 			try {
 				const stored = localStorage.getItem(THEME_STORAGE_KEY);
-				if (stored && isValidTheme(stored)) {
-					setThemeState(stored as AppTheme);
+				if (stored) {
+					setThemeState(migrateTheme(stored));
 				}
 			} catch (error) {
 				console.error('Failed to load theme:', error);
@@ -95,6 +98,10 @@ export function useTheme() {
 	return context;
 }
 
-function isValidTheme(value: string): boolean {
-	return ['auto', 'light', 'dark', 'ocean', 'forest', 'sunset'].includes(value);
+// Normalize a stored value (which may be a removed legacy theme) to a shipping theme.
+function migrateTheme(value: string): AppTheme {
+	const legacy = value as LegacyTheme;
+	if (legacy === 'auto' || legacy === 'light' || legacy === 'dark') return legacy;
+	if (legacy === 'ocean' || legacy === 'forest' || legacy === 'sunset') return 'light';
+	return 'auto';
 }

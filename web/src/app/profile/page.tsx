@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriends } from '@/contexts/FriendsContext';
-import { getUserStatistics, updateUserProfile } from '@/lib/api';
-import FriendRequestsManager from '@/components/FriendRequestsManager';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useReadingPreferences } from '@/contexts/ReadingPreferencesContext';
+import { getUserStatistics, getMonthlySavedCounts, updateUserProfile, MonthlyActivity } from '@/lib/api';
+import AppShell from '@/components/shell/AppShell';
 
 interface Statistics {
 	totalArticles: number;
@@ -22,21 +23,20 @@ interface Statistics {
 export default function ProfilePage() {
 	const router = useRouter();
 	const { user, loading: authLoading, signOut } = useAuth();
-	const { userProfile, pendingRequests, sentRequests, refreshFriends } = useFriends();
-	const [statistics, setStatistics] = useState<Statistics | null>(null);
-	const [loadingStats, setLoadingStats] = useState(true);
-	const [activeTab, setActiveTab] = useState<'stats' | 'requests' | 'settings'>('stats');
+	const { userProfile, refreshFriends } = useFriends();
+	const { theme } = useTheme();
+	const { preferences } = useReadingPreferences();
 
-	// Edit profile state
+	const [statistics, setStatistics] = useState<Statistics | null>(null);
+	const [activity, setActivity] = useState<MonthlyActivity[]>([]);
+
 	const [isEditing, setIsEditing] = useState(false);
 	const [displayName, setDisplayName] = useState('');
 	const [bio, setBio] = useState('');
 	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		if (!authLoading && !user) {
-			router.push('/login');
-		}
+		if (!authLoading && !user) router.push('/login');
 	}, [user, authLoading, router]);
 
 	useEffect(() => {
@@ -47,53 +47,17 @@ export default function ProfilePage() {
 	}, [userProfile]);
 
 	useEffect(() => {
-		const loadStatistics = async () => {
-			if (!user) return;
-			setLoadingStats(true);
-			try {
-				const stats = await getUserStatistics(user.id);
-				setStatistics(stats);
-			} catch (err) {
-				console.error('Error loading statistics:', err);
-			} finally {
-				setLoadingStats(false);
-			}
-		};
-
-		loadStatistics();
-
-		// Reload statistics when page becomes visible or window gains focus
-		const handleVisibilityChange = () => {
-			if (!document.hidden && user) {
-				loadStatistics();
-			}
-		};
-
-		const handleFocus = () => {
-			if (user) {
-				loadStatistics();
-			}
-		};
-
-		document.addEventListener('visibilitychange', handleVisibilityChange);
-		window.addEventListener('focus', handleFocus);
-
-		return () => {
-			document.removeEventListener('visibilitychange', handleVisibilityChange);
-			window.removeEventListener('focus', handleFocus);
-		};
+		if (!user) return;
+		getUserStatistics(user.id).then(setStatistics).catch((e) => console.error(e));
+		getMonthlySavedCounts(user.id).then(setActivity).catch((e) => console.error(e));
 	}, [user]);
 
 	const handleSaveProfile = async () => {
 		if (!user) return;
 		setSaving(true);
 		try {
-			await updateUserProfile(user.id, {
-				display_name: displayName,
-				bio: bio
-			});
+			await updateUserProfile(user.id, { display_name: displayName, bio });
 			setIsEditing(false);
-			// Refresh the context
 			await refreshFriends();
 		} catch (err) {
 			console.error('Error saving profile:', err);
@@ -104,364 +68,175 @@ export default function ProfilePage() {
 
 	if (authLoading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900">
-				<div className="flex flex-col items-center gap-4">
-					<div className="w-12 h-12 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
-					<p className="text-purple-600 dark:text-purple-400 font-medium">Caricamento...</p>
-				</div>
+			<div className="flex min-h-screen items-center justify-center bg-app-page">
+				<div className="h-10 w-10 animate-spin rounded-full border-2 border-app-line border-t-accent" />
 			</div>
 		);
 	}
 
 	if (!user) return null;
 
-	const totalRequests = pendingRequests.length + sentRequests.length;
+	const name = userProfile?.display_name || user.email?.split('@')[0] || 'Reader';
+	const memberSince = user.created_at
+		? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+		: null;
+
+	const readingDefault = `${preferences.fontFamily === 'serif' ? 'Serif' : 'Figtree'} · ${preferences.fontSize}px`;
+	const appearance = theme === 'auto' ? 'Auto (system)' : theme === 'dark' ? 'Dark' : 'Cream';
+
+	const maxCount = Math.max(1, ...activity.map((a) => a.count));
+	const peakIdx = activity.reduce((best, a, i, arr) => (a.count > arr[best].count ? i : best), 0);
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
-			<div className="max-w-4xl mx-auto">
+		<AppShell>
+			<div className="mx-auto max-w-[840px] px-9 py-8">
 				{/* Header */}
-				<header className="mb-8">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-4">
-							<Link
-								href="/"
-								className="p-2 hover:bg-white/80 dark:hover:bg-slate-700/80 rounded-lg transition-colors"
-							>
-								<svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-								</svg>
-							</Link>
-							<h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Il mio profilo</h1>
-						</div>
-						<button
-							onClick={signOut}
-							className="px-4 py-2 text-sm bg-white/80 dark:bg-slate-700/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all font-medium border border-gray-200 dark:border-slate-600"
-						>
-							Esci
-						</button>
+				<div className="flex flex-wrap items-center gap-5">
+					<span className="flex h-[76px] w-[76px] flex-none items-center justify-center rounded-full bg-accent font-heading text-[32px] text-app-page">
+						{name.charAt(0).toUpperCase()}
+					</span>
+					<div className="min-w-0 flex-1">
+						<h1 className="font-heading text-[34px] leading-none text-ink">{name}</h1>
+						<p className="mt-1.5 text-[13px] text-app-muted">
+							{user.email}
+							{memberSince && <> · member since {memberSince}</>}
+						</p>
 					</div>
-				</header>
-
-				{/* Profile Card */}
-				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden mb-6">
-					<div className="bg-gradient-to-r from-purple-500 to-pink-500 h-24 sm:h-32"></div>
-					<div className="px-6 pb-6">
-						<div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-16">
-							<div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-4 border-white dark:border-slate-800 shadow-lg">
-								{userProfile?.display_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
-							</div>
-							<div className="flex-1 sm:pb-2">
-								{isEditing ? (
-									<div className="space-y-3">
-										<input
-											type="text"
-											value={displayName}
-											onChange={(e) => setDisplayName(e.target.value)}
-											placeholder="Nome visualizzato"
-											className="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
-										/>
-										<textarea
-											value={bio}
-											onChange={(e) => setBio(e.target.value)}
-											placeholder="Bio (opzionale)"
-											rows={2}
-											className="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
-										/>
-										<div className="flex gap-2">
-											<button
-												onClick={handleSaveProfile}
-												disabled={saving}
-												className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm font-medium"
-											>
-												{saving ? 'Salvataggio...' : 'Salva'}
-											</button>
-											<button
-												onClick={() => {
-													setIsEditing(false);
-													setDisplayName(userProfile?.display_name || '');
-													setBio(userProfile?.bio || '');
-												}}
-												className="px-4 py-2 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
-											>
-												Annulla
-											</button>
-										</div>
-									</div>
-								) : (
-									<>
-										<div className="flex items-center gap-3">
-											<h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-												{userProfile?.display_name || user.email?.split('@')[0] || 'Utente'}
-											</h2>
-											<button
-												onClick={() => setIsEditing(true)}
-												className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-											>
-												<svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-												</svg>
-											</button>
-										</div>
-										<p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{user.email}</p>
-										{userProfile?.bio && (
-											<p className="text-gray-600 dark:text-gray-300 mt-2">{userProfile.bio}</p>
-										)}
-									</>
-								)}
-							</div>
-						</div>
+					<div className="flex gap-2.5">
+						<button
+							type="button"
+							onClick={() => setIsEditing((v) => !v)}
+							className="rounded-full border border-app-line px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-app-hover"
+						>
+							Edit profile
+						</button>
+						<button
+							type="button"
+							onClick={signOut}
+							className="rounded-full border border-app-line px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-app-hover"
+						>
+							Sign out
+						</button>
 					</div>
 				</div>
 
-				{/* Tabs */}
-				<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
-					<div className="flex border-b border-gray-200 dark:border-slate-700">
-						<button
-							onClick={() => setActiveTab('stats')}
-							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${activeTab === 'stats'
-									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
-									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-								}`}
-						>
-							<div className="flex items-center justify-center gap-2">
-								<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-								</svg>
-								<span>Statistiche</span>
-							</div>
-						</button>
-						<button
-							onClick={() => setActiveTab('requests')}
-							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors relative ${activeTab === 'requests'
-									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
-									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-								}`}
-						>
-							<div className="flex items-center justify-center gap-2">
-								<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
-								<span>Richieste</span>
-								{totalRequests > 0 && (
-									<span className="absolute top-2 right-1/4 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-										{totalRequests}
-									</span>
-								)}
-							</div>
-						</button>
-						<button
-							onClick={() => setActiveTab('settings')}
-							className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${activeTab === 'settings'
-									? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/30'
-									: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-								}`}
-						>
-							<div className="flex items-center justify-center gap-2">
-								<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
-								<span>Impostazioni</span>
-							</div>
-						</button>
+				{/* Inline edit */}
+				{isEditing && (
+					<div className="mt-5 rounded-3xl border border-app-line bg-app-card p-5">
+						<label className="mb-1.5 block text-[12px] font-medium text-app-muted">Display name</label>
+						<input
+							type="text"
+							value={displayName}
+							onChange={(e) => setDisplayName(e.target.value)}
+							className="w-full rounded-full border border-app-line bg-app-surface px-4 py-2.5 text-[14px] text-ink focus:border-accent focus:outline-none"
+						/>
+						<label className="mb-1.5 mt-3 block text-[12px] font-medium text-app-muted">Bio</label>
+						<textarea
+							value={bio}
+							onChange={(e) => setBio(e.target.value)}
+							rows={2}
+							className="w-full resize-none rounded-[18px] border border-app-line bg-app-surface px-4 py-2.5 text-[14px] text-ink focus:border-accent focus:outline-none"
+						/>
+						<div className="mt-3 flex justify-end gap-2.5">
+							<button
+								type="button"
+								onClick={() => {
+									setIsEditing(false);
+									setDisplayName(userProfile?.display_name || '');
+									setBio(userProfile?.bio || '');
+								}}
+								className="rounded-full border border-app-line px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-app-hover"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								onClick={handleSaveProfile}
+								disabled={saving}
+								className="rounded-full bg-accent px-5 py-2 text-[13.5px] font-semibold text-app-page transition-colors hover:bg-accent-600 disabled:opacity-50"
+							>
+								{saving ? 'Saving…' : 'Save'}
+							</button>
+						</div>
 					</div>
+				)}
 
-					<div className="p-6">
-						{/* Statistics Tab */}
-						{activeTab === 'stats' && (
-							<div>
-								{loadingStats ? (
-									<div className="flex items-center justify-center py-12">
-										<div className="w-10 h-10 border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
-									</div>
-								) : statistics ? (
-									<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-												</svg>
-											}
-											label="Articoli salvati"
-											value={statistics.totalArticles}
-											color="purple"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-												</svg>
-											}
-											label="Articoli letti"
-											value={statistics.readArticles}
-											color="green"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-												</svg>
-											}
-											label="Preferiti"
-											value={statistics.favoriteArticles}
-											color="yellow"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-												</svg>
-											}
-											label="Like ricevuti"
-											value={statistics.totalLikesReceived}
-											color="red"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-												</svg>
-											}
-											label="Commenti ricevuti"
-											value={statistics.totalCommentsReceived}
-											color="blue"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-												</svg>
-											}
-											label="Amici"
-											value={statistics.friendsCount}
-											color="pink"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-												</svg>
-											}
-											label="Articoli condivisi"
-											value={statistics.sharedArticlesCount}
-											color="indigo"
-										/>
-										<StatCard
-											icon={
-												<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-												</svg>
-											}
-											label="Articoli ricevuti"
-											value={statistics.receivedArticlesCount}
-											color="teal"
-										/>
-									</div>
-								) : (
-									<p className="text-center text-gray-500 dark:text-gray-400 py-8">
-										Impossibile caricare le statistiche
-									</p>
-								)}
-							</div>
-						)}
+				{/* Stats */}
+				<div className="mt-7 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+					<StatCard label="Saved" value={statistics?.totalArticles} />
+					<StatCard label="Finished" value={statistics?.readArticles} tone="sage" />
+					<StatCard label="Favourites" value={statistics?.favoriteArticles} tone="accent" />
+					<StatCard label="Shared out" value={statistics?.sharedArticlesCount} />
+				</div>
+				{statistics && (
+					<p className="mt-3 text-[12.5px] text-app-muted">
+						{statistics.totalLikesReceived} likes · {statistics.totalCommentsReceived} comments ·{' '}
+						{statistics.friendsCount} friends · {statistics.receivedArticlesCount} received
+					</p>
+				)}
 
-						{/* Requests Tab */}
-						{activeTab === 'requests' && (
-							<FriendRequestsManager
-								pendingRequests={pendingRequests}
-								sentRequests={sentRequests}
-							/>
-						)}
-
-						{/* Settings Tab */}
-						{activeTab === 'settings' && (
-							<div className="space-y-6">
-								<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-									<h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Account</h3>
-									<p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-										Email: <span className="font-medium">{user.email}</span>
-									</p>
-									<p className="text-sm text-gray-500 dark:text-gray-400">
-										Membro dal {new Date(user.created_at || '').toLocaleDateString('it-IT', {
-											day: 'numeric',
-											month: 'long',
-											year: 'numeric'
-										})}
-									</p>
-								</div>
-
-								<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-									<h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Link rapidi</h3>
-									<div className="space-y-2">
-										<Link
-											href="/friends"
-											className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
-										>
-											<svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-											</svg>
-											<span className="text-gray-700 dark:text-gray-200">Gestisci amici</span>
-										</Link>
-										<Link
-											href="/shared"
-											className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
-										>
-											<svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-											</svg>
-											<span className="text-gray-700 dark:text-gray-200">Articoli condivisi con me</span>
-										</Link>
-									</div>
-								</div>
-
-								<div className="bg-red-50 dark:bg-red-900/30 rounded-xl p-4">
-									<h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">Zona pericolosa</h3>
-									<p className="text-sm text-red-600 dark:text-red-300 mb-4">
-										Queste azioni sono irreversibili.
-									</p>
-									<button
-										onClick={signOut}
-										className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-									>
-										Disconnetti
-									</button>
-								</div>
-							</div>
-						)}
+				{/* Activity */}
+				<div className="mt-6 rounded-3xl border border-app-line bg-app-card p-6">
+					<div className="text-[11px] font-bold uppercase tracking-[0.12em] text-app-muted">
+						Saved over the last 12 months
 					</div>
+					<div className="mt-4 flex h-24 items-end gap-[7px]">
+						{activity.map((m, i) => {
+							const h = Math.round((m.count / maxCount) * 100);
+							const color = m.isCurrent
+								? 'var(--app-accent)'
+								: i === peakIdx
+									? 'var(--app-sage)'
+									: 'var(--accent-300)';
+							return (
+								<div
+									key={i}
+									className="flex-1 rounded-t-lg"
+									style={{ height: `${Math.max(4, h)}%`, background: color }}
+									title={`${m.label}: ${m.count}`}
+								/>
+							);
+						})}
+					</div>
+					<p className="mt-3 text-[12.5px] text-app-muted">
+						{activity.reduce((s, m) => s + m.count, 0)} articles saved in the last year.
+					</p>
+				</div>
+
+				{/* Settings */}
+				<div className="mt-6 overflow-hidden rounded-3xl border border-app-line bg-app-card">
+					<SettingRow label="Reading defaults" value={readingDefault} />
+					<SettingRow label="Appearance" value={appearance} />
+					<SettingRow label="Feed refresh" value="Manage in Feeds" href="/rss" />
 				</div>
 			</div>
-		</main>
+		</AppShell>
 	);
 }
 
-interface StatCardProps {
-	icon: React.ReactNode;
-	label: string;
-	value: number;
-	color: string;
-}
-
-function StatCard({ icon, label, value, color }: StatCardProps) {
-	const colorClasses: Record<string, string> = {
-		purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
-		green: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
-		yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400',
-		red: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400',
-		blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
-		pink: 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400',
-		indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
-		teal: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400',
-	};
-
+function StatCard({ label, value, tone }: { label: string; value?: number; tone?: 'accent' | 'sage' }) {
+	const figureColor = tone === 'sage' ? 'text-sage-700' : tone === 'accent' ? 'text-accent-700' : 'text-ink';
 	return (
-		<div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-			<div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center mb-3`}>
-				{icon}
-			</div>
-			<p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
-			<p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+		<div className="rounded-[22px] border border-app-line bg-app-card p-5">
+			<div className={`font-heading text-[34px] leading-none ${figureColor}`}>{value ?? '—'}</div>
+			<div className="mt-1.5 text-[12.5px] text-app-muted">{label}</div>
 		</div>
 	);
+}
+
+function SettingRow({ label, value, href }: { label: string; value: string; href?: string }) {
+	const content = (
+		<div className="flex items-center justify-between px-5 py-4">
+			<span className="text-[14.5px] font-semibold text-ink">{label}</span>
+			<span className="text-[13px] text-app-muted">{value}</span>
+		</div>
+	);
+	if (href) {
+		return (
+			<a href={href} className="block border-b border-app-line transition-colors last:border-b-0 hover:bg-app-hover">
+				{content}
+			</a>
+		);
+	}
+	return <div className="border-b border-app-line last:border-b-0">{content}</div>;
 }

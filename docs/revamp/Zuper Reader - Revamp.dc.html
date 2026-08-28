@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-5d845faa-eaf6-4be2-a3f5-9c40e2282f29/styles.css">
+<script src="_ds/organic-5d845faa-eaf6-4be2-a3f5-9c40e2282f29/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#cfc6b6}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-600)}
+[data-shell]{--app-page:#f5ead8;--app-rail:#efe2ca;--app-card:#fffaf1;--app-line:rgba(32,30,29,.12);--app-muted:rgba(32,30,29,.58);--app-hover:rgba(32,30,29,.05)}
+[data-shell="dark"]{--color-bg:#23201c;--color-surface:#332f28;--color-text:#f3ebdf;--color-accent:#e2975f;--color-accent-2:#a9bd8c;--app-page:#23201c;--app-rail:#1c1a17;--app-card:#2b2823;--app-line:rgba(243,235,223,.14);--app-muted:rgba(243,235,223,.6);--app-hover:rgba(243,235,223,.06)}
+[data-nav]{cursor:pointer}
+[data-nav]:hover{background:var(--app-hover)}
+[data-nav][data-active="true"]{background:var(--color-accent);color:var(--color-bg)}
+[data-nav][data-active="true"]:hover{background:var(--color-accent-600)}
+[data-sub][data-active="true"]{background:var(--app-hover);color:var(--color-accent-800);box-shadow:inset 2px 0 0 var(--color-accent)}
+[data-sub][data-active="true"]:hover{background:var(--app-hover)}
+[data-shell="dark"] [data-sub][data-active="true"]{color:var(--color-accent)}
+[data-pill]{cursor:pointer}
+[data-pill]:hover{background:var(--app-hover)}
+[data-pill][data-active="true"]{background:var(--color-text);color:var(--app-page)}
+[data-icon]{cursor:pointer}
+[data-icon]:hover{background:var(--app-hover)}
+[data-icon][data-active="true"]{background:var(--color-text);color:var(--app-page)}
+[data-card]{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+[data-card]:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(46,43,37,.16)}
+[data-row]{cursor:pointer}
+[data-row]:hover{background:var(--app-hover)}
+[data-btn]{cursor:pointer}
+[data-btn]:hover{filter:brightness(.95)}
+</style>
+</helmet>
+
+<div data-shell="{{ theme }}" style="position:relative;width:1440px;height:920px;overflow:hidden;display:flex;background:var(--app-page);color:var(--color-text);font-family:var(--font-body);font-size:15px;box-shadow:0 8px 40px rgba(46,43,37,.2)">
+
+<!-- ─────────── RAIL ─────────── -->
+<sc-if value="{{ chromeOn }}" hint-placeholder-val="{{ true }}">
+<div style="width:264px;flex:none;background:var(--app-rail);border-right:1px solid var(--app-line);display:flex;flex-direction:column;padding:20px 14px 14px">
+
+<div style="display:flex;align-items:center;gap:10px;padding:0 8px 18px">
+<div style="width:34px;height:34px;border-radius:999px;background:var(--color-accent);display:flex;align-items:center;justify-content:center;color:var(--app-page);font-family:var(--font-heading);font-size:17px;line-height:1">Z</div>
+<div style="font-family:var(--font-heading);font-size:21px;line-height:1;letter-spacing:-.01em">Zuper</div>
+</div>
+
+<div data-btn="" onClick="{{ openAdd }}" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 4px 18px;padding:11px 14px;background:var(--color-accent);color:var(--app-page);border-radius:999px;font-family:var(--font-heading);font-size:14px;line-height:1">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Save a link
+</div>
+
+<div style="display:flex;flex-direction:column;gap:2px">
+<div data-nav="" data-active="{{ isLibrary }}" onClick="{{ goLibrary }}" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14.5px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+<span style="flex:1">Library</span><span style="font-size:12.5px;font-weight:600;opacity:.65">248</span>
+</div>
+<div data-nav="" data-active="{{ isQueue }}" onClick="{{ goQueue }}" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14.5px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M5 6h14M5 18h9"></path></svg>
+<span style="flex:1">Up next</span><span style="font-size:12.5px;font-weight:600;opacity:.65">5</span>
+</div>
+<div data-nav="" data-active="{{ isFeeds }}" onClick="{{ goFeeds }}" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14.5px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg>
+<span style="flex:1">Feeds</span><span style="padding:1px 7px;border-radius:999px;background:var(--color-accent-2);color:var(--color-bg);font-size:11.5px;font-weight:700">52</span>
+</div>
+<div data-nav="" data-active="{{ isShared }}" onClick="{{ goShared }}" style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14.5px;font-weight:600">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="M8.6 10.7l6.8-4M8.6 13.3l6.8 4"></path></svg>
+<span style="flex:1">Shared with me</span><span style="padding:1px 7px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-size:11.5px;font-weight:700">2</span>
+</div>
+</div>
+
+<div style="margin:22px 8px 8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted)">Reading</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div data-nav="" data-sub="" data-active="{{ statusAll }}" onClick="{{ setAll }}" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:12px;font-size:14px">
+<span style="width:8px;height:8px;border-radius:999px;background:currentColor;opacity:.3"></span><span style="flex:1">Everything</span><span style="font-size:12.5px;opacity:.65">248</span>
+</div>
+<div data-nav="" data-sub="" data-active="{{ statusUnread }}" onClick="{{ setUnread }}" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:12px;font-size:14px">
+<span style="width:8px;height:8px;border-radius:999px;background:var(--color-accent)"></span><span style="flex:1">Unread</span><span style="font-size:12.5px;opacity:.65">64</span>
+</div>
+<div data-nav="" data-sub="" data-active="{{ statusReading }}" onClick="{{ setReading }}" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:12px;font-size:14px">
+<span style="width:8px;height:8px;border-radius:999px;border:2px solid var(--color-accent)"></span><span style="flex:1">In progress</span><span style="font-size:12.5px;opacity:.65">11</span>
+</div>
+<div data-nav="" data-sub="" data-active="{{ statusDone }}" onClick="{{ setDone }}" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:12px;font-size:14px">
+<span style="width:8px;height:8px;border-radius:999px;background:var(--color-accent-2)"></span><span style="flex:1">Finished</span><span style="font-size:12.5px;opacity:.65">173</span>
+</div>
+<div data-nav="" data-sub="" data-active="{{ statusFav }}" onClick="{{ setFav }}" style="display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:12px;font-size:14px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 2-3.4 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.6.5 3.5 2 5l7 7z"></path></svg><span style="flex:1">Favourites</span><span style="font-size:12.5px;opacity:.65">31</span>
+</div>
+</div>
+
+<div style="margin:22px 8px 8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted)">Tags</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 8px">
+<span data-pill="" style="padding:4px 11px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">archivi</span>
+<span data-pill="" data-active="true" style="padding:4px 11px;border-radius:999px;border:1px solid transparent;font-size:12.5px;font-weight:600">culture</span>
+<span data-pill="" style="padding:4px 11px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">design</span>
+<span data-pill="" style="padding:4px 11px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">web</span>
+<span data-pill="" style="padding:4px 11px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">ai</span>
+</div>
+
+<div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--app-line);display:flex;align-items:center;gap:10px">
+<div data-nav="" data-active="{{ isProfile }}" onClick="{{ goProfile }}" style="flex:1;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px">
+<div style="width:30px;height:30px;border-radius:999px;background:var(--color-accent-2);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:14px;line-height:1">L</div>
+<div style="min-width:0">
+<div style="font-size:13.5px;font-weight:600;line-height:1.2">Liago</div>
+<div style="font-size:11.5px;color:var(--app-muted);line-height:1.3">liago@example.com</div>
+</div>
+</div>
+<div data-icon="" onClick="{{ toggleTheme }}" title="Light / dark" style="width:32px;height:32px;flex:none;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"></path></svg>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ─────────── MAIN ─────────── -->
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+<!-- ══ LIBRARY ══ -->
+<sc-if value="{{ isLibrary }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+
+<div style="padding:26px 36px 18px;display:flex;align-items:flex-end;gap:20px;border-bottom:1px solid var(--app-line)">
+<div style="flex:1;min-width:0">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:6px">Saved by you</div>
+<h1 style="margin:0;font-size:34px;line-height:1">Library</h1>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;width:264px;padding:9px 14px;border-radius:999px;background:var(--app-card);border:1px solid var(--app-line);color:var(--app-muted)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.3-4.3"></path></svg>
+<span style="font-size:13.5px">Search titles, tags, notes</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600" data-pill="">Newest
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+</div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--app-line)">
+<div data-icon="" data-active="{{ isGrid }}" onClick="{{ setGrid }}" style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"></rect><rect x="14" y="3" width="7" height="7" rx="1.6"></rect><rect x="3" y="14" width="7" height="7" rx="1.6"></rect><rect x="14" y="14" width="7" height="7" rx="1.6"></rect></svg>
+</div>
+<div data-icon="" data-active="{{ isList }}" onClick="{{ setList }}" style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+</div>
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;overflow-y:auto;padding:24px 36px 36px">
+
+<sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:#b9ad99">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.9);font-weight:700">COVER</div>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent);flex:none"></span>
+<span style="font-weight:600">theverge.com</span><span>·</span><span>8 min</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">The quiet return of the personal website</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">After a decade of feeds and timelines, people are building small corners of the web again — and the tooling finally caught up.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:6px">
+<span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800);font-size:11.5px;font-weight:600">web</span>
+<span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:11.5px;font-weight:600">culture</span>
+</div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:var(--color-surface);display:flex;align-items:center;justify-content:center">
+<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+<div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--app-line)"><div style="width:38%;height:100%;background:var(--color-accent)"></div></div>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;border:2px solid var(--color-accent);flex:none"></span>
+<span style="font-weight:600">unaparolaalgiorno.it</span><span>·</span><span>38% read</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">Cesellare — parola del giorno</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">Lavorare a bulino su una lastra di metallo, e per estensione rifinire qualcosa con pazienza minuziosa.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:12px;color:var(--app-muted)">Add tags</span>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="var(--color-accent)" stroke="var(--color-accent)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:#a89b86">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.9);font-weight:700">COVER</div>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2);flex:none"></span>
+<span style="font-weight:600">ilpost.it</span><span>·</span><span>finished</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">Come si costruisce un archivio che dura cent'anni</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">Dai microfilm ai data center: la conservazione digitale è un problema di manutenzione, non di capienza.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:6px">
+<span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:11.5px;font-weight:600">archivi</span>
+<span style="padding:3px 10px;border-radius:999px;border:1px solid var(--app-line);font-size:11.5px;font-weight:600;color:var(--app-muted)">+2</span>
+</div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:#c3b7a1">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.9);font-weight:700">COVER</div>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent);flex:none"></span>
+<span style="font-weight:600">simonwillison.net</span><span>·</span><span>6 min</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">Notes on running a small archive of everything you read</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">A parser, a database and a habit. The hard part is the habit, and it took three rewrites to make it stick.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:6px"><span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800);font-size:11.5px;font-weight:600">tools</span></div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:var(--color-surface);display:flex;align-items:center;justify-content:center">
+<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.55"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2);flex:none"></span>
+<span style="font-weight:600">arstechnica.com</span><span>·</span><span>finished</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">E-ink is having a moment, again</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">Refresh rates are still bad. Nobody who buys one seems to mind, and that tells you what the device is for.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:6px"><span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:11.5px;font-weight:600">hardware</span></div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;flex-direction:column;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div style="position:relative;aspect-ratio:16/10;background:#b0a48f">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.9);font-weight:700">COVER</div>
+</div>
+<div style="padding:18px 20px 16px;display:flex;flex-direction:column;flex:1">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--app-muted)">
+<span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent);flex:none"></span>
+<span style="font-weight:600">nplusonemag.com</span><span>·</span><span>21 min</span>
+</div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;text-wrap:pretty">Against the infinite scroll</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted);margin-bottom:16px">An argument for endings: why the best reading interfaces are the ones that let you finish something.</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:6px"><span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800);font-size:11.5px;font-weight:600">essays</span></div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:112px;height:76px;flex:none;border-radius:16px;background:#b9ad99;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.9)">COVER</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--app-muted)"><span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent)"></span><span style="font-weight:600">theverge.com</span><span>·</span><span>14 Aug</span><span>·</span><span>8 min</span></div>
+<div style="font-size:18px;font-weight:700;line-height:1.3;margin-bottom:4px">The quiet return of the personal website</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted)">After a decade of feeds and timelines, people are building small corners of the web again — and the tooling finally caught up.</div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:8px;flex:none;color:var(--app-muted)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"></path></svg>
+</div>
+</div>
+
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:112px;height:76px;flex:none;border-radius:16px;background:var(--color-surface);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.55"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+<div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--app-line)"><div style="width:38%;height:100%;background:var(--color-accent)"></div></div>
+</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--app-muted)"><span style="width:7px;height:7px;border-radius:999px;border:2px solid var(--color-accent)"></span><span style="font-weight:600">unaparolaalgiorno.it</span><span>·</span><span>12 Aug</span><span>·</span><span>38% read</span></div>
+<div style="font-size:18px;font-weight:700;line-height:1.3;margin-bottom:4px">Cesellare — parola del giorno</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted)">Lavorare a bulino su una lastra di metallo, e per estensione rifinire qualcosa con pazienza minuziosa.</div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:8px;flex:none;color:var(--color-accent)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:112px;height:76px;flex:none;border-radius:16px;background:#a89b86;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.9)">COVER</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--app-muted)"><span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2)"></span><span style="font-weight:600">ilpost.it</span><span>·</span><span>14 Aug</span><span>·</span><span>finished</span></div>
+<div style="font-size:18px;font-weight:700;line-height:1.3;margin-bottom:4px;color:var(--app-muted)">Come si costruisce un archivio che dura cent'anni</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted)">Dai microfilm ai data center: la conservazione digitale è un problema di manutenzione, non di capienza.</div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:8px;flex:none;color:var(--app-muted)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:18px 22px">
+<div style="width:112px;height:76px;flex:none;border-radius:16px;background:#c3b7a1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.9)">COVER</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--app-muted)"><span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent)"></span><span style="font-weight:600">simonwillison.net</span><span>·</span><span>11 Aug</span><span>·</span><span>6 min</span></div>
+<div style="font-size:18px;font-weight:700;line-height:1.3;margin-bottom:4px">Notes on running a small archive of everything you read</div>
+<div style="font-size:13.5px;line-height:1.6;color:var(--app-muted)">A parser, a database and a habit. The hard part is the habit, and it took three rewrites to make it stick.</div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:8px;flex:none;color:var(--app-muted)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+<!-- ══ READER ══ -->
+<sc-if value="{{ isReader }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+
+<div style="height:3px;background:var(--app-line);flex:none"><div style="width:42%;height:100%;background:var(--color-accent)"></div></div>
+
+<div style="padding:14px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--app-line);flex:none">
+<div data-icon="" onClick="{{ goLibrary }}" style="width:34px;height:34px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;border:1px solid var(--app-line)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+</div>
+<div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px">
+<span style="font-size:12.5px;font-weight:700;color:var(--color-accent)">ilpost.it</span>
+<span style="font-size:13.5px;color:var(--app-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Come si costruisce un archivio che dura cent'anni</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;flex:none">
+<div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:12.5px;font-weight:700">42% · 7 min left</div>
+<div data-icon="" onClick="{{ openType }}" data-active="{{ typeOpen }}" style="width:34px;height:34px;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center" title="Typography"><span style="font-family:var(--font-heading);font-size:14px;line-height:1">Aa</span></div>
+<div data-icon="" style="width:34px;height:34px;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center" title="Summarise">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"></path><path d="M18 17l.8 2 2 .8-2 .8L18 23l-.8-2.4-2-.8 2-.8z"></path></svg>
+</div>
+<div data-icon="" style="width:34px;height:34px;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center" title="Save">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+</div>
+<div data-icon="" style="width:34px;height:34px;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center" title="Share">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="M8.6 10.7l6.8-4M8.6 13.3l6.8 4"></path></svg>
+</div>
+<div data-icon="" data-active="{{ focusOn }}" onClick="{{ toggleFocus }}" style="display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:700">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path></svg>Focus
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;overflow-y:auto;display:flex;justify-content:center;gap:40px;padding:44px 40px 60px">
+
+<div style="width:664px;flex:none">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:16px">Il Post · 14 August 2026 · 12 min read</div>
+<h1 style="margin:0 0 22px;font-size:44px;line-height:1.06;letter-spacing:-.02em;text-wrap:pretty">Come si costruisce un archivio che dura cent'anni</h1>
+<div style="display:flex;align-items:center;gap:11px;padding-bottom:26px;margin-bottom:26px;border-bottom:1px solid var(--app-line)">
+<div style="width:34px;height:34px;border-radius:999px;background:var(--color-accent-2);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:15px;line-height:1">G</div>
+<div style="font-size:14px;font-weight:600">Giulia Ferrari</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+<span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:11.5px;font-weight:600">archivi</span>
+<span style="padding:3px 10px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800);font-size:11.5px;font-weight:600">culture</span>
+</div>
+</div>
+<p style="margin:0 0 20px;font-size:18.5px;line-height:1.75;color:var(--color-text)">Nel sottosuolo di una biblioteca nazionale, in una stanza tenuta a diciotto gradi, ci sono ventimila bobine di microfilm che nessuno ha aperto da trent'anni. Sono lì perché qualcuno, nel 1974, ha deciso che sarebbero servite. Aveva ragione.</p>
+<h2 style="margin:34px 0 14px;font-size:27px;line-height:1.15">Il problema non è lo spazio</h2>
+<p style="margin:0 0 20px;font-size:18.5px;line-height:1.75">La conservazione digitale viene raccontata come una questione di capienza: quanti terabyte, quanti data center, quanto costa il disco. È una lettura sbagliata. Il disco costa poco e costa sempre meno. Quello che costa è la <strong>manutenzione</strong>: qualcuno che ogni cinque anni sposta i dati su un supporto nuovo e verifica che i checksum tornino.</p>
+<blockquote style="margin:28px 0;padding:4px 0 4px 22px;border-left:3px solid var(--color-accent-2);font-size:21px;line-height:1.5;font-style:italic">Un archivio non è un posto dove metti le cose. È un impegno che prendi a rinnovarle.</blockquote>
+<p style="margin:0 0 20px;font-size:18.5px;line-height:1.75">Le istituzioni che riescono a farlo hanno una cosa in comune: hanno smesso di trattare l'archivio come un progetto e hanno cominciato a trattarlo come un servizio, con una riga di bilancio ricorrente.</p>
+</div>
+
+<sc-if value="{{ chromeOn }}" hint-placeholder-val="{{ true }}">
+<div style="width:236px;flex:none;display:flex;flex-direction:column;gap:26px">
+<div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:12px">In this article</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="padding:6px 12px;border-left:2px solid var(--color-accent);font-size:13.5px;font-weight:600">Le bobine del 1974</div>
+<div style="padding:6px 12px;border-left:2px solid var(--app-line);font-size:13.5px;color:var(--app-muted)">Il problema non è lo spazio</div>
+<div style="padding:6px 12px;border-left:2px solid var(--app-line);font-size:13.5px;color:var(--app-muted)">Chi ci riesce, e come</div>
+<div style="padding:6px 12px;border-left:2px solid var(--app-line);font-size:13.5px;color:var(--app-muted)">Cosa costa davvero</div>
+</div>
+</div>
+<div style="padding:16px;background:var(--app-card);border:1px solid var(--app-line);border-radius:22px">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Summary</div>
+<div style="font-size:13px;line-height:1.6;color:var(--app-muted);margin-bottom:12px">Three paragraphs, generated once and kept with the article.</div>
+<div data-btn="" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:13px;line-height:1">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"></path></svg>Summarise
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:12px">Up next</div>
+<div data-row="" style="padding:10px 12px;border-radius:16px;margin-bottom:2px">
+<div style="font-size:13.5px;font-weight:600;line-height:1.35;margin-bottom:3px">Against the infinite scroll</div>
+<div style="font-size:11.5px;color:var(--app-muted)">n+1 · 21 min</div>
+</div>
+<div data-row="" style="padding:10px 12px;border-radius:16px">
+<div style="font-size:13.5px;font-weight:600;line-height:1.35;margin-bottom:3px">Notes on running a small archive</div>
+<div style="font-size:11.5px;color:var(--app-muted)">simonwillison.net · 6 min</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+<!-- ══ UP NEXT ══ -->
+<sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:32px 36px">
+<div style="max-width:760px">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:6px">Five articles · 48 minutes</div>
+<h1 style="margin:0 0 6px;font-size:34px;line-height:1">Up next</h1>
+<p style="margin:0 0 28px;font-size:14.5px;line-height:1.6;color:var(--app-muted);max-width:56ch">A short, ordered queue instead of a wall of 248 saved links. Drag to reorder; finishing one moves you straight to the next.</p>
+
+<div style="background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;overflow:hidden">
+<div data-row="" onClick="{{ openReader }}" style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:13px;line-height:1">1</div>
+<div style="flex:1;min-width:0"><div style="font-size:16.5px;font-weight:700;line-height:1.3">Come si costruisce un archivio che dura cent'anni</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:3px">ilpost.it · 42% read · 7 min left</div></div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);font-size:12.5px;font-weight:700">Continue</div>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:13px;line-height:1;color:var(--app-muted)">2</div>
+<div style="flex:1;min-width:0"><div style="font-size:16.5px;font-weight:700;line-height:1.3">The quiet return of the personal website</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:3px">theverge.com · 8 min</div></div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" style="opacity:.4"><path d="M5 9h14M5 15h14"></path></svg>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:13px;line-height:1;color:var(--app-muted)">3</div>
+<div style="flex:1;min-width:0"><div style="font-size:16.5px;font-weight:700;line-height:1.3">Notes on running a small archive of everything you read</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:3px">simonwillison.net · 6 min</div></div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" style="opacity:.4"><path d="M5 9h14M5 15h14"></path></svg>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--app-line)">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:13px;line-height:1;color:var(--app-muted)">4</div>
+<div style="flex:1;min-width:0"><div style="font-size:16.5px;font-weight:700;line-height:1.3">Against the infinite scroll</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:3px">n+1 · 21 min</div></div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" style="opacity:.4"><path d="M5 9h14M5 15h14"></path></svg>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;align-items:center;gap:16px;padding:18px 22px">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;border:1px solid var(--app-line);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:13px;line-height:1;color:var(--app-muted)">5</div>
+<div style="flex:1;min-width:0"><div style="font-size:16.5px;font-weight:700;line-height:1.3">Cesellare — parola del giorno</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:3px">unaparolaalgiorno.it · 3 min</div></div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" style="opacity:.4"><path d="M5 9h14M5 15h14"></path></svg>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ FEEDS ══ -->
+<sc-if value="{{ isFeeds }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;overflow:hidden">
+<div style="width:250px;flex:none;border-right:1px solid var(--app-line);padding:26px 16px;overflow-y:auto">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin:0 8px 12px">Folders</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div data-nav="" data-active="true" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;font-size:14px;font-weight:600"><span style="width:16px;height:16px;border-radius:5px;background:currentColor;opacity:.35"></span><span style="flex:1">The Verge</span><span style="font-size:12px;font-weight:700">18</span></div>
+<div data-nav="" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;font-size:14px"><span style="width:16px;height:16px;border-radius:5px;background:var(--app-line)"></span><span style="flex:1">Ars Technica</span><span style="font-size:12px;color:var(--app-muted)">24</span></div>
+<div data-nav="" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;font-size:14px"><span style="width:16px;height:16px;border-radius:5px;background:var(--app-line)"></span><span style="flex:1">Simon Willison</span></div>
+<div style="height:14px"></div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin:0 12px 6px">Italiano</div>
+<div data-nav="" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;font-size:14px"><span style="width:16px;height:16px;border-radius:5px;background:var(--app-line)"></span><span style="flex:1">Il Post</span><span style="font-size:12px;color:var(--app-muted)">7</span></div>
+<div data-nav="" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;font-size:14px"><span style="width:16px;height:16px;border-radius:5px;background:var(--app-line)"></span><span style="flex:1">Una parola al giorno</span><span style="font-size:12px;color:var(--app-muted)">3</span></div>
+</div>
+<div style="margin-top:20px;display:flex;gap:8px;padding:0 4px">
+<div data-btn="" style="flex:1;text-align:center;padding:8px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">Add feed</div>
+<div data-btn="" style="flex:1;text-align:center;padding:8px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">Discover</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;overflow-y:auto;padding:26px 34px">
+<div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:22px">
+<div style="flex:1">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:6px">18 unread · refreshed 2 min ago</div>
+<h1 style="margin:0;font-size:32px;line-height:1">The Verge</h1>
+</div>
+<div data-btn="" style="padding:9px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:13px;font-weight:600">Mark all read</div>
+</div>
+
+<div style="display:flex;flex-direction:column">
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:16px;padding:16px 8px;border-bottom:1px solid var(--app-line);align-items:flex-start">
+<span style="margin-top:8px;width:8px;height:8px;flex:none;border-radius:999px;background:var(--color-accent)"></span>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;font-weight:700;line-height:1.3;margin-bottom:5px">Framework's new laptop is the first with a swappable GPU that actually ships</div>
+<div style="font-size:12.5px;color:var(--app-muted)">Sean Hollister · 26 Aug · 5 min</div>
+</div>
+<div style="width:104px;height:68px;flex:none;border-radius:14px;background:#b9ad99"></div>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:16px;padding:16px 8px;border-bottom:1px solid var(--app-line);align-items:flex-start">
+<span style="margin-top:8px;width:8px;height:8px;flex:none;border-radius:999px;background:var(--color-accent)"></span>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;font-weight:700;line-height:1.3;margin-bottom:5px">The browser wars are back, and this time it's about agents</div>
+<div style="font-size:12.5px;color:var(--app-muted)">25 Aug · 9 min</div>
+</div>
+</div>
+<div data-row="" onClick="{{ openReader }}" style="display:flex;gap:16px;padding:16px 8px;border-bottom:1px solid var(--app-line);align-items:flex-start;opacity:.55">
+<span style="margin-top:8px;width:8px;height:8px;flex:none;border-radius:999px;background:currentColor;opacity:.35"></span>
+<div style="flex:1;min-width:0">
+<div style="font-size:17px;font-weight:600;line-height:1.3;margin-bottom:5px">E-ink is having a moment, again</div>
+<div style="font-size:12.5px;color:var(--app-muted)">24 Aug · read</div>
+</div>
+</div>
+<div style="padding:22px 0;display:flex;justify-content:center">
+<div data-btn="" style="padding:8px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600;color:var(--app-muted)">Show 12 read articles</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ SHARED ══ -->
+<sc-if value="{{ isShared }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:32px 36px">
+<div style="max-width:780px">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:6px">2 new · 6 friends</div>
+<h1 style="margin:0 0 28px;font-size:34px;line-height:1">Shared with me</h1>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div data-card="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:20px;background:var(--app-card);border:1px solid var(--color-accent);border-radius:24px">
+<div style="width:120px;height:88px;flex:none;border-radius:16px;background:#b9ad99"></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+<div style="width:24px;height:24px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;line-height:1">M</div>
+<span style="font-size:13px;color:var(--app-muted)"><strong style="color:var(--color-text)">Marco</strong> shared this · 2 hours ago</span>
+</div>
+<div style="font-size:17px;font-weight:700;line-height:1.3;margin-bottom:8px">The quiet return of the personal website</div>
+<div style="padding:11px 14px;border-left:3px solid var(--color-accent-2);font-size:13.5px;line-height:1.6;font-style:italic;color:var(--app-muted)">Questo ti piacerà, parla anche di archivi</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<div data-btn="" style="padding:8px 16px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:13px;line-height:1;text-align:center">Read</div>
+<div data-btn="" style="padding:8px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600;text-align:center;color:var(--app-muted)">Queue</div>
+</div>
+</div>
+
+<div data-card="" onClick="{{ openReader }}" style="display:flex;gap:18px;padding:20px;background:var(--app-card);border:1px solid var(--app-line);border-radius:24px">
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+<div style="width:24px;height:24px;border-radius:999px;background:var(--color-accent-2);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;line-height:1">A</div>
+<span style="font-size:13px;color:var(--app-muted)"><strong style="color:var(--color-text)">Anna</strong> shared this · 3 days ago</span>
+</div>
+<div style="font-size:17px;font-weight:700;line-height:1.3;margin-bottom:4px">E-ink is having a moment, again</div>
+<div style="font-size:12.5px;color:var(--app-muted)">theverge.com · 7 min</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<div data-btn="" style="padding:8px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:13px;font-weight:600;text-align:center">Read</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:34px;padding-top:24px;border-top:1px solid var(--app-line)">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:14px">Friends</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<div style="display:flex;align-items:center;gap:9px;padding:8px 14px 8px 8px;border-radius:999px;border:1px solid var(--app-line)"><div style="width:26px;height:26px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;line-height:1">M</div><span style="font-size:13.5px;font-weight:600">Marco</span></div>
+<div style="display:flex;align-items:center;gap:9px;padding:8px 14px 8px 8px;border-radius:999px;border:1px solid var(--app-line)"><div style="width:26px;height:26px;border-radius:999px;background:var(--color-accent-2);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;line-height:1">A</div><span style="font-size:13.5px;font-weight:600">Anna</span></div>
+<div style="display:flex;align-items:center;gap:9px;padding:8px 14px 8px 8px;border-radius:999px;border:1px solid var(--app-line)"><div style="width:26px;height:26px;border-radius:999px;background:var(--color-neutral-400);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;line-height:1">D</div><span style="font-size:13.5px;font-weight:600">Davide</span></div>
+<div data-btn="" style="display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:var(--color-surface);font-size:13.5px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Find friends<span style="padding:1px 7px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-size:11px;font-weight:700">1</span></div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ PROFILE ══ -->
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:32px 36px">
+<div style="max-width:840px">
+<div style="display:flex;align-items:center;gap:18px;margin-bottom:32px">
+<div style="width:76px;height:76px;flex:none;border-radius:999px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:32px;line-height:1">L</div>
+<div style="flex:1">
+<h1 style="margin:0 0 4px;font-size:32px;line-height:1">Liago</h1>
+<div style="font-size:13.5px;color:var(--app-muted)">liago@example.com · member since March 2024</div>
+</div>
+<div data-btn="" style="padding:9px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:13px;font-weight:600">Edit profile</div>
+<div data-btn="" onClick="{{ goLogin }}" style="padding:9px 16px;border-radius:999px;border:1px solid var(--app-line);font-size:13px;font-weight:600;color:var(--app-muted)">Sign out</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
+<div style="padding:20px;background:var(--app-card);border:1px solid var(--app-line);border-radius:22px"><div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:8px">248</div><div style="font-size:12.5px;color:var(--app-muted)">Saved</div></div>
+<div style="padding:20px;background:var(--app-card);border:1px solid var(--app-line);border-radius:22px"><div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:8px;color:var(--color-accent-2-700)">173</div><div style="font-size:12.5px;color:var(--app-muted)">Finished</div></div>
+<div style="padding:20px;background:var(--app-card);border:1px solid var(--app-line);border-radius:22px"><div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:8px;color:var(--color-accent-700)">31</div><div style="font-size:12.5px;color:var(--app-muted)">Favourites</div></div>
+<div style="padding:20px;background:var(--app-card);border:1px solid var(--app-line);border-radius:22px"><div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:8px">18</div><div style="font-size:12.5px;color:var(--app-muted)">Shared out</div></div>
+</div>
+
+<div style="padding:22px 24px;background:var(--app-card);border:1px solid var(--app-line);border-radius:24px;margin-bottom:14px">
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:16px">This month</div>
+<div style="display:flex;align-items:flex-end;gap:7px;height:96px">
+<div style="flex:1;height:34%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:58%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:22%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:76%;background:var(--color-accent);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:44%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:64%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:18%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:52%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:88%;background:var(--color-accent-2);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:40%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:28%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+<div style="flex:1;height:60%;background:var(--color-accent-300);border-radius:8px 8px 0 0"></div>
+</div>
+<div style="margin-top:10px;font-size:12.5px;color:var(--app-muted)">19 articles finished · 4 h 12 m of reading</div>
+</div>
+
+<div style="background:var(--app-card);border:1px solid var(--app-line);border-radius:24px;overflow:hidden">
+<div data-row="" style="display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--app-line)"><span style="flex:1;font-size:14.5px;font-weight:600">Reading defaults</span><span style="font-size:13px;color:var(--app-muted)">Figtree · 18.5px · comfortable</span></div>
+<div data-row="" style="display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--app-line)"><span style="flex:1;font-size:14.5px;font-weight:600">Appearance</span><span style="font-size:13px;color:var(--app-muted)">Follows system · light &amp; dark</span></div>
+<div data-row="" style="display:flex;align-items:center;gap:14px;padding:16px 22px"><span style="flex:1;font-size:14.5px;font-weight:600">Feed refresh</span><span style="font-size:13px;color:var(--app-muted)">On open, in the background</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ LOGIN ══ -->
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px">
+<div style="width:420px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+<div style="width:44px;height:44px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:22px;line-height:1">Z</div>
+<div style="font-family:var(--font-heading);font-size:28px;line-height:1">Zuper Reader</div>
+</div>
+<h1 style="margin:0 0 10px;font-size:38px;line-height:1.05">Read what you saved.</h1>
+<p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:var(--app-muted)">One email, one link, no password. We&apos;ll keep your queue where you left it.</p>
+<div style="font-size:12px;color:var(--app-muted);margin-bottom:6px">Email</div>
+<div style="padding:13px 18px;border-radius:999px;background:var(--color-surface);border:1px solid var(--app-line);font-size:14.5px;color:var(--app-muted);margin-bottom:12px">you@example.com</div>
+<div data-btn="" onClick="{{ goLibrary }}" style="padding:14px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:15px;line-height:1;text-align:center">Send magic link</div>
+<div style="margin-top:20px;font-size:12.5px;color:var(--app-muted);text-align:center">Already have a link in your inbox? <a href="#">Paste it here</a></div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ MODAL · SAVE A LINK ══ -->
+<sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeAll }}" style="position:absolute;inset:0;background:rgba(32,30,29,.42);display:flex;align-items:center;justify-content:center;padding:40px;z-index:20">
+<div onClick="{{ stop }}" style="width:520px;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;box-shadow:0 24px 60px rgba(32,30,29,.28);overflow:hidden">
+<div style="padding:24px 26px 20px">
+<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
+<div style="flex:1">
+<h2 style="margin:0 0 4px;font-size:24px;line-height:1.1">Save a link</h2>
+<div style="font-size:13px;color:var(--app-muted)">We&apos;ll fetch the title, cover and reading time.</div>
+</div>
+<div data-icon="" onClick="{{ closeAll }}" style="width:32px;height:32px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--app-muted)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:999px;background:var(--color-surface);border:1px solid var(--app-line);color:var(--app-muted);font-size:14.5px;margin-bottom:12px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg>
+<span style="flex:1">https://</span>
+</div>
+<div data-row="" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--color-accent-100);border:1px solid var(--color-accent-300);margin-bottom:20px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="8" y="2" width="8" height="4" rx="1.4"></rect><path d="M16 4h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 13l2 2 4-4"></path></svg>
+<div style="flex:1;min-width:0">
+<div style="font-size:12px;font-weight:700;color:var(--color-accent-800);margin-bottom:2px">In your clipboard</div>
+<div style="font-size:12.5px;color:var(--color-accent-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85">ilpost.it/2026/08/14/archivi-digitali-conservazione/</div>
+</div>
+<div data-btn="" style="flex:none;padding:7px 14px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-size:12.5px;font-weight:700">Use</div>
+</div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Tags</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span data-pill="" style="padding:5px 12px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">archivi</span>
+<span data-pill="" style="padding:5px 12px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">culture</span>
+<span data-pill="" style="padding:5px 12px;border-radius:999px;border:1px solid var(--app-line);font-size:12.5px;font-weight:600">design</span>
+<span data-pill="" style="padding:5px 12px;border-radius:999px;border:1px dashed var(--app-line);font-size:12.5px;font-weight:600;color:var(--app-muted)">+ New tag</span>
+</div>
+</div>
+<div style="padding:18px 26px;border-top:1px solid var(--app-line);display:flex;align-items:center;gap:10px">
+<div data-row="" style="flex:1;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--app-muted)">
+<span style="width:34px;height:20px;border-radius:999px;background:var(--color-accent);position:relative;flex:none"><span style="position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:999px;background:var(--color-bg)"></span></span>
+Add to Up next
+</div>
+<div data-btn="" onClick="{{ closeAll }}" style="padding:10px 18px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600">Cancel</div>
+<div data-btn="" onClick="{{ closeAll }}" style="padding:10px 22px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:14px;line-height:1">Save</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ══ MODAL · READING TYPOGRAPHY ══ -->
+<sc-if value="{{ typeOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeAll }}" style="position:absolute;inset:0;background:rgba(32,30,29,.42);display:flex;align-items:flex-start;justify-content:flex-end;padding:70px 40px;z-index:20">
+<div onClick="{{ stop }}" style="width:360px;background:var(--app-card);border:1px solid var(--app-line);border-radius:28px;box-shadow:0 24px 60px rgba(32,30,29,.28);padding:22px 24px">
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+<h2 style="margin:0;flex:1;font-size:21px;line-height:1.1">Reading</h2>
+<div data-icon="" onClick="{{ closeAll }}" style="width:30px;height:30px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--app-muted)">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+</div>
+</div>
+
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:9px">Typeface</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px">
+<div data-pill="" data-active="true" style="padding:12px;border-radius:18px;border:1px solid transparent;text-align:center;font-size:15px;font-weight:600">Figtree</div>
+<div data-pill="" style="padding:12px;border-radius:18px;border:1px solid var(--app-line);text-align:center;font-family:Georgia,serif;font-size:15px">Serif</div>
+</div>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted)">Size</span>
+<span style="font-size:12.5px;font-weight:700;color:var(--color-accent-700)">18.5px</span>
+</div>
+<div style="height:6px;border-radius:999px;background:var(--app-line);position:relative;margin-bottom:22px">
+<div style="width:46%;height:100%;border-radius:999px;background:var(--color-accent)"></div>
+<div style="position:absolute;left:46%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:999px;background:var(--color-accent);border:3px solid var(--app-card)"></div>
+</div>
+
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:9px">Line height</div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--app-line);margin-bottom:22px">
+<div data-pill="" style="flex:1;padding:8px;border-radius:999px;text-align:center;font-size:13px;font-weight:600">Tight</div>
+<div data-pill="" data-active="true" style="flex:1;padding:8px;border-radius:999px;text-align:center;font-size:13px;font-weight:600">Comfortable</div>
+<div data-pill="" style="flex:1;padding:8px;border-radius:999px;text-align:center;font-size:13px;font-weight:600">Loose</div>
+</div>
+
+<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:9px">Surface</div>
+<div style="display:flex;gap:8px;margin-bottom:22px">
+<div data-pill="" data-active="true" style="flex:1;padding:10px;border-radius:18px;border:1px solid transparent;text-align:center;font-size:13px;font-weight:600">Cream</div>
+<div data-pill="" style="flex:1;padding:10px;border-radius:18px;border:1px solid var(--app-line);text-align:center;font-size:13px;font-weight:600">Dark</div>
+</div>
+
+<div style="padding:16px 18px;border-radius:20px;background:var(--color-surface);font-size:15px;line-height:1.75;color:var(--app-muted)">Un archivio non è un posto dove metti le cose.</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:920},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;grid&quot;,&quot;list&quot;],&quot;default&quot;:&quot;grid&quot;,&quot;tsType&quot;:&quot;'grid' | 'list'&quot;,&quot;section&quot;:&quot;Library&quot;}}">
+class Component extends DCLogic {
+  state = { screen: 'library', view: 'grid', status: 'all', focus: false, theme: null, modal: null };
+
+  set(k, v) { this.setState({ [k]: v }); }
+
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme || this.props.theme || 'light';
+    const view = this.props.defaultView && s.view === 'grid' && !s.viewTouched ? this.props.defaultView : s.view;
+    return {
+      theme,
+      chromeOn: !(s.screen === 'reader' && s.focus),
+      focusOn: s.focus,
+      isLibrary: s.screen === 'library',
+      isReader: s.screen === 'reader',
+      isQueue: s.screen === 'queue',
+      isFeeds: s.screen === 'feeds',
+      isShared: s.screen === 'shared',
+      isProfile: s.screen === 'profile',
+      isLogin: s.screen === 'login',
+      addOpen: s.modal === 'add',
+      typeOpen: s.modal === 'type',
+      openAdd: () => this.set('modal', 'add'),
+      openType: () => this.set('modal', 'type'),
+      closeAll: () => this.set('modal', null),
+      stop: e => e.stopPropagation(),
+      isGrid: view === 'grid',
+      isList: view === 'list',
+      statusAll: s.status === 'all',
+      statusUnread: s.status === 'unread',
+      statusReading: s.status === 'reading',
+      statusDone: s.status === 'done',
+      statusFav: s.status === 'fav',
+      goLibrary: () => this.setState({ screen: 'library', focus: false }),
+      goQueue: () => this.set('screen', 'queue'),
+      goFeeds: () => this.set('screen', 'feeds'),
+      goShared: () => this.set('screen', 'shared'),
+      goProfile: () => this.set('screen', 'profile'),
+      goLogin: () => this.set('screen', 'login'),
+      openReader: () => this.setState({ screen: 'reader' }),
+      toggleFocus: () => this.setState(p => ({ focus: !p.focus })),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      setGrid: () => this.setState({ view: 'grid', viewTouched: true }),
+      setList: () => this.setState({ view: 'list', viewTouched: true }),
+      setAll: () => this.set('status', 'all'),
+      setUnread: () => this.set('status', 'unread'),
+      setReading: () => this.set('status', 'reading'),
+      setDone: () => this.set('status', 'done'),
+      setFav: () => this.set('status', 'fav')
+    };
+  }
+}
+</script>
+</body>
+</html>

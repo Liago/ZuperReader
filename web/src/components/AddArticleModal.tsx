@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Link2, ClipboardCheck, X } from 'lucide-react';
 import { parseArticle, saveArticle } from '../lib/api';
 
 interface AddArticleModalProps {
@@ -17,6 +18,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	const [error, setError] = useState('');
 	const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
 	const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
+	const [addToQueue, setAddToQueue] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	// Check clipboard when modal opens
@@ -29,37 +31,29 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 		}
 	}, [isOpen]);
 
+	// Close on Escape
+	useEffect(() => {
+		if (!isOpen) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && !loading) handleClose();
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen, loading]);
+
 	const checkClipboard = async () => {
 		try {
 			const text = await navigator.clipboard.readText();
-			// Check if it's a URL
 			if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
 				setClipboardUrl(text);
 				setShowClipboardPrompt(true);
-				// Don't focus input when clipboard URL is found - show prompt instead
 			} else {
-				// No URL in clipboard, focus the input field
 				setTimeout(() => inputRef.current?.focus(), 100);
 			}
 		} catch (err) {
-			// Permission denied or clipboard not available
 			console.log('Clipboard access denied:', err);
-			// Focus input field when clipboard is not available
 			setTimeout(() => inputRef.current?.focus(), 100);
-		}
-	};
-
-	const handlePasteFromClipboard = async () => {
-		try {
-			const text = await navigator.clipboard.readText();
-			if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
-				setUrl(text);
-				setShowClipboardPrompt(false);
-			} else {
-				setError('No valid URL found in clipboard');
-			}
-		} catch (err) {
-			setError('Unable to read from clipboard. Please allow clipboard access.');
 		}
 	};
 
@@ -70,13 +64,6 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 		}
 	};
 
-	const handleDismissClipboardPrompt = () => {
-		setShowClipboardPrompt(false);
-		setClipboardUrl(null);
-		// Focus input field after dismissing clipboard prompt
-		setTimeout(() => inputRef.current?.focus(), 100);
-	};
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
@@ -84,10 +71,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 		setParsingStep('parsing');
 
 		try {
-			// Step 1: Parse the URL using Netlify Function
 			const parsedData = await parseArticle(url);
-
-			// Step 2: Save to Supabase
 			setParsingStep('saving');
 			await saveArticle(parsedData, userId);
 
@@ -115,197 +99,140 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+		<div
+			className="fixed inset-0 z-50 grid place-items-center p-4"
+			style={{ background: 'rgba(32,30,29,.42)' }}
+			onClick={handleClose}
+		>
 			<div
-				className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all"
+				className="w-full max-w-[520px] rounded-[28px] border border-app-line bg-app-card p-7 [box-shadow:var(--shadow-modal)]"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
-				<div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700">
-					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-							<svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-							</svg>
-						</div>
-						<div>
-							<h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add New Article</h2>
-							<p className="text-sm text-gray-500 dark:text-gray-400">Save an article to your library</p>
-						</div>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2 className="font-heading text-[24px] leading-[1.1] text-ink">Save a link</h2>
+						<p className="mt-1 text-[13px] text-app-muted">
+							We&apos;ll fetch the title, cover and reading time.
+						</p>
 					</div>
 					<button
+						type="button"
 						onClick={handleClose}
 						disabled={loading}
-						className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+						className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-app-line text-app-muted transition-colors hover:bg-app-hover hover:text-ink disabled:opacity-50"
 					>
-						<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-						</svg>
+						<X size={16} strokeWidth={2.75} />
 					</button>
 				</div>
 
-				{/* Content */}
-				<form onSubmit={handleSubmit} className="p-5">
-					<div className="relative">
-						<label htmlFor="article-url" className="flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							<span>Article URL</span>
-							<button
-								type="button"
-								onClick={handlePasteFromClipboard}
-								disabled={loading}
-								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-								</svg>
-								Paste from Clipboard
+				<form onSubmit={handleSubmit} className="mt-5">
+					{/* URL input */}
+					<div className="flex items-center gap-2.5 rounded-full border border-app-line bg-app-surface px-4 py-3">
+						<Link2 size={18} strokeWidth={2.75} className="flex-none text-app-muted" />
+						<input
+							ref={inputRef}
+							id="article-url"
+							type="url"
+							value={url}
+							onChange={(e) => setUrl(e.target.value)}
+							placeholder="https://"
+							required
+							disabled={loading}
+							className="w-full bg-transparent text-[14px] text-ink placeholder:text-app-muted focus:outline-none disabled:opacity-50"
+						/>
+						{url && !loading && (
+							<button type="button" onClick={() => setUrl('')} className="flex-none text-app-muted hover:text-ink">
+								<X size={15} strokeWidth={2.75} />
 							</button>
-						</label>
-						<div className="relative">
-							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-								<svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-								</svg>
-							</div>
-							<input
-								ref={inputRef}
-								id="article-url"
-								type="url"
-								value={url}
-								onChange={(e) => setUrl(e.target.value)}
-								placeholder="https://example.com/article"
-								required
-								disabled={loading}
-								className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-							/>
-							{url && !loading && (
-								<button
-									type="button"
-									onClick={() => setUrl('')}
-									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-								>
-									<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</button>
-							)}
-						</div>
+						)}
 					</div>
 
-					{/* Clipboard prompt */}
+					{/* Clipboard suggestion */}
 					{showClipboardPrompt && clipboardUrl && (
-						<div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
-							<div className="flex items-start gap-3">
-								<div className="flex-shrink-0 mt-0.5">
-									<svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-									</svg>
-								</div>
-								<div className="flex-1 min-w-0">
-									<p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">Link found in clipboard</p>
-									<p className="text-xs text-blue-700 dark:text-blue-300 break-all mb-3">{clipboardUrl}</p>
-									<div className="flex gap-2">
-										<button
-											type="button"
-											onClick={handleUseClipboardUrl}
-											className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-										>
-											Use this link
-										</button>
-										<button
-											type="button"
-											onClick={handleDismissClipboardPrompt}
-											className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors"
-										>
-											Dismiss
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					)}
-
-					{/* Loading progress indicator */}
-					{loading && (
-						<div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl border border-purple-100 dark:border-purple-800">
-							<div className="flex items-center gap-3">
-								<div className="flex-shrink-0">
-									<div className="w-8 h-8 border-3 border-purple-200 dark:border-purple-700 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin"></div>
-								</div>
-								<div className="flex-1">
-									<p className="text-sm font-medium text-purple-900 dark:text-purple-200">
-										{parsingStep === 'parsing' && 'Parsing article content...'}
-										{parsingStep === 'saving' && 'Saving to your library...'}
-									</p>
-									<div className="mt-2 h-1.5 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden">
-										<div
-											className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-500"
-											style={{ width: parsingStep === 'parsing' ? '40%' : '80%' }}
-										></div>
-									</div>
-								</div>
-							</div>
-						</div>
-					)}
-
-					{/* Error message */}
-					{error && (
-						<div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
-							<svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-							</svg>
-							<div className="flex-1">
-								<p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+						<div
+							className="mt-3 flex items-center gap-3 rounded-[20px] border p-3"
+							style={{ background: 'var(--accent-100)', borderColor: 'var(--accent-300)' }}
+						>
+							<ClipboardCheck size={18} strokeWidth={2.75} className="flex-none text-accent" />
+							<div className="min-w-0 flex-1">
+								<div className="text-[12px] font-bold text-accent-800">In your clipboard</div>
+								<div className="truncate text-[12.5px] text-accent-800/80">{clipboardUrl}</div>
 							</div>
 							<button
 								type="button"
-								onClick={() => setError('')}
-								className="text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors"
+								onClick={handleUseClipboardUrl}
+								className="flex-none rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-app-page transition-colors hover:bg-accent-600"
 							>
-								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-								</svg>
+								Use
 							</button>
 						</div>
 					)}
 
-					{/* Actions */}
-					<div className="mt-6 flex gap-3 justify-end">
-						<button
-							type="button"
-							onClick={handleClose}
-							disabled={loading}
-							className="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
-						>
-							Cancel
-						</button>
-						<button
-							type="submit"
-							disabled={loading || !url}
-							className="relative px-6 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 overflow-hidden group"
-						>
-							{/* Shimmer effect */}
-							<div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+					{/* Loading progress */}
+					{loading && (
+						<div className="mt-4 rounded-[18px] border border-app-line bg-app-surface p-4">
+							<p className="text-[13px] font-medium text-ink">
+								{parsingStep === 'parsing' && 'Fetching article…'}
+								{parsingStep === 'saving' && 'Saving to your library…'}
+							</p>
+							<div className="mt-2 h-1 overflow-hidden rounded-full bg-app-line">
+								<div
+									className="h-full rounded-full bg-accent transition-all duration-500"
+									style={{ width: parsingStep === 'parsing' ? '40%' : '80%' }}
+								/>
+							</div>
+						</div>
+					)}
 
-							<span className="relative flex items-center justify-center gap-2">
-								{loading ? (
-									<>
-										<svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-										</svg>
-										{parsingStep === 'parsing' ? 'Parsing...' : 'Saving...'}
-									</>
-								) : (
-									<>
-										<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-										</svg>
-										Add Article
-									</>
-								)}
-							</span>
-						</button>
+					{/* Error */}
+					{error && (
+						<div className="mt-4 flex items-start justify-between gap-3 rounded-[18px] border border-app-line p-4" style={{ background: 'var(--accent-100)' }}>
+							<p className="text-[13px] font-medium text-accent-800">{error}</p>
+							<button type="button" onClick={() => setError('')} className="flex-none text-accent-800/70 hover:text-accent-800">
+								<X size={16} strokeWidth={2.75} />
+							</button>
+						</div>
+					)}
+
+					{/* Footer */}
+					<div className="mt-6 flex items-center justify-between gap-4 border-t border-app-line pt-5">
+						<label className="flex cursor-pointer select-none items-center gap-2.5">
+							<button
+								type="button"
+								role="switch"
+								aria-checked={addToQueue}
+								onClick={() => setAddToQueue((v) => !v)}
+								className={`relative h-5 w-[34px] flex-none rounded-full transition-colors ${
+									addToQueue ? 'bg-accent' : 'bg-app-line'
+								}`}
+							>
+								<span
+									className={`absolute top-0.5 h-4 w-4 rounded-full bg-app-card transition-transform ${
+										addToQueue ? 'translate-x-[15px]' : 'translate-x-0.5'
+									}`}
+								/>
+							</button>
+							<span className="text-[13px] text-app-muted">Add to Up next</span>
+						</label>
+
+						<div className="flex gap-2.5">
+							<button
+								type="button"
+								onClick={handleClose}
+								disabled={loading}
+								className="rounded-full border border-app-line px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-app-hover disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								disabled={loading || !url}
+								className="rounded-full bg-accent px-5 py-2 text-[13.5px] font-semibold text-app-page transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{loading ? (parsingStep === 'parsing' ? 'Fetching…' : 'Saving…') : 'Save'}
+							</button>
+						</div>
 					</div>
 				</form>
 			</div>

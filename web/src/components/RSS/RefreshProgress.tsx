@@ -1,6 +1,6 @@
 'use client';
 
-import { useReadingPreferences } from '@/contexts/ReadingPreferencesContext';
+import { Check } from 'lucide-react';
 
 interface RefreshProgressProps {
 	current: number;
@@ -9,78 +9,49 @@ interface RefreshProgressProps {
 }
 
 export default function RefreshProgress({ current, total, isVisible }: RefreshProgressProps) {
-	const { preferences } = useReadingPreferences();
-
 	if (!isVisible || total === 0) return null;
 
 	const percentage = Math.round((current / total) * 100);
 	const isComplete = current === total;
-	const isDark = preferences.colorTheme === 'dark';
 
 	return (
-		<div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-			<div className={`backdrop-blur-md rounded-2xl shadow-2xl border p-6 min-w-[320px] max-w-md ${
-				isDark
-					? 'bg-slate-800/95 border-slate-700'
-					: 'bg-white/95 border-orange-100'
-			}`}>
+		<div className="fixed left-1/2 top-20 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-300">
+			<div className="min-w-[320px] max-w-md rounded-[28px] border border-app-line bg-app-card p-6 [box-shadow:var(--shadow-modal)]">
 				{/* Header */}
-				<div className="flex items-center justify-between mb-4">
+				<div className="mb-4 flex items-center justify-between gap-4">
 					<div className="flex items-center gap-3">
-						<div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-							isComplete
-								? 'bg-gradient-to-br from-green-400 to-emerald-500'
-								: 'bg-gradient-to-br from-orange-400 to-pink-500'
-						}`}>
+						<div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent">
 							{isComplete ? (
-								<svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-								</svg>
+								<Check size={20} strokeWidth={2.75} className="text-app-page" />
 							) : (
-								<div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+								<div className="h-5 w-5 animate-spin rounded-full border-2 border-app-page/30 border-t-app-page" />
 							)}
 						</div>
 						<div>
-							<h3 className={`font-semibold ${isDark ? 'text-slate-100' : 'text-gray-900'}`}>
-								{isComplete ? 'Aggiornamento completato!' : 'Aggiornamento feed RSS'}
+							<h3 className="font-heading text-[17px] text-ink">
+								{isComplete ? 'Feeds updated' : 'Refreshing feeds'}
 							</h3>
-							<p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-								{current} di {total} feed processati
+							<p className="text-[13px] text-app-muted">
+								{current} of {total} feeds processed
 							</p>
 						</div>
 					</div>
-					<div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">
-						{percentage}%
-					</div>
+					<div className="font-heading text-[24px] text-accent">{percentage}%</div>
 				</div>
 
 				{/* Progress Bar */}
-				<div className={`relative h-3 rounded-full overflow-hidden ${
-					isDark ? 'bg-slate-700' : 'bg-gray-100'
-				}`}>
-					{/* Progress fill */}
+				<div className="h-2 overflow-hidden rounded-full bg-app-line">
 					<div
-						className={`h-full rounded-full transition-all duration-500 ease-out ${
-							isComplete
-								? 'bg-gradient-to-r from-green-400 to-emerald-500'
-								: 'bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500'
-						}`}
+						className="h-full rounded-full bg-accent transition-all duration-500 ease-out"
 						style={{ width: `${percentage}%` }}
-					>
-						{/* Glow effect */}
-						<div className="h-full w-full bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-pulse"></div>
-					</div>
+					/>
 				</div>
 
 				{/* Status message */}
 				{!isComplete && (
 					<div className="mt-3 text-center">
-						<p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-							Recupero degli ultimi articoli in corso...
-						</p>
-						<p className="text-xs text-green-600 mt-1 font-medium">
-							Puoi continuare a leggere mentre aggiorniamo
-						</p>
+						<p className="text-[12px] text-app-muted">Fetching the latest articles…</p>
+						<p className="mt-1 text-[12px] font-medium text-sage">You can keep reading while we update.</p>
 					</div>
 				)}
 			</div>

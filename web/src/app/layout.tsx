@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu, Montserrat } from "next/font/google";
+import { Geist, Geist_Mono, Roboto, Lato, Open_Sans, Ubuntu, Montserrat, Caprasimo, Figtree } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
@@ -49,6 +49,19 @@ const montserrat = Montserrat({
 	subsets: ["latin"],
 });
 
+// Organic design system pairing: Caprasimo (display) + Figtree (body)
+const caprasimo = Caprasimo({
+	weight: ['400'],
+	variable: "--font-caprasimo",
+	subsets: ["latin"],
+});
+
+const figtree = Figtree({
+	weight: ['400', '500', '600', '700'],
+	variable: "--font-figtree",
+	subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
 	title: "SuperReader",
 	description: "Save and read your favorite articles",
@@ -74,7 +87,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} ${montserrat.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${lato.variable} ${openSans.variable} ${ubuntu.variable} ${montserrat.variable} ${caprasimo.variable} ${figtree.variable} antialiased`}
 			>
 				<QueryProvider>
 					<AuthProvider>
