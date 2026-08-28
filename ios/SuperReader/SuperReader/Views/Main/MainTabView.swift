@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import UIKit
 
 
 // MARK: - Main Tab View
@@ -57,8 +58,20 @@ struct MainTabView: View {
         .task {
             await loadBadgeCounts()
         }
+        .onAppear { updateTabBarAppearance() }
+        .onChange(of: themeManager.resolvedTheme) { _, _ in updateTabBarAppearance() }
     }
-    
+
+    // Organic design system tab bar chrome (rail fill, 1pt top hairline).
+    private func updateTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(themeManager.colors.rail)
+        appearance.shadowColor = UIColor(themeManager.colors.line)
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+
     private func loadBadgeCounts() async {
         guard let userId = authManager.user?.id.uuidString else { return }
         

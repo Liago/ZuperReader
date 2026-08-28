@@ -1,249 +1,293 @@
 import SwiftUI
 
-// MARK: - Article Card View
+// MARK: - Article Card View (Library · grid)
 
 struct ArticleCardView: View {
     let article: Article
     let onFavorite: () -> Void
     let onDelete: () -> Void
-    
+
     @EnvironmentObject var themeManager: ThemeManager
-    @State private var showDeleteConfirm = false
-    @State private var isPressed = false
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // MARK: - Image Area
-            ZStack(alignment: .topLeading) {
-                // Main Image
-                if let imageUrl = article.imageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: 0)
-                        .aspectRatio(1.6, contentMode: .fill)
-                        .clipped()
-                } else {
-                    // Fallback: App Icon
-                    // Users request: Se non ci sono immagini per il thumbnail dell'articolo salvato, proponi un fallback che abbia come immagine di default uguale identica alla icona della app
-                    ZStack {
-                        Color(themeManager.colors.bgSecondary)
-                        
-                        if let appIcon = Bundle.main.appIcon {
-                            Image(uiImage: appIcon)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill) // Fill the frame
-                                .frame(width: nil, height: nil) // Allow standard fill
-                                .clipped()
-                        } else {
-                            // Ultimate fallback if app icon fails loading
-                             Image(systemName: "doc.text.image")
-                                .font(.system(size: 40))
-                                .foregroundColor(themeManager.colors.accent.opacity(0.3))
-                        }
-                    }
-                    .aspectRatio(1.6, contentMode: .fill)
-                }
-                
-                // Overlay Gradients
-                ZStack {
-                    // Bottom gradient for text readability (if we had text over image, but kept here for depth)
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.2)],
-                        startPoint: .center,
-                        endPoint: .bottom
-                    )
-                }
-                
-                // Floating Status Badge
-                HStack(spacing: 6) {
-                    StatusBadge(status: article.readingStatus)
-                    
-                    Spacer()
-                    
-                    // Fav Button (Floating)
-                    Button(action: onFavorite) {
-                        Image(systemName: article.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(article.isFavorite ? .red : .primary)
-                            .padding(8)
-                            .background(Material.ultraThin)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                    }
-                }
-                .padding(12)
+        Group {
+            if article.imageUrl != nil {
+                fullCard
+            } else {
+                compactCard
             }
-            .frame(height: 180)
-            .clipped()
-            
-            // MARK: - Content Area
-            VStack(alignment: .leading, spacing: 12) {
-                // Domain & Date Row
-                HStack {
-                    if let domain = article.domain {
-                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(0.5)
-                            .foregroundColor(themeManager.colors.accent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(themeManager.colors.accent.opacity(0.1))
-                            .cornerRadius(6)
-                    }
-                    
-                    Spacer()
-                    
-                    if let readTime = article.formattedReadTime {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.caption2)
-                            Text(readTime)
-                                .font(.caption2)
-                        }
-                        .foregroundColor(.secondary)
-                    }
+        }
+        .background(themeManager.colors.card)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
+        .shadow(color: AppShadows.card.color, radius: AppShadows.card.radius, x: AppShadows.card.x, y: AppShadows.card.y)
+        .contextMenu {
+            Button(action: onFavorite) {
+                Label(
+                    article.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                    systemImage: article.isFavorite ? "heart.slash" : "heart"
+                )
+            }
+            if let url = URL(string: article.url) {
+                ShareLink(item: url) {
+                    Label("Share", systemImage: "square.and.arrow.up")
                 }
-                
-                // Title
+            }
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+
+    // MARK: - Full card (hero image)
+
+    private var fullCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                themeManager.colors.accent200
+                AsyncImageView(url: article.imageUrl, cornerRadius: 0)
+                    .aspectRatio(contentMode: .fill)
+                if let domain = article.domain {
+                    sourcePill(domain)
+                }
+            }
+            .frame(height: 150)
+            .clipped()
+
+            progressTrack
+
+            VStack(alignment: .leading, spacing: 10) {
+                stateRow
+
                 Text(article.title)
-                    .font(.system(size: 18, weight: .bold)) // Inter-like system font
-                    .foregroundColor(themeManager.colors.textPrimary)
-                    .lineLimit(2)
+                    .font(Typography.cardTitle)
+                    .foregroundColor(themeManager.colors.text)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
-                
-                // Excerpt (Optional)
+
                 if let excerpt = article.excerpt, !excerpt.isEmpty {
                     Text(excerpt)
-                        .font(.system(size: 14))
-                        .foregroundColor(themeManager.colors.textSecondary)
+                        .font(Typography.bodyExcerpt)
+                        .foregroundColor(themeManager.colors.muted)
                         .lineLimit(2)
-                        .lineSpacing(2)
                 }
-                
-                Divider()
-                    .opacity(0.5)
-                
-                // Footer: Tags & Actions
-                HStack {
-                    // Tags
-                    if !article.tags.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 6) {
-                                ForEach(article.tags.prefix(2), id: \.self) { tag in
-                                    Text("#\(tag)")
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                    } else {
-                        Text("No tags")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary.opacity(0.5))
+
+                footer
+            }
+            .padding(.top, 16)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
+        }
+    }
+
+    private func sourcePill(_ domain: String) -> some View {
+        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
+            .font(Typography.figtree(11, weight: .heavy))
+            .tracking(1.1)
+            .foregroundColor(themeManager.colors.accent800)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(themeManager.colors.card)
+            .clipShape(Capsule())
+            .padding(12)
+    }
+
+    private var progressTrack: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(themeManager.colors.line)
+                Rectangle()
+                    .fill(themeManager.colors.accent)
+                    .frame(width: geometry.size.width * progressFraction)
+            }
+        }
+        .frame(height: 3)
+    }
+
+    private var progressFraction: CGFloat {
+        min(max(CGFloat(article.readingProgress) / 100, 0), 1)
+    }
+
+    private var stateRow: some View {
+        HStack {
+            HStack(spacing: 6) {
+                ReadingStateDot(
+                    status: article.readingStatus,
+                    accentColor: themeManager.colors.accent,
+                    accent2Color: themeManager.colors.accent2,
+                    mutedColor: themeManager.colors.muted
+                )
+                Text(stateLabel)
+                    .font(Typography.figtree(12.5, weight: .bold))
+                    .foregroundColor(themeManager.colors.muted)
+            }
+
+            Spacer()
+
+            if let readTime = article.estimatedReadTime {
+                Text("\(readTime) min")
+                    .font(Typography.meta)
+                    .foregroundColor(themeManager.colors.muted)
+            }
+        }
+    }
+
+    private var stateLabel: String {
+        switch article.readingStatus {
+        case .unread: return "Unread"
+        case .reading: return "Reading · \(article.readingProgress)%"
+        case .completed: return "Done"
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            if !article.tags.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(article.tags.prefix(2), id: \.self) { tag in
+                        Text(tag)
+                            .font(Typography.figtree(12))
+                            .foregroundColor(themeManager.colors.text)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(themeManager.colors.sink)
+                            .clipShape(Capsule())
                     }
-                    
-                    Spacer()
-                    
-                    // Delete Action
-                    Button(action: { showDeleteConfirm = true }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                            .padding(8)
-                            .background(Color.secondary.opacity(0.1))
-                            .clipShape(Circle())
+                }
+            } else {
+                Spacer(minLength: 0)
+            }
+
+            Spacer()
+
+            HStack(spacing: 14) {
+                Button(action: onFavorite) {
+                    Image(systemName: article.isFavorite ? "heart.fill" : "heart")
+                        .foregroundColor(article.isFavorite ? themeManager.colors.accent : themeManager.colors.text.opacity(0.55))
+                }
+                if let url = URL(string: article.url) {
+                    ShareLink(item: url) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(themeManager.colors.text.opacity(0.55))
                     }
                 }
             }
-            .padding(16)
-            .background(themeManager.colors.cardBg)
-        }
-        .background(themeManager.colors.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Material.thick, lineWidth: 1).opacity(0.5)
-        )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .animation(.spring(response: 0.3), value: isPressed)
-        .alert("Delete Article", isPresented: $showDeleteConfirm) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive, action: onDelete)
-        } message: {
-            Text("Are you sure you want to delete \"\(article.title)\"?")
+            .font(.system(size: 15, weight: .medium))
         }
     }
-}
 
-// Helper Component for Status Badge
-struct StatusBadge: View {
-    let status: ReadingStatus
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 6, height: 6)
-            
-            Text(statusText)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white)
-                .textCase(.uppercase)
+    // MARK: - Compact card (no hero image)
+
+    private var compactCard: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                themeManager.colors.accent2_200
+                if let appIcon = Bundle.main.appIcon {
+                    Image(uiImage: appIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Image(systemName: "doc.text.image")
+                        .foregroundColor(themeManager.colors.text.opacity(0.3))
+                }
+            }
+            .frame(width: 66, height: 66)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    ReadingStateDot(
+                        status: article.readingStatus,
+                        accentColor: themeManager.colors.accent,
+                        accent2Color: themeManager.colors.accent2,
+                        mutedColor: themeManager.colors.muted
+                    )
+                    if let domain = article.domain {
+                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
+                            .font(Typography.figtree(12, weight: .bold))
+                            .foregroundColor(themeManager.colors.muted)
+                    }
+                    Spacer()
+                    if let readTime = article.estimatedReadTime {
+                        Text("\(readTime) min")
+                            .font(Typography.meta)
+                            .foregroundColor(themeManager.colors.muted)
+                    }
+                }
+
+                Text(article.title)
+                    .font(Typography.listRowTitle)
+                    .foregroundColor(themeManager.colors.text)
+                    .lineLimit(2)
+            }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Material.thin)
-        .background(statusColor.opacity(0.8))
-        .clipShape(Capsule())
-        .shadow(color: statusColor.opacity(0.3), radius: 4, x: 0, y: 2)
-    }
-    
-    var statusColor: Color {
-        switch status {
-        case .unread: return .blue
-        case .reading: return .orange
-        case .completed: return .green
-        }
-    }
-    
-    var statusText: String {
-        switch status {
-        case .unread: return "Unread"
-        case .reading: return "Reading"
-        case .completed: return "Done"
-        }
+        .padding(14)
     }
 }
 
 #Preview {
-    ArticleCardView(
-        article: Article(
-            id: "1",
-            userId: "user1",
-            url: "https://example.com",
-            title: "Reimagining the Future of Digital Typography",
-            content: nil,
-            excerpt: "How variable fonts and fluid type scales are changing the web.",
-            imageUrl: "https://picsum.photos/400/300",
-            faviconUrl: nil,
-            author: "Jane Doe",
-            publishedDate: "2024-01-15",
-            domain: "typography.com",
-            tags: ["Design", "Web"],
-            isFavorite: true,
-            likeCount: 24,
-            commentCount: 8,
-            readingStatus: .reading,
-            estimatedReadTime: 6,
-            isPublic: true,
-            scrapedAt: "",
-            aiSummary: nil,
-            aiSummaryGeneratedAt: nil,
-            createdAt: "",
-            updatedAt: ""
-        ),
-        onFavorite: {},
-        onDelete: {}
-    )
+    VStack(spacing: 16) {
+        ArticleCardView(
+            article: Article(
+                id: "1",
+                userId: "user1",
+                url: "https://theverge.com/article",
+                title: "The quiet return of the personal website",
+                content: nil,
+                excerpt: "Why people are leaving platforms and building small corners of the web again.",
+                imageUrl: "https://picsum.photos/400/300",
+                faviconUrl: nil,
+                author: "Jane Doe",
+                publishedDate: "2024-01-15",
+                domain: "theverge.com",
+                tags: ["web", "culture"],
+                isFavorite: true,
+                likeCount: 24,
+                commentCount: 8,
+                readingStatus: .reading,
+                readingProgress: 38,
+                estimatedReadTime: 7,
+                isPublic: true,
+                scrapedAt: "",
+                aiSummary: nil,
+                aiSummaryGeneratedAt: nil,
+                createdAt: "",
+                updatedAt: ""
+            ),
+            onFavorite: {},
+            onDelete: {}
+        )
+
+        ArticleCardView(
+            article: Article(
+                id: "2",
+                userId: "user1",
+                url: "https://nautil.us/article",
+                title: "What forests know about time",
+                content: nil,
+                excerpt: nil,
+                imageUrl: nil,
+                faviconUrl: nil,
+                author: nil,
+                publishedDate: nil,
+                domain: "nautil.us",
+                tags: [],
+                isFavorite: false,
+                likeCount: 0,
+                commentCount: 0,
+                readingStatus: .unread,
+                readingProgress: 0,
+                estimatedReadTime: 12,
+                isPublic: true,
+                scrapedAt: "",
+                aiSummary: nil,
+                aiSummaryGeneratedAt: nil,
+                createdAt: "",
+                updatedAt: ""
+            ),
+            onFavorite: {},
+            onDelete: {}
+        )
+    }
     .padding()
     .background(Color.gray.opacity(0.1))
     .environmentObject(ThemeManager.shared)

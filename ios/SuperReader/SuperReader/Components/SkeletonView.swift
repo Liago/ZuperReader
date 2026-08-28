@@ -22,15 +22,15 @@ struct SkeletonView: View {
     
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(themeManager.colors.textSecondary.opacity(0.2))
+            .fill(themeManager.colors.sink)
             .frame(width: width, height: height)
             .overlay(
                 GeometryReader { geometry in
                     LinearGradient(
                         colors: [
-                            themeManager.colors.textSecondary.opacity(0),
-                            themeManager.colors.textPrimary.opacity(0.15),
-                            themeManager.colors.textSecondary.opacity(0)
+                            Color.white.opacity(0),
+                            Color.white.opacity(0.06),
+                            Color.white.opacity(0)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -57,30 +57,29 @@ struct SkeletonView: View {
 
 struct ArticleCardSkeleton: View {
     @EnvironmentObject private var themeManager: ThemeManager
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Image placeholder
-            SkeletonView(height: 150, cornerRadius: CornerRadius.md)
-            
+            SkeletonView(height: 150, cornerRadius: 0)
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Domain
                 SkeletonView(width: 80, height: 14)
-                
+
                 // Title
                 SkeletonView(height: 18)
                 SkeletonView(width: 200, height: 18)
-                
+
                 // Excerpt
                 SkeletonView(height: 14)
                 SkeletonView(width: 180, height: 14)
             }
-            .padding(.horizontal, Spacing.sm)
-            .padding(.bottom, Spacing.sm)
+            .padding(.horizontal, Spacing.md)
+            .padding(.bottom, Spacing.md)
         }
-        .background(themeManager.colors.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
-        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+        .background(themeManager.colors.card)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
     }
 }
 
@@ -88,19 +87,19 @@ struct ArticleCardSkeleton: View {
 
 struct ArticleRowSkeleton: View {
     @EnvironmentObject private var themeManager: ThemeManager
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Thumbnail
-            SkeletonView(width: 80, height: 80, cornerRadius: CornerRadius.md)
-            
+            SkeletonView(width: 66, height: 66, cornerRadius: CornerRadius.listThumbnail)
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Title
                 SkeletonView(height: 16)
                 SkeletonView(width: 150, height: 16)
-                
+
                 Spacer()
-                
+
                 // Meta info
                 HStack(spacing: Spacing.sm) {
                     SkeletonView(width: 60, height: 12)
@@ -108,9 +107,7 @@ struct ArticleRowSkeleton: View {
                 }
             }
         }
-        .padding(Spacing.sm)
-        .background(themeManager.colors.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+        .padding(.vertical, Spacing.sm)
     }
 }
 

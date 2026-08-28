@@ -1,151 +1,113 @@
 import SwiftUI
 
-// MARK: - Article Row View (List Mode)
+// MARK: - Article Row View (Library · list)
 
 struct ArticleRowView: View {
     let article: Article
-    let onFavorite: () -> Void
-    
+
     @EnvironmentObject var themeManager: ThemeManager
-    
+
     var body: some View {
-        HStack(spacing: 16) {
-            // MARK: - Thumbnail
-            ZStack(alignment: .topTrailing) { // Request 3: Spostato a in alto a destra
-                if let imageUrl = article.imageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: 16)
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 100, height: 100)
-                        .clipped()
-                        .cornerRadius(16)
-                } else {
-                    Group {
-                         if let appIcon = Bundle.main.appIcon {
-                             Image(uiImage: appIcon)
-                                 .resizable()
-                                 .aspectRatio(contentMode: .fill)
-                                 .background(themeManager.colors.bgSecondary)
-                         } else {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(themeManager.colors.bgSecondary)
-                                .overlay(
-                                    Image(systemName: "doc.text")
-                                        .foregroundColor(themeManager.colors.accent.opacity(0.4))
-                                )
-                         }
-                    }
-                    .frame(width: 100, height: 100)
-                    .clipped() // Ensure it doesn't overflow
-                    .cornerRadius(16)
-                }
-                
-                // Mini Status Dot
-                StatusDot(status: article.readingStatus)
-                    .padding(8)
-            }
-            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-            
-            // MARK: - Content
+        HStack(spacing: 14) {
+            thumbnail
+
             VStack(alignment: .leading, spacing: 6) {
-                // Top Meta: Domain & Date
-                HStack {
+                HStack(spacing: 6) {
+                    ReadingStateDot(
+                        status: article.readingStatus,
+                        accentColor: themeManager.colors.accent,
+                        accent2Color: themeManager.colors.accent2,
+                        mutedColor: themeManager.colors.muted
+                    )
                     if let domain = article.domain {
-                        Text(domain.replacingOccurrences(of: "www.", with: "").capitalized)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(themeManager.colors.accent)
+                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
+                            .font(Typography.figtree(12, weight: .bold))
+                            .foregroundColor(themeManager.colors.muted)
                     }
-                    
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    
-                    if let date = article.createdAtDate {
-                        Text(date.formatted(.dateTime.day().month()))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Title
-                Text(article.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(themeManager.colors.textPrimary)
-                    .lineLimit(2)
-                    .lineSpacing(2)
-                
-                Spacer()
-                
-                // Bottom Actions & Info
-                HStack {
-                    // Read Time
-                    if let readTime = article.estimatedReadTime {
-                        HStack(spacing: 2) {
-                            Image(systemName: "book")
-                                .font(.system(size: 10))
-                            Text("\(readTime) min")
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(6)
-                    }
-                    
                     Spacer()
-                    
-                    // Request 4: Icona commenti a sinistra del cuore
-                    if article.commentCount > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "bubble.left")
-                                .font(.system(size: 14))
-                            Text("\(article.commentCount)")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundColor(.secondary)
-                        .padding(.trailing, 8)
-                    }
-                    
-                    // Favorite Button
-                    Button(action: onFavorite) {
-                        Image(systemName: article.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 16))
-                            .foregroundColor(article.isFavorite ? .red : .gray.opacity(0.5))
+                    if let readTime = article.estimatedReadTime {
+                        Text("\(readTime) min")
+                            .font(Typography.meta)
+                            .foregroundColor(themeManager.colors.muted)
                     }
                 }
+
+                Text(article.title)
+                    .font(Typography.listRowTitle)
+                    .foregroundColor(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.text)
+                    .lineLimit(2)
+
+                progressTrack
             }
         }
-        .padding(12)
-        .background(themeManager.colors.cardBg)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.primary.opacity(0.03), lineWidth: 1)
-        )
+        .padding(.vertical, 14)
+    }
+
+    private var thumbnail: some View {
+        Group {
+            if let imageUrl = article.imageUrl {
+                AsyncImageView(url: imageUrl, cornerRadius: CornerRadius.listThumbnail)
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                ZStack {
+                    themeManager.colors.accent2_200
+                    if let appIcon = Bundle.main.appIcon {
+                        Image(uiImage: appIcon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "doc.text")
+                            .foregroundColor(themeManager.colors.text.opacity(0.3))
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+            }
+        }
+        .frame(width: 66, height: 66)
+        .clipped()
+    }
+
+    private var progressTrack: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(themeManager.colors.line)
+                Rectangle()
+                    .fill(article.readingStatus == .completed ? themeManager.colors.muted.opacity(0.45) : themeManager.colors.accent)
+                    .frame(width: geometry.size.width * progressFraction)
+            }
+        }
+        .frame(height: 2)
+        .clipShape(Capsule())
+    }
+
+    private var progressFraction: CGFloat {
+        if article.readingStatus == .completed { return 1 }
+        return min(max(CGFloat(article.readingProgress) / 100, 0), 1)
     }
 }
 
-// Minimal Status Dot for List View
-struct StatusDot: View {
+// MARK: - Reading State Dot
+
+/// A 7pt colored dot for "unread"/"reading" rows, or a check glyph for "completed"
+/// rows — shared between the Library grid card and list row (docs/revamp-ios/README.md).
+struct ReadingStateDot: View {
     let status: ReadingStatus
-    
+    let accentColor: Color
+    let accent2Color: Color
+    let mutedColor: Color
+    var size: CGFloat = 7
+
     var body: some View {
-        Circle()
-            .fill(statusColor)
-            .frame(width: 8, height: 8)
-            .overlay(
+        Group {
+            if status == .completed {
+                Image(systemName: "checkmark")
+                    .font(.system(size: size + 1, weight: .bold))
+                    .foregroundColor(mutedColor)
+            } else {
                 Circle()
-                    .stroke(Color.white, lineWidth: 1.5)
-            )
-            .shadow(color: statusColor.opacity(0.5), radius: 2, x: 0, y: 1)
-    }
-    
-    var statusColor: Color {
-        switch status {
-        case .unread: return .blue
-        case .reading: return .orange
-        case .completed: return .green
+                    .fill(status == .reading ? accentColor : accent2Color)
+                    .frame(width: size, height: size)
+            }
         }
     }
 }
@@ -161,34 +123,36 @@ extension Article {
 }
 
 #Preview {
-    ArticleRowView(
-        article: Article(
-            id: "1",
-            userId: "u1",
-            url: "http://test.com",
-            title: "SwiftUI Layout System",
-            content: nil,
-            excerpt: "Deep dive into layout",
-            imageUrl: "https://picsum.photos/100",
-            faviconUrl: nil,
-            author: nil,
-            publishedDate: nil,
-            domain: "apple.com",
-            tags: ["iOS"],
-            isFavorite: true,
-            likeCount: 0,
-            commentCount: 5,
-            readingStatus: .unread,
-            estimatedReadTime: 4,
-            isPublic: false,
-            scrapedAt: "",
-            aiSummary: nil,
-            aiSummaryGeneratedAt: nil,
-            createdAt: "2023-11-20T10:00:00.000Z",
-            updatedAt: ""
-        ),
-        onFavorite: {}
-    )
+    VStack(spacing: 0) {
+        ArticleRowView(
+            article: Article(
+                id: "1",
+                userId: "u1",
+                url: "http://test.com",
+                title: "SwiftUI Layout System",
+                content: nil,
+                excerpt: "Deep dive into layout",
+                imageUrl: "https://picsum.photos/100",
+                faviconUrl: nil,
+                author: nil,
+                publishedDate: nil,
+                domain: "apple.com",
+                tags: ["iOS"],
+                isFavorite: true,
+                likeCount: 0,
+                commentCount: 5,
+                readingStatus: .reading,
+                readingProgress: 60,
+                estimatedReadTime: 4,
+                isPublic: false,
+                scrapedAt: "",
+                aiSummary: nil,
+                aiSummaryGeneratedAt: nil,
+                createdAt: "2023-11-20T10:00:00.000Z",
+                updatedAt: ""
+            )
+        )
+    }
     .padding()
     .environmentObject(ThemeManager.shared)
 }
