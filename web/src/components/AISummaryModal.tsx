@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Sparkles, X, RefreshCw, Zap } from 'lucide-react';
 import { Article } from '../lib/supabase';
 import { regenerateArticleSummary } from '../lib/api';
 import Dropdown from './Dropdown';
@@ -19,19 +20,14 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 	const [summaryLength, setSummaryLength] = useState<'short' | 'medium' | 'long'>('medium');
 	const [localArticle, setLocalArticle] = useState<Article>(article);
 
-	// Update local article when prop changes
 	useEffect(() => {
 		setLocalArticle(article);
 	}, [article]);
 
-	// Handle keyboard navigation
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') {
-				onClose();
-			}
+			if (e.key === 'Escape') onClose();
 		};
-
 		if (isOpen) {
 			window.addEventListener('keydown', handleKeyDown);
 			return () => window.removeEventListener('keydown', handleKeyDown);
@@ -40,7 +36,7 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 
 	const handleGenerateSummary = async () => {
 		if (!localArticle.content) {
-			setError('Questo articolo non ha contenuto da riassumere');
+			setError('This article has no content to summarise.');
 			return;
 		}
 
@@ -50,11 +46,9 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 		try {
 			const updatedArticle = await regenerateArticleSummary(localArticle.id, summaryLength, summaryFormat);
 			setLocalArticle(updatedArticle);
-			if (onSummaryUpdated) {
-				onSummaryUpdated(updatedArticle);
-			}
+			if (onSummaryUpdated) onSummaryUpdated(updatedArticle);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Errore durante la generazione del riassunto');
+			setError(err instanceof Error ? err.message : 'Failed to generate the summary.');
 		} finally {
 			setIsGenerating(false);
 		}
@@ -63,23 +57,26 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-			<div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+		<div
+			className="fixed inset-0 z-50 grid place-items-center p-4"
+			style={{ background: 'rgba(32,30,29,.42)' }}
+			onClick={onClose}
+		>
+			<div
+				className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] border border-app-line bg-app-card [box-shadow:var(--shadow-modal)]"
+				onClick={(e) => e.stopPropagation()}
+			>
 				{/* Header */}
-				<div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+				<div className="flex items-center justify-between gap-4 border-b border-app-line p-6">
 					<div className="flex items-center gap-3">
-						<div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
-							<svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-							</svg>
+						<div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent">
+							<Sparkles size={18} strokeWidth={2.75} className="text-app-page" />
 						</div>
 						<div>
-							<h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-								Riassunto AI
-							</h3>
+							<h2 className="font-heading text-[24px] leading-none text-ink">AI summary</h2>
 							{localArticle.ai_summary_generated_at && (
-								<p className="text-xs text-gray-500 dark:text-gray-400">
-									Generato {new Date(localArticle.ai_summary_generated_at).toLocaleDateString('it-IT')}
+								<p className="mt-1 text-[12px] text-app-muted">
+									Generated {new Date(localArticle.ai_summary_generated_at).toLocaleDateString('en-US')}
 								</p>
 							)}
 						</div>
@@ -87,47 +84,40 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 
 					<button
 						onClick={onClose}
-						className="p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-700 transition-all"
-						title="Chiudi (Esc)"
+						title="Close (Esc)"
+						className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-app-line text-app-muted transition-colors hover:bg-app-hover hover:text-ink"
 					>
-						<svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-						</svg>
+						<X size={16} strokeWidth={2.75} />
 					</button>
 				</div>
 
 				{/* Controls */}
 				{localArticle.content && (
-					<div className="flex items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-						<div className="flex items-center gap-4 flex-wrap">
-							<div className="flex items-center gap-3">
-								<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-									Formato:
-								</label>
+					<div className="flex flex-wrap items-center justify-between gap-4 border-b border-app-line p-4">
+						<div className="flex flex-wrap items-center gap-4">
+							<div className="flex items-center gap-2.5">
+								<label className="text-[13px] font-medium text-app-muted">Format:</label>
 								<Dropdown
 									value={summaryFormat}
 									onChange={(value) => setSummaryFormat(value as 'summary' | 'bullet')}
 									options={[
-										{ label: 'Riassunto', value: 'summary' },
-										{ label: 'Punti elenco', value: 'bullet' }
+										{ label: 'Summary', value: 'summary' },
+										{ label: 'Bullet points', value: 'bullet' },
 									]}
 									disabled={isGenerating}
 									className="w-40"
 								/>
-
 							</div>
 
-							<div className="flex items-center gap-3">
-								<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-									Lunghezza:
-								</label>
+							<div className="flex items-center gap-2.5">
+								<label className="text-[13px] font-medium text-app-muted">Length:</label>
 								<Dropdown
 									value={summaryLength}
 									onChange={(value) => setSummaryLength(value as 'short' | 'medium' | 'long')}
 									options={[
-										{ label: 'Breve', value: 'short' },
-										{ label: 'Medio', value: 'medium' },
-										{ label: 'Lungo', value: 'long' }
+										{ label: 'Short', value: 'short' },
+										{ label: 'Medium', value: 'medium' },
+										{ label: 'Long', value: 'long' },
 									]}
 									disabled={isGenerating}
 									className="w-32"
@@ -138,94 +128,53 @@ export default function AISummaryModal({ isOpen, onClose, article, onSummaryUpda
 						<button
 							onClick={handleGenerateSummary}
 							disabled={isGenerating}
-							className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
-							title={localArticle.ai_summary ? 'Rigenera riassunto' : 'Genera riassunto'}
+							className="flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-[13.5px] font-semibold text-app-page transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+							title={localArticle.ai_summary ? 'Regenerate summary' : 'Generate summary'}
 						>
-							{isGenerating ? (
-								<>
-									<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-									</svg>
-									<span>Generazione...</span>
-								</>
-							) : (
-								<>
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-									</svg>
-									<span>{localArticle.ai_summary ? 'Rigenera' : 'Genera'}</span>
-								</>
-							)}
+							<RefreshCw size={15} strokeWidth={2.75} className={isGenerating ? 'animate-spin' : ''} />
+							{isGenerating ? 'Generating…' : localArticle.ai_summary ? 'Regenerate' : 'Generate'}
 						</button>
 					</div>
 				)}
 
 				{/* Content */}
 				<div className="flex-1 overflow-y-auto p-6">
-					{/* Error message */}
 					{error && (
-						<div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-							<p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+						<div className="mb-4 rounded-[18px] border border-app-line p-4" style={{ background: 'var(--accent-100)' }}>
+							<p className="text-[13px] font-medium text-accent-800">{error}</p>
 						</div>
 					)}
 
-					{/* Summary content */}
 					{isGenerating ? (
-						/* Skeleton placeholder during generation */
-						<div className="space-y-4 animate-pulse">
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-11/12"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-9/12"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-11/12"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
-							<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-8/12"></div>
-
-							<div className="pt-4">
-								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-full"></div>
-								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-10/12 mt-4"></div>
-								<div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-lg w-9/12 mt-4"></div>
-							</div>
-
-							{/* Loading indicator */}
-							<div className="flex items-center justify-center gap-3 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-								<svg className="w-5 h-5 animate-spin text-purple-600" fill="none" viewBox="0 0 24 24">
-									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
-								<span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-									Generazione del riassunto in corso...
-								</span>
+						<div className="animate-pulse space-y-3">
+							{['w-full', 'w-11/12', 'w-10/12', 'w-full', 'w-9/12', 'w-10/12', 'w-full', 'w-8/12'].map((w, i) => (
+								<div key={i} className={`h-4 rounded bg-app-surface ${w}`} />
+							))}
+							<div className="mt-8 flex items-center justify-center gap-3 border-t border-app-line pt-8">
+								<div className="h-5 w-5 animate-spin rounded-full border-2 border-app-line border-t-accent" />
+								<span className="text-[13px] font-medium text-app-muted">Generating the summary…</span>
 							</div>
 						</div>
 					) : localArticle.ai_summary ? (
-						<div className="prose prose-lg dark:prose-invert max-w-none">
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line font-lato">
-								{localArticle.ai_summary}
-							</p>
+						<div
+							className="whitespace-pre-line text-[15px] leading-[1.7] text-ink"
+							style={{ fontFamily: 'var(--font-body)' }}
+						>
+							{localArticle.ai_summary}
 						</div>
 					) : (
-						<div className="text-center py-12">
-							<svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-							</svg>
-							<p className="text-gray-600 dark:text-gray-400 text-lg mb-2 font-medium">
-								Nessun riassunto AI disponibile
-							</p>
-							<p className="text-sm text-gray-500 dark:text-gray-500">
-								Clicca su &quot;Genera&quot; per creare un riassunto intelligente di questo articolo
+						<div className="py-12 text-center">
+							<Sparkles size={40} strokeWidth={1.75} className="mx-auto mb-4 text-accent opacity-50" />
+							<p className="font-heading text-[21px] text-ink">No AI summary yet</p>
+							<p className="mt-1.5 text-[13.5px] text-app-muted">
+								Click &quot;Generate&quot; to create a smart summary of this article.
 							</p>
 						</div>
 					)}
 
 					{/* AI Badge */}
-					<div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-						</svg>
+					<div className="mt-6 flex items-center justify-center gap-2 border-t border-app-line pt-6 text-[12px] text-app-muted">
+						<Zap size={14} strokeWidth={2.75} />
 						<span>Powered by Cohere AI</span>
 					</div>
 				</div>
