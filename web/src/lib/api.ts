@@ -141,6 +141,39 @@ export async function getArticles(
 	};
 }
 
+export interface ArticleCounts {
+	all: number;
+	unread: number;
+	reading: number;
+	completed: number;
+	favorites: number;
+}
+
+/**
+ * Lightweight head-only count queries for the sidebar reading filters.
+ * Uses `count: 'exact', head: true` so no rows are transferred.
+ */
+export async function getArticleCounts(userId: string): Promise<ArticleCounts> {
+	const base = () =>
+		supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', userId);
+
+	const [all, unread, reading, completed, favorites] = await Promise.all([
+		base(),
+		base().eq('reading_status', 'unread'),
+		base().eq('reading_status', 'reading'),
+		base().eq('reading_status', 'completed'),
+		base().eq('is_favorite', true),
+	]);
+
+	return {
+		all: all.count || 0,
+		unread: unread.count || 0,
+		reading: reading.count || 0,
+		completed: completed.count || 0,
+		favorites: favorites.count || 0,
+	};
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
 	const { data, error } = await supabase
 		.from('articles')

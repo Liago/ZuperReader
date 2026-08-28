@@ -11,6 +11,48 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* ============================================
+     ORGANIC DESIGN SYSTEM — light theme (default)
+     Source: docs/revamp/_ds/organic-…/styles.css + README token tables.
+     Semantic tokens are rebound under [data-theme="dark"] below.
+     ============================================ */
+  --app-page: #f5ead8;
+  --app-rail: #efe2ca;
+  --app-card: #fffaf1;
+  --app-surface: #ebddc5;
+  --app-line: rgba(32, 30, 29, 0.12);
+  --app-muted: rgba(32, 30, 29, 0.58);
+  --app-hover: rgba(32, 30, 29, 0.05);
+  --app-ink: #201e1d;
+  --app-accent: #c67139;
+  --app-sage: #7a8a5e;
+
+  /* Tonal ramps (shared across themes — used for tinted fills) */
+  --accent-100: #fff2eb;
+  --accent-200: #ffe1d0;
+  --accent-300: #ffc6a5;
+  --accent-400: #f6a06b;
+  --accent-500: #d67f48;
+  --accent-600: #b2622d;
+  --accent-700: #8c491a;
+  --accent-800: #643312;
+  --accent-900: #402310;
+
+  --sage-100: #f0fae1;
+  --sage-200: #e1eecc;
+  --sage-300: #ccdbb2;
+  --sage-400: #aebf92;
+  --sage-500: #8fa073;
+  --sage-600: #728157;
+  --sage-700: #56633f;
+  --sage-800: #3d472b;
+  --sage-900: #272e1b;
+
+  /* Elevation — only three shadows ship in the revamp */
+  --shadow-card-hover: 0 12px 32px rgba(46, 43, 37, 0.16);
+  --shadow-modal: 0 24px 60px rgba(32, 30, 29, 0.28);
+  --shadow-shell: 0 1px 2px rgba(46, 43, 37, 0.08);
 }
 
 /* Light Theme (Default) */
@@ -24,7 +66,7 @@
   --app-text-secondary: #6b7280;
   --app-border: #e5e7eb;
   --app-card-bg: rgba(255, 255, 255, 0.8);
-  --app-accent: #9333ea;
+  --app-accent: #c67139;
 }
 
 /* Dark Theme */
@@ -38,7 +80,18 @@
   --app-text-secondary: #cbd5e1;
   --app-border: #334155;
   --app-card-bg: rgba(30, 41, 59, 0.8);
-  --app-accent: #818cf8;
+
+  /* Organic — dark theme (semantic tokens rebound; ramps inherited) */
+  --app-page: #23201c;
+  --app-rail: #1c1a17;
+  --app-card: #2b2823;
+  --app-surface: #332f28;
+  --app-line: rgba(243, 235, 223, 0.14);
+  --app-muted: rgba(243, 235, 223, 0.6);
+  --app-hover: rgba(243, 235, 223, 0.06);
+  --app-ink: #f3ebdf;
+  --app-accent: #e2975f;
+  --app-sage: #a9bd8c;
 }
 
 /* Ocean Theme */
@@ -92,6 +145,41 @@
   --font-lato: var(--font-lato);
   --font-open-sans: var(--font-open-sans);
   --font-ubuntu: var(--font-ubuntu);
+
+  /* Organic — expose semantic tokens + ramps as Tailwind utilities */
+  --color-app-page: var(--app-page);
+  --color-app-rail: var(--app-rail);
+  --color-app-card: var(--app-card);
+  --color-app-surface: var(--app-surface);
+  --color-app-line: var(--app-line);
+  --color-app-muted: var(--app-muted);
+  --color-app-hover: var(--app-hover);
+  --color-ink: var(--app-ink);
+  --color-accent: var(--app-accent);
+  --color-sage: var(--app-sage);
+
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+
+  --color-sage-100: var(--sage-100);
+  --color-sage-200: var(--sage-200);
+  --color-sage-300: var(--sage-300);
+  --color-sage-400: var(--sage-400);
+  --color-sage-500: var(--sage-500);
+  --color-sage-600: var(--sage-600);
+  --color-sage-700: var(--sage-700);
+  --color-sage-800: var(--sage-800);
+  --color-sage-900: var(--sage-900);
+
+  --font-heading: var(--font-caprasimo);
+  --font-body: var(--font-figtree);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -102,9 +190,24 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--app-page);
+  color: var(--app-ink);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+}
+
+/* Organic — global helpers used by the revamped surfaces */
+.washed {
+  filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94);
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Organic mandates a visible focus ring on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
 }
 
 /* ============================================

@@ -1,13 +1,25 @@
 'use client';
 
-import { getTagColor } from '../lib/tagSuggestionService';
-
 interface TagBadgeProps {
 	tag: string;
 	onRemove?: () => void;
 	onClick?: () => void;
 	size?: 'sm' | 'md';
 	removable?: boolean;
+}
+
+// Two-voice tag palette (Organic): a stable hash picks terracotta or sage so a
+// given tag always reads the same colour across the app.
+function tagTone(tag: string): 'accent' | 'sage' {
+	let hash = 0;
+	for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) | 0;
+	return Math.abs(hash) % 2 === 0 ? 'accent' : 'sage';
+}
+
+function toneClasses(tone: 'accent' | 'sage') {
+	return tone === 'accent'
+		? 'bg-accent-200 text-accent-800'
+		: 'bg-sage-200 text-sage-800';
 }
 
 export default function TagBadge({
@@ -17,11 +29,9 @@ export default function TagBadge({
 	size = 'sm',
 	removable = false,
 }: TagBadgeProps) {
-	const colors = getTagColor(tag);
-
 	const sizeClasses = size === 'sm'
-		? 'px-2 py-0.5 text-xs'
-		: 'px-3 py-1 text-sm';
+		? 'px-2.5 py-[3px] text-[11px]'
+		: 'px-3 py-1 text-[12.5px]';
 
 	const handleRemoveClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -32,26 +42,25 @@ export default function TagBadge({
 		<span
 			onClick={onClick}
 			className={`
-				inline-flex items-center gap-1 rounded-full font-medium border
-				${colors.bg} ${colors.text} ${colors.border}
+				inline-flex items-center gap-1 rounded-full font-medium tracking-[0.02em]
+				${toneClasses(tagTone(tag))}
 				${sizeClasses}
-				${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
+				${onClick ? 'cursor-pointer transition-opacity hover:opacity-80' : ''}
 				${removable ? 'pr-1' : ''}
 			`}
 		>
-			<span className="truncate max-w-[120px]">{tag}</span>
+			<span className="max-w-[120px] truncate">{tag}</span>
 			{removable && onRemove && (
 				<button
 					onClick={handleRemoveClick}
 					className={`
-						flex-shrink-0 rounded-full p-0.5
-						hover:bg-black/10 transition-colors
+						shrink-0 rounded-full p-0.5 transition-colors hover:bg-black/10
 						${size === 'sm' ? 'ml-0.5' : 'ml-1'}
 					`}
 					aria-label={`Remove ${tag} tag`}
 				>
 					<svg
-						className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'}
+						className={size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'}
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -106,9 +115,8 @@ export function TagList({
 			))}
 			{hiddenCount > 0 && (
 				<span className={`
-					inline-flex items-center rounded-full font-medium
-					bg-gray-100 text-gray-600 border border-gray-200
-					${size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}
+					inline-flex items-center rounded-full font-medium text-app-muted
+					${size === 'sm' ? 'px-2.5 py-[3px] text-[11px]' : 'px-3 py-1 text-[12.5px]'}
 				`}>
 					+{hiddenCount} more
 				</span>
