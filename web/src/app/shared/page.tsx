@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { UserPlus, X, Check, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriends } from '@/contexts/FriendsContext';
-import { getSharedWithMe, markShareAsRead, deleteArticleShare } from '@/lib/api';
+import { getSharedWithMe, markShareAsRead, deleteArticleShare, addToQueue } from '@/lib/api';
 import { ArticleShare } from '@/lib/supabase';
 import AppShell from '@/components/shell/AppShell';
 import UserSearch from '@/components/UserSearch';
@@ -37,6 +37,7 @@ export default function SharedPage() {
 	const [shares, setShares] = useState<ArticleShare[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [showFindFriends, setShowFindFriends] = useState(false);
+	const [queuedIds, setQueuedIds] = useState<Set<string>>(new Set());
 
 	useEffect(() => {
 		if (!authLoading && !user) router.push('/login');
@@ -66,6 +67,21 @@ export default function SharedPage() {
 			} catch (err) {
 				console.error('Error marking as read:', err);
 			}
+		}
+	};
+
+	const handleQueue = async (articleId: string) => {
+		if (!user) return;
+		setQueuedIds((prev) => new Set(prev).add(articleId));
+		try {
+			await addToQueue(user.id, articleId);
+		} catch (err) {
+			console.error('Failed to add to queue:', err);
+			setQueuedIds((prev) => {
+				const next = new Set(prev);
+				next.delete(articleId);
+				return next;
+			});
 		}
 	};
 
@@ -169,10 +185,12 @@ export default function SharedPage() {
 									</Link>
 									<button
 										type="button"
+										onClick={() => handleQueue(share.article_id)}
+										disabled={queuedIds.has(share.article_id)}
 										title="Add to Up next"
-										className="rounded-full border border-app-line px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-app-hover"
+										className="rounded-full border border-app-line px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-app-hover disabled:opacity-50"
 									>
-										Queue
+										{queuedIds.has(share.article_id) ? 'Queued' : 'Queue'}
 									</button>
 									<button
 										type="button"

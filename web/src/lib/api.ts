@@ -219,6 +219,85 @@ export async function getMonthlySavedCounts(userId: string): Promise<MonthlyActi
 	return buckets;
 }
 
+// ============================================================================
+// "Up next" reading queue (public.reading_queue)
+// ============================================================================
+
+export type QueueItem = {
+	id: string;
+	article_id: string;
+	position: number;
+	article: Article;
+};
+
+/** Ordered queue for a user, joined with the article rows. */
+export async function getReadingQueue(userId: string): Promise<QueueItem[]> {
+	const { data, error } = await supabase
+		.from('reading_queue')
+		.select('id, article_id, position, article:articles(*)')
+		.eq('user_id', userId)
+		.order('position', { ascending: true });
+
+	if (error) throw new Error(error.message);
+
+	// Supabase types the embedded relation as an array; normalize to a single object
+	// and drop any orphaned rows whose article no longer exists.
+	return (data || [])
+		.map((row) => {
+			const rel = row.article as unknown;
+			const article = Array.isArray(rel) ? rel[0] : rel;
+			return { id: row.id, article_id: row.article_id, position: row.position, article } as QueueItem;
+		})
+		.filter((item) => !!item.article);
+}
+
+export async function getReadingQueueCount(userId: string): Promise<number> {
+	const { count, error } = await supabase
+		.from('reading_queue')
+		.select('*', { count: 'exact', head: true })
+		.eq('user_id', userId);
+
+	if (error) throw new Error(error.message);
+	return count || 0;
+}
+
+/** Append an article to the end of the queue. No-op if already queued. */
+export async function addToQueue(userId: string, articleId: string): Promise<void> {
+	const count = await getReadingQueueCount(userId);
+	const { error } = await supabase
+		.from('reading_queue')
+		.upsert(
+			{ user_id: userId, article_id: articleId, position: count },
+			{ onConflict: 'user_id,article_id', ignoreDuplicates: true }
+		);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function removeFromQueue(queueItemId: string): Promise<void> {
+	const { error } = await supabase.from('reading_queue').delete().eq('id', queueItemId);
+	if (error) throw new Error(error.message);
+}
+
+/** Remove an article from the queue by article id (used to advance on finish). */
+export async function removeFromQueueByArticle(userId: string, articleId: string): Promise<void> {
+	const { error } = await supabase
+		.from('reading_queue')
+		.delete()
+		.eq('user_id', userId)
+		.eq('article_id', articleId);
+	if (error) throw new Error(error.message);
+}
+
+/** Persist a new order: `orderedIds` are reading_queue row ids in the desired order. */
+export async function reorderQueue(orderedIds: string[]): Promise<void> {
+	await Promise.all(
+		orderedIds.map((id, index) =>
+			supabase.from('reading_queue').update({ position: index }).eq('id', id)
+		)
+	);
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
 	const { data, error } = await supabase
 		.from('articles')

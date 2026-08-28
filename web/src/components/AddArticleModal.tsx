@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Link2, ClipboardCheck, X } from 'lucide-react';
-import { parseArticle, saveArticle } from '../lib/api';
+import { parseArticle, saveArticle, addToQueue as addArticleToQueue } from '../lib/api';
 
 interface AddArticleModalProps {
 	isOpen: boolean;
@@ -73,9 +73,18 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 		try {
 			const parsedData = await parseArticle(url);
 			setParsingStep('saving');
-			await saveArticle(parsedData, userId);
+			const saved = await saveArticle(parsedData, userId);
+
+			if (addToQueue && saved?.id) {
+				try {
+					await addArticleToQueue(userId, saved.id);
+				} catch (queueErr) {
+					console.error('Failed to add to Up next:', queueErr);
+				}
+			}
 
 			setUrl('');
+			setAddToQueue(false);
 			setParsingStep('idle');
 			onArticleAdded();
 			onClose();

@@ -8,7 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useFriends } from '../../contexts/FriendsContext';
 import { useArticles } from '../../contexts/ArticlesContext';
 import { useArticleFilters, ReadingStatus } from '../../contexts/ArticleFiltersContext';
-import { getArticleCounts, ArticleCounts } from '../../lib/api';
+import { getArticleCounts, getReadingQueueCount, ArticleCounts } from '../../lib/api';
 import ThemeSelector from '../ThemeSelector';
 import StateMark, { StateMarkVariant } from './StateMark';
 
@@ -38,6 +38,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 	} = useArticleFilters();
 
 	const [counts, setCounts] = useState<ArticleCounts | null>(null);
+	const [queueCount, setQueueCount] = useState<number>(0);
 
 	useEffect(() => {
 		if (!user?.id) return;
@@ -49,11 +50,16 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 			.catch(() => {
 				/* counts are non-essential — omit rather than fake */
 			});
+		getReadingQueueCount(user.id)
+			.then((n) => {
+				if (!cancelled) setQueueCount(n);
+			})
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
 		// Re-count when the loaded set changes (add / delete / status change).
-	}, [user?.id, state.articles.length]);
+	}, [user?.id, state.articles.length, pathname]);
 
 	// Tags surfaced from the loaded articles.
 	const availableTags = useMemo(() => {
@@ -64,7 +70,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 
 	const destinations: Destination[] = [
 		{ href: '/', label: 'Library', icon: BookOpen, badge: counts?.all },
-		{ href: '/queue', label: 'Up next', icon: ListOrdered },
+		{ href: '/queue', label: 'Up next', icon: ListOrdered, badge: queueCount || undefined, badgeTone: 'sage' },
 		{ href: '/rss', label: 'Feeds', icon: Rss, badgeTone: 'sage' },
 		{
 			href: '/shared',

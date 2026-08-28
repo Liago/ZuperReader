@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ChevronDown, LayoutGrid, List as ListIcon, X, Sparkles, BookOpen } from 'lucide-react';
-import { deleteArticle, updateArticleTags, toggleFavorite, ArticleFilters, ArticleSortOptions, ArticleSortField } from '../lib/api';
+import { deleteArticle, updateArticleTags, toggleFavorite, addToQueue, ArticleFilters, ArticleSortOptions, ArticleSortField } from '../lib/api';
 import { Article } from '../lib/supabase';
 import { useReadingPreferences } from '../contexts/ReadingPreferencesContext';
 import { useArticles } from '../contexts/ArticlesContext';
@@ -210,6 +210,15 @@ export default function ArticleList({ userId }: ArticleListProps) {
 		}
 	};
 
+	const handleAddToQueue = async (e: React.MouseEvent, article: Article) => {
+		e.stopPropagation();
+		try {
+			await addToQueue(userId, article.id);
+		} catch (err) {
+			console.error('Failed to add to queue:', err);
+		}
+	};
+
 	const handleToggleFavorite = async (e: React.MouseEvent, article: Article) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -389,6 +398,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 							onToggleFavorite={handleToggleFavorite}
 							onDelete={handleDeleteClick}
 							onEditTags={handleTagClick}
+							onAddToQueue={handleAddToQueue}
 						/>
 					))}
 				</div>

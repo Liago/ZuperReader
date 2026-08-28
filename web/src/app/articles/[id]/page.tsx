@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Type, Sparkles, Bookmark, Eye, Trash2, Tag } from 'lucide-react';
-import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus, updateReadingProgress } from '../../../lib/api';
+import { getArticleById, deleteArticle, updateArticleTags, toggleFavorite, updateReadingStatus, updateReadingProgress, removeFromQueueByArticle } from '../../../lib/api';
 import { Article } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useReadingPreferences } from '../../../contexts/ReadingPreferencesContext';
@@ -222,12 +222,15 @@ export default function ArticleReaderPage() {
 			});
 			if (current) setActiveHeadingId(current);
 
-			// Mark completed at 85%
+			// Mark completed at 85% and advance the queue (remove this article from Up next)
 			if (pct >= 85 && article.reading_status === 'reading') {
 				(async () => {
 					try {
 						await updateReadingStatus(article.id, 'completed');
 						setArticle((prev) => (prev ? { ...prev, reading_status: 'completed' } : prev));
+						if (user) {
+							removeFromQueueByArticle(user.id, article.id).catch(() => {});
+						}
 					} catch (error) {
 						console.error('Failed to update reading status to completed:', error);
 					}
