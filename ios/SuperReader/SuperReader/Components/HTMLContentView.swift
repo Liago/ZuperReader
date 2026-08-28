@@ -56,42 +56,14 @@ struct HTMLContentView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <style>
                 @font-face {
-                    font-family: 'Inter';
-                    src: url('Inter-Regular.ttf') format('truetype');
-                }
-                @font-face {
-                    font-family: 'Poppins';
-                    src: url('Poppins-Regular.ttf') format('truetype');
-                }
-                @font-face {
                     font-family: 'Lora';
                     src: url('Lora-Regular.ttf') format('truetype');
                 }
                 @font-face {
-                    font-family: 'Montserrat';
-                    src: url('Montserrat-Regular.ttf') format('truetype');
+                    font-family: 'Figtree';
+                    src: url('Figtree-Regular.ttf') format('truetype');
                 }
-                @font-face {
-                    font-family: 'Crimson Text';
-                    src: url('CrimsonText-Regular.ttf') format('truetype');
-                }
-                @font-face {
-                    font-family: 'Lato';
-                    src: url('Lato-Regular.ttf') format('truetype');
-                }
-                @font-face {
-                    font-family: 'Roboto';
-                    src: url('Roboto-Regular.ttf') format('truetype');
-                }
-                @font-face {
-                    font-family: 'Open Sans';
-                    src: url('OpenSans-Regular.ttf') format('truetype');
-                }
-                @font-face {
-                    font-family: 'Ubuntu';
-                    src: url('Ubuntu-Regular.ttf') format('truetype');
-                }
-                
+
                 body {
                     font-family: \(fontFamily);
                     font-size: \(fontSize)px;
@@ -216,45 +188,23 @@ struct HTMLContentView: UIViewRepresentable {
     
     private func getThemeColors(theme: ColorTheme) -> (text: String, link: String) {
         switch theme {
-        case .light, .auto:
-            return ("#111827", "#9333EA") // textPrimary, accent
+        case .cream, .system:
+            return ("#201E1D", "#C67139") // text, accent
+        case .sepia:
+            return ("#3A2F1F", "#C67139")
         case .dark:
-            return ("#F1F5F9", "#818CF8")
-        case .ocean:
-            return ("#164E63", "#0891B2")
-        case .forest:
-            return ("#14532D", "#16A34A")
-        case .sunset:
-            return ("#581C87", "#A855F7")
+            return ("#F3EBDF", "#E2975F")
         }
     }
-    
+
     private func getCSSFontFamily(for family: Typography.FontFamily) -> String {
         switch family {
-        case .sans:
-            return "-apple-system, system-ui, 'Helvetica Neue', sans-serif"
-        case .serif:
-            return "Georgia, 'Times New Roman', Times, serif"
-        case .mono:
-            return "'SF Mono', Menlo, Monaco, monospace"
-        case .inter:
-            return "'Inter', -apple-system, sans-serif"
-        case .poppins:
-            return "'Poppins', sans-serif"
         case .lora:
             return "'Lora', Georgia, serif"
-        case .montserrat:
-            return "'Montserrat', sans-serif"
-        case .crimsonText:
-            return "'Crimson Text', Georgia, serif"
-        case .lato:
-            return "'Lato', sans-serif"
-        case .roboto:
-            return "'Roboto', -apple-system, sans-serif"
-        case .openSans:
-            return "'Open Sans', sans-serif"
-        case .ubuntu:
-            return "'Ubuntu', sans-serif"
+        case .figtree:
+            return "'Figtree', -apple-system, sans-serif"
+        case .mono:
+            return "'SF Mono', Menlo, Monaco, monospace"
         }
     }
     

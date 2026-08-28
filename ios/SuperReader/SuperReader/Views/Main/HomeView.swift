@@ -201,8 +201,8 @@ struct ThemeSelectorSheet: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private func previewTheme(_ theme: ColorTheme) -> ColorTheme {
-        if theme == .auto {
-            return colorScheme == .dark ? .dark : .light
+        if theme == .system {
+            return colorScheme == .dark ? .dark : .cream
         }
         return theme
     }
@@ -217,11 +217,11 @@ struct ThemeSelectorSheet: View {
                     }) {
                         HStack {
                             // Theme preview
-                            if theme == .auto {
+                            if theme == .system {
                                 ZStack {
                                     HStack(spacing: 0) {
                                         Rectangle()
-                                            .fill(ColorTheme.light.colors.bgPrimary)
+                                            .fill(ColorTheme.cream.colors.bgPrimary)
                                         Rectangle()
                                             .fill(ColorTheme.dark.colors.bgPrimary)
                                     }
@@ -259,7 +259,7 @@ struct ThemeSelectorSheet: View {
                                 Text(theme.displayName)
                                     .font(.headline)
                                     .foregroundColor(themeManager.colors.textPrimary)
-                                if theme == .auto {
+                                if theme == .system {
                                     Text("Follows system setting")
                                         .font(.caption)
                                         .foregroundColor(themeManager.colors.textSecondary)
@@ -270,7 +270,7 @@ struct ThemeSelectorSheet: View {
 
                             if themeManager.currentTheme == theme {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.purple)
+                                    .foregroundColor(themeManager.colors.accent)
                             }
                         }
                         .padding(.vertical, 4)

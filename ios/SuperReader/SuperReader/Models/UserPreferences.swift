@@ -27,9 +27,9 @@ struct UserPreferences: Codable {
     
     init(
         id: String,
-        fontFamily: Typography.FontFamily = .serif,
+        fontFamily: Typography.FontFamily = .lora,
         fontSize: Int = 18,
-        colorTheme: ColorTheme = .light,
+        colorTheme: ColorTheme = .cream,
         lineHeight: Typography.LineHeight = .relaxed,
         contentWidth: Typography.ContentWidth = .normal,
         viewMode: ViewMode = .grid,
@@ -55,9 +55,9 @@ struct UserPreferences: Codable {
 // MARK: - Local Reading Preferences (for article reader)
 
 struct ReadingPreferences: Equatable {
-    var fontFamily: Typography.FontFamily = .serif
+    var fontFamily: Typography.FontFamily = .lora
     var fontSize: CGFloat = 18
-    var colorTheme: ColorTheme = .light
+    var colorTheme: ColorTheme = .cream
     var lineHeight: Typography.LineHeight = .relaxed
     var contentWidth: Typography.ContentWidth = .normal
     
