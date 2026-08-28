@@ -270,13 +270,19 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 			{/* Account */}
 			<div className="mt-auto border-t border-app-line pt-3">
 				<div className="flex items-center gap-2.5">
-					<span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-sage text-[13px] font-semibold text-app-page">
-						{displayName.charAt(0).toUpperCase()}
-					</span>
-					<div className="min-w-0 flex-1">
-						<div className="truncate text-[13.5px] font-semibold text-ink">{displayName}</div>
-						<div className="truncate text-[11.5px] text-app-muted">{user?.email}</div>
-					</div>
+					<Link
+						href="/profile"
+						className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 transition-colors hover:bg-app-hover"
+						title="View profile"
+					>
+						<span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-sage text-[13px] font-semibold text-app-page">
+							{displayName.charAt(0).toUpperCase()}
+						</span>
+						<div className="min-w-0 flex-1">
+							<div className="truncate text-[13.5px] font-semibold text-ink">{displayName}</div>
+							<div className="truncate text-[11.5px] text-app-muted">{user?.email}</div>
+						</div>
+					</Link>
 					<ThemeSelector />
 				</div>
 				<button
