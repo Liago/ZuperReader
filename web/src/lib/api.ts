@@ -174,6 +174,51 @@ export async function getArticleCounts(userId: string): Promise<ArticleCounts> {
 	};
 }
 
+export interface MonthlyActivity {
+	label: string; // short month label, e.g. "Jan"
+	count: number;
+	isCurrent: boolean;
+}
+
+/**
+ * Articles saved per month over the last 12 months, for the Profile activity
+ * chart. Fetches only created_at to keep the payload small.
+ */
+export async function getMonthlySavedCounts(userId: string): Promise<MonthlyActivity[]> {
+	const now = new Date();
+	const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+	const { data, error } = await supabase
+		.from('articles')
+		.select('created_at')
+		.eq('user_id', userId)
+		.gte('created_at', start.toISOString());
+
+	if (error) throw new Error(error.message);
+
+	// Seed the 12 month buckets in order.
+	const buckets: MonthlyActivity[] = [];
+	const keyOf = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+	const index = new Map<string, number>();
+	for (let i = 0; i < 12; i++) {
+		const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+		index.set(keyOf(d), buckets.length);
+		buckets.push({
+			label: d.toLocaleDateString('en-US', { month: 'short' }),
+			count: 0,
+			isCurrent: i === 11,
+		});
+	}
+
+	(data || []).forEach((row: { created_at: string }) => {
+		const d = new Date(row.created_at);
+		const idx = index.get(keyOf(d));
+		if (idx !== undefined) buckets[idx].count += 1;
+	});
+
+	return buckets;
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
 	const { data, error } = await supabase
 		.from('articles')
