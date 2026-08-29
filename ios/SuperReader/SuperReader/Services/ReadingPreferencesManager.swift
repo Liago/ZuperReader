@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import Supabase
+import Auth
 
 // MARK: - Reading Preferences Manager
 

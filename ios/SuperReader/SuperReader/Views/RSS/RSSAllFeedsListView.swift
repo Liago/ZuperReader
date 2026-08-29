@@ -1,4 +1,5 @@
 import SwiftUI
+import Auth
 
 // MARK: - All Feeds (combined, unread) — destination of the Feeds screen's
 // "All feeds" hero row (docs/revamp-ios/README.md · "06 Feeds").
