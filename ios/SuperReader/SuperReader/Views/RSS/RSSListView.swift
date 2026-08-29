@@ -5,88 +5,40 @@ struct RSSListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @State private var showingDiscovery = false
     @State private var showingSettings = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.backgroundGradient
+                themeManager.colors.page
                     .ignoresSafeArea()
-                
+
                 if viewModel.isLoading && viewModel.feeds.isEmpty {
-                    ProgressView()
+                    loadingView
                 } else if viewModel.feeds.isEmpty {
                     emptyState
                 } else {
                     ScrollView {
-                        VStack(spacing: 24) {
-                            // Stats Header
-                            HStack(spacing: 16) {
-                                RSSStatCard(title: "Channels", value: "\(viewModel.feeds.count)", icon: "antenna.radiowaves.left.and.right", color: .purple)
-                                RSSStatCard(title: "To Read", value: "\(viewModel.totalUnreadCount)", icon: "tray.full.fill", color: .blue)
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            
-                            // Feed List
-                            LazyVStack(spacing: 16) {
-                                ForEach(viewModel.feeds) { feed in
-                                    NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: viewModel)) {
-                                        RSSFeedRow(feed: feed, unreadCount: viewModel.unreadCounts[feed.id] ?? 0)
-                                    }
-                                    .buttonStyle(ScaleButtonStyle())
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.bottom, 20)
+                        VStack(alignment: .leading, spacing: Spacing.md) {
+                            allFeedsRow
+                            feedList
                         }
+                        .padding(.horizontal, Spacing.screenHorizontal)
+                        .padding(.top, Spacing.md)
+                        .padding(.bottom, Spacing.scrollBottomInset)
                     }
                     .refreshable {
-                        Task {
-                            await viewModel.refreshFeedsViaAPI()
-                        }
+                        await viewModel.refreshFeedsViaAPI()
                     }
                 }
-                
+
                 if viewModel.isRefreshing {
                     RSSRefreshLoaderView(viewModel: viewModel)
                 }
             }
-            .navigationTitle("Your Feeds")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 12) {
-                        Button(action: { showingSettings = true }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Circle().fill(Color.gray))
-                                .shadow(color: Color.gray.opacity(0.4), radius: 4, y: 2)
-                        }
-
-                        Button {
-                            Task { await viewModel.refreshFeedsViaAPI() }
-                        } label: {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Circle().fill(Color.orange))
-                                .shadow(color: Color.orange.opacity(0.4), radius: 4, y: 2)
-                        }
-                        .disabled(viewModel.isRefreshing)
-
-                        Button(action: { showingDiscovery = true }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Circle().fill(themeManager.colors.accent))
-                                .shadow(color: themeManager.colors.accent.opacity(0.4), radius: 4, y: 2)
-                        }
-                    }
-                }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                header
             }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingDiscovery) {
                 RSSDiscoveryView {
                     Task { await viewModel.loadFeeds() }
@@ -105,192 +57,226 @@ struct RSSListView: View {
             }
         }
     }
-    
-    var emptyState: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "dot.radiowaves.up.forward")
-                .font(.system(size: 72))
-                .foregroundColor(themeManager.colors.textSecondary.opacity(0.3))
-                .padding()
-                .background(
-                    Circle()
-                        .fill(themeManager.colors.bgSecondary)
-                        .frame(width: 120, height: 120)
-                )
-            
-            VStack(spacing: 8) {
-                Text("No RSS Feeds")
-                    .font(.title2.bold())
-                    .foregroundColor(themeManager.colors.textPrimary)
-                
-                Text("Follow your favorite websites\nto see their latest articles here.")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(themeManager.colors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal)
-            
-            Button(action: { showingDiscovery = true }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Discover Feeds")
+
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Feeds")
+                    .font(Typography.largeTitle)
+                    .foregroundColor(themeManager.colors.text)
+
+                Spacer()
+
+                HStack(spacing: Spacing.sm) {
+                    Button(action: { showingSettings = true }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(themeManager.colors.text)
+                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
+                            .background(themeManager.colors.sink)
+                            .clipShape(Circle())
+                    }
+
+                    Button(action: { showingDiscovery = true }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(themeManager.colors.page)
+                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
+                            .background(themeManager.colors.accent)
+                            .clipShape(Circle())
+                    }
                 }
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(
-                        colors: [Color.purple, Color.blue],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(Capsule())
-                .shadow(color: Color.purple.opacity(0.4), radius: 8, x: 0, y: 4)
             }
-            .padding(.top, 12)
+
+            Text(subtitle)
+                .font(Typography.figtree(13.5))
+                .foregroundColor(themeManager.colors.muted)
         }
-        .padding()
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.top, Spacing.contentTop)
+        .padding(.bottom, Spacing.md)
+        .background(themeManager.colors.page)
+    }
+
+    private var subtitle: String {
+        let channels = viewModel.feeds.count
+        let unread = viewModel.totalUnreadCount
+        return "\(channels) channel\(channels == 1 ? "" : "s") · \(unread) unread · \(viewModel.lastSyncedDescription)"
+    }
+
+    // MARK: - All Feeds Hero Row
+
+    private var allFeedsRow: some View {
+        NavigationLink(destination: RSSAllFeedsListView(viewModel: viewModel)) {
+            HStack(spacing: 14) {
+                Image(systemName: "dot.radiowaves.up.forward")
+                    .font(.system(size: 20, weight: .semibold))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("All feeds")
+                        .font(Typography.caprasimo(16))
+                    Text("Everything, newest first")
+                        .font(Typography.figtree(12.5))
+                        .opacity(0.85)
+                }
+
+                Spacer()
+
+                if viewModel.totalUnreadCount > 0 {
+                    Text("\(viewModel.totalUnreadCount)")
+                        .font(Typography.figtree(14, weight: .heavy))
+                }
+            }
+            .foregroundColor(themeManager.colors.page)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(themeManager.colors.accent)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    // MARK: - Feed List
+
+    // Folders (`RSSFeed.folderId`) aren't backed by any folder CRUD yet on
+    // either platform, so feeds render as one flat list rather than the
+    // "Design" / "Long reads" grouping in the mock.
+    private var feedList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(viewModel.feeds.enumerated()), id: \.element.id) { index, feed in
+                NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: viewModel)) {
+                    RSSFeedRow(feed: feed, unreadCount: viewModel.unreadCounts[feed.id] ?? 0, monogramIndex: index)
+                }
+                .buttonStyle(ScaleButtonStyle())
+
+                if index < viewModel.feeds.count - 1 {
+                    Rectangle()
+                        .fill(themeManager.colors.line)
+                        .frame(height: 1)
+                        .padding(.leading, 12 + 36 + 14)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .background(themeManager.colors.card)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
+    }
+
+    // MARK: - Loading
+
+    private var loadingView: some View {
+        ScrollView {
+            VStack(spacing: Spacing.sm) {
+                ForEach(0..<6, id: \.self) { _ in
+                    ArticleRowSkeleton()
+                }
+            }
+            .padding(.horizontal, Spacing.screenHorizontal)
+            .padding(.top, Spacing.contentTop + 60)
+        }
+    }
+
+    // MARK: - Empty State
+
+    var emptyState: some View {
+        VStack(spacing: Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(themeManager.colors.sink)
+                    .frame(width: 96, height: 96)
+                Image(systemName: "dot.radiowaves.up.forward")
+                    .font(.system(size: 40))
+                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+            }
+
+            Text("No feeds yet")
+                .font(Typography.sheetTitle)
+                .foregroundColor(themeManager.colors.text)
+
+            Text("Follow your favorite websites\nto see their latest articles here.")
+                .font(Typography.figtree(15))
+                .foregroundColor(themeManager.colors.muted)
+                .multilineTextAlignment(.center)
+
+            Button(action: { showingDiscovery = true }) {
+                Text("Discover feeds")
+                    .font(Typography.figtree(15, weight: .bold))
+                    .foregroundColor(themeManager.colors.page)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(themeManager.colors.accent)
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(Spacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-struct RSSStatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.colors.textPrimary)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(themeManager.colors.textSecondary)
-            }
-            
-            Spacer()
-            
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(color)
-                .padding(10)
-                .background(color.opacity(0.1))
-                .clipShape(Circle())
-        }
-        .padding(16)
-        .background(themeManager.colors.cardBg)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
+// MARK: - Feed Row
 
 struct RSSFeedRow: View {
     let feed: RSSFeed
     let unreadCount: Int
+    let monogramIndex: Int
     @EnvironmentObject var themeManager: ThemeManager
-    
+
     var domain: String {
         URL(string: feed.siteUrl ?? feed.url)?.host?.replacingOccurrences(of: "www.", with: "") ?? ""
     }
-    
+
+    private var monogramLetter: String {
+        String(feed.title.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased()
+    }
+
+    private var isFullyRead: Bool { unreadCount == 0 }
+
     var body: some View {
-        HStack(spacing: 16) {
-            // Favicon with glow
+        HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(themeManager.colors.bgSecondary)
-                    .frame(width: 48, height: 48)
-                
-                AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 28, height: 28)
-                            .clipShape(Circle())
-                    case .failure:
-                        Image(systemName: "rss")
-                            .font(.system(size: 16))
-                            .foregroundColor(.purple)
-                    case .empty:
-                        ProgressView()
-                            .scaleEffect(0.5)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
+                    .fill(monogramIndex % 2 == 0 ? themeManager.colors.accent200 : themeManager.colors.accent2_200)
+                Text(monogramLetter)
+                    .font(Typography.figtree(15, weight: .heavy))
+                    .foregroundColor(monogramIndex % 2 == 0 ? themeManager.colors.accent800 : themeManager.colors.accent2)
             }
-            
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
+            .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(feed.title)
-                    .font(.headline)
-                    .foregroundColor(themeManager.colors.textPrimary)
+                    .font(Typography.figtree(15, weight: .bold))
+                    .foregroundColor(themeManager.colors.text)
                     .lineLimit(1)
-                
+
                 if !domain.isEmpty {
                     Text(domain)
-                        .font(.caption)
-                        .foregroundColor(themeManager.colors.textSecondary)
+                        .font(Typography.figtree(12.5))
+                        .foregroundColor(themeManager.colors.muted)
                 }
             }
-            
+
             Spacer()
-            
-            // Unread Badge
-            if unreadCount > 0 {
-                Text("\(unreadCount)")
+
+            if isFullyRead {
+                Image(systemName: "checkmark")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(minWidth: 24, minHeight: 24)
-                    .padding(.horizontal, 8)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.purple, Color.blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(Capsule())
-                    .shadow(color: Color.purple.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .foregroundColor(themeManager.colors.muted)
             } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(Color.green.opacity(0.6))
-                    .font(.system(size: 16))
+                Text("\(unreadCount)")
+                    .font(Typography.figtree(14, weight: .heavy))
+                    .foregroundColor(themeManager.colors.accent)
             }
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(themeManager.colors.textSecondary.opacity(0.3))
         }
-        .padding(16)
-        .background(themeManager.colors.cardBg)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 12)
+        .opacity(isFullyRead ? 0.62 : 1)
+        .contentShape(Rectangle())
     }
 }
 
-// Helper Button Style
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
-    }
+#Preview {
+    RSSListView()
+        .environmentObject(ThemeManager.shared)
 }

@@ -202,4 +202,13 @@ class RSSViewModel: ObservableObject {
     var totalUnreadCount: Int {
         unreadCounts.values.reduce(0, +)
     }
+
+    /// "synced 4 minutes ago" for the Feeds header subtitle
+    /// (docs/revamp-ios/README.md · "06 Feeds").
+    var lastSyncedDescription: String {
+        guard let last = lastRefreshDate else { return "not yet synced" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "synced \(formatter.localizedString(for: last, relativeTo: Date()))"
+    }
 }
