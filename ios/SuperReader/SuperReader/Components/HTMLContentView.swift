@@ -7,7 +7,8 @@ struct HTMLContentView: UIViewRepresentable {
     @Binding var dynamicHeight: CGFloat
     var onLinkTap: ((URL) -> Void)? = nil
     var onImageTap: ((String, Int) -> Void)? = nil  // URL and index
-    
+    var onBodyTap: (() -> Void)? = nil  // Any tap that isn't on a link or image (Focus mode chrome toggle)
+
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         // Disable data detectors to prevent unwanted links (phone numbers etc) unless they are actual links
@@ -16,6 +17,7 @@ struct HTMLContentView: UIViewRepresentable {
         // Register script message handlers
         config.userContentController.add(context.coordinator, name: "heightObserver")
         config.userContentController.add(context.coordinator, name: "imageTapHandler")
+        config.userContentController.add(context.coordinator, name: "bodyTapHandler")
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
@@ -104,6 +106,7 @@ struct HTMLContentView: UIViewRepresentable {
                     padding-left: 20px;
                     margin-bottom: 1em;
                 }
+                blockquote {
                     padding-left: 15px;
                     border-left: 4px solid \(linkColor);
                     opacity: 0.8;
@@ -180,6 +183,13 @@ struct HTMLContentView: UIViewRepresentable {
                         });
                     });
                 });
+
+                // Any tap that isn't on a link or image restores the reader
+                // chrome when Focus mode is active (docs/revamp-ios/README.md · "04 Focus").
+                document.body.addEventListener('click', function(e) {
+                    if (e.target.closest('a') || e.target.closest('img')) return;
+                    window.webkit.messageHandlers.bodyTapHandler.postMessage({});
+                });
             </script>
         </body>
         </html>
@@ -250,6 +260,10 @@ struct HTMLContentView: UIViewRepresentable {
                       let index = body["index"] as? Int {
                 DispatchQueue.main.async {
                     self.parent.onImageTap?(url, index)
+                }
+            } else if message.name == "bodyTapHandler" {
+                DispatchQueue.main.async {
+                    self.parent.onBodyTap?()
                 }
             }
         }

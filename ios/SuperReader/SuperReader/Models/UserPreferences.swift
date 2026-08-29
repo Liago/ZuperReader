@@ -56,7 +56,7 @@ struct UserPreferences: Codable {
 
 struct ReadingPreferences: Equatable {
     var fontFamily: Typography.FontFamily = .lora
-    var fontSize: CGFloat = 18
+    var fontSize: CGFloat = 18.5
     var colorTheme: ColorTheme = .cream
     var lineHeight: Typography.LineHeight = .relaxed
     var contentWidth: Typography.ContentWidth = .normal
