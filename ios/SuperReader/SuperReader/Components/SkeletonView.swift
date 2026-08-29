@@ -119,7 +119,7 @@ struct ProfileSkeleton: View {
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Avatar
-            SkeletonView(width: 100, height: 100, cornerRadius: 50)
+            SkeletonView(width: 72, height: 72, cornerRadius: 36)
             
             // Name
             SkeletonView(width: 150, height: 24)

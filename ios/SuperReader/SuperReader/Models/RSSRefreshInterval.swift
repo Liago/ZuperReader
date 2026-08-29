@@ -13,13 +13,13 @@ enum RSSRefreshInterval: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .immediate: return "Subito"
-        case .fifteenMinutes: return "15 minuti"
-        case .thirtyMinutes: return "30 minuti"
-        case .oneHour: return "1 ora"
-        case .twoHours: return "2 ore"
-        case .fiveHours: return "5 ore"
-        case .never: return "Mai"
+        case .immediate: return "Immediately"
+        case .fifteenMinutes: return "Every 15 minutes"
+        case .thirtyMinutes: return "Every 30 minutes"
+        case .oneHour: return "Every hour"
+        case .twoHours: return "Every 2 hours"
+        case .fiveHours: return "Every 5 hours"
+        case .never: return "Never"
         }
     }
 
