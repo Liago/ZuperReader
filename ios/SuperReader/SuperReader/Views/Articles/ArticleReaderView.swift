@@ -49,18 +49,30 @@ struct ArticleReaderView: View {
         preferencesManager.preferences
     }
 
-    /// Reading preferences with colorTheme overridden by the app theme, and —
-    /// in Focus mode — type overridden to the fixed Lora 19/1.78 spec
-    /// (docs/revamp-ios/README.md · "04 Focus").
+    /// Reading preferences with `.system` resolved to the app's current theme,
+    /// and — in Focus mode — type overridden to the fixed Lora 19/1.78 spec
+    /// (docs/revamp-ios/README.md · "04 Focus"). An explicit Cream/Sepia/Dark
+    /// choice from the reading preferences sheet is left untouched, so the
+    /// reading pane can intentionally diverge from the app's own theme.
     private var themedPreferences: ReadingPreferences {
         var prefs = preferences
-        prefs.colorTheme = themeManager.resolvedTheme
+        if prefs.colorTheme == .system {
+            prefs.colorTheme = themeManager.resolvedTheme
+        }
         if isFocusMode {
             prefs.fontFamily = .lora
             prefs.fontSize = 19
-            prefs.lineHeight = .relaxed
+            prefs.lineHeight = .comfortable
         }
         return prefs
+    }
+
+    /// Colors for the reading surface itself (title, byline, page background,
+    /// body text) — follows `themedPreferences.colorTheme`, which may diverge
+    /// from `themeManager.colors` used by the reader's chrome (top bar,
+    /// floating action bar).
+    private var readingColors: ThemeColors {
+        themedPreferences.colorTheme.colors
     }
 
     // Get all media items from article
@@ -98,6 +110,8 @@ struct ArticleReaderView: View {
         .sheet(isPresented: $showPreferences) {
             ReadingPreferencesView(preferences: $preferencesManager.preferences)
                 .environmentObject(themeManager)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $showSummarySheet) {
             if let article = article {
@@ -192,7 +206,7 @@ struct ArticleReaderView: View {
                             .font(Typography.articleTitle)
                             .tracking(-0.3)
                             .lineSpacing(6)
-                            .foregroundColor(themeManager.colors.text)
+                            .foregroundColor(readingColors.text)
                             .padding(.horizontal, Spacing.readerColumn)
                             .padding(.top, 20)
 
@@ -256,7 +270,7 @@ struct ArticleReaderView: View {
                 }
             }
         }
-        .background(themeManager.colors.page)
+        .background(readingColors.page)
         .safeAreaInset(edge: .top, spacing: 0) {
             if !isFocusMode {
                 readerTopChrome(article)
@@ -270,10 +284,10 @@ struct ArticleReaderView: View {
             } else if let label = focusTimeRemainingLabel(article) {
                 Text(label)
                     .font(Typography.figtree(12.5, weight: .bold))
-                    .foregroundColor(themeManager.colors.muted)
+                    .foregroundColor(readingColors.muted)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(themeManager.colors.sink)
+                    .background(readingColors.sink)
                     .clipShape(Capsule())
                     .padding(.bottom, 34)
                     .transition(.opacity)
@@ -389,7 +403,7 @@ struct ArticleReaderView: View {
     private var focusProgressLine: some View {
         GeometryReader { geometry in
             Rectangle()
-                .fill(themeManager.colors.accent)
+                .fill(readingColors.accent)
                 .frame(width: geometry.size.width * readingProgress, height: 2)
         }
         .frame(height: 2)
@@ -416,7 +430,7 @@ struct ArticleReaderView: View {
                     }
                 }
                 .font(Typography.figtree(13))
-                .foregroundColor(themeManager.colors.text)
+                .foregroundColor(readingColors.text)
             }
         }
     }
@@ -606,10 +620,10 @@ struct ArticleReaderView: View {
                         .font(Typography.figtree(15, weight: .bold))
                     Image(systemName: "arrow.up.right")
                 }
-                .foregroundColor(themeManager.colors.page)
+                .foregroundColor(readingColors.page)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(themeManager.colors.text)
+                .background(readingColors.text)
                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
             }
         }
@@ -627,18 +641,18 @@ struct ArticleReaderView: View {
                 if article.commentCount > 0 {
                     Text("\(article.commentCount)")
                         .font(Typography.figtree(13, weight: .bold))
-                        .foregroundColor(themeManager.colors.page)
+                        .foregroundColor(readingColors.page)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(themeManager.colors.accent)
+                        .background(readingColors.accent)
                         .clipShape(Capsule())
                 }
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13))
             }
-            .foregroundColor(themeManager.colors.text)
+            .foregroundColor(readingColors.text)
             .padding()
-            .background(themeManager.colors.sink)
+            .background(readingColors.sink)
             .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
         }
     }

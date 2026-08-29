@@ -192,7 +192,7 @@ struct Typography {
             switch self {
             case .lora: return "Lora"
             case .figtree: return "Figtree"
-            case .mono: return "Monospace"
+            case .mono: return "Mono"
             }
         }
 
@@ -224,21 +224,34 @@ struct Typography {
     // MARK: Line Height
 
     enum LineHeight: String, CaseIterable, Codable {
-        case compact
-        case normal
-        case relaxed
+        case tight
+        case comfortable
         case loose
 
         var displayName: String {
-            rawValue.capitalized
+            switch self {
+            case .tight: return "Tight"
+            case .comfortable: return "Comfortable"
+            case .loose: return "Loose"
+            }
         }
 
         var multiplier: CGFloat {
             switch self {
-            case .compact: return 1.25
-            case .normal: return 1.5
-            case .relaxed: return 1.75
+            case .tight: return 1.3
+            case .comfortable: return 1.72
             case .loose: return 2.0
+            }
+        }
+
+        /// Maps legacy stored raw values (compact, normal, relaxed) onto the
+        /// reduced three-value set — "loose" already matches directly — per
+        /// docs/revamp-ios/README.md · "05 Reading preferences sheet".
+        static func migrated(from legacyRawValue: String) -> LineHeight {
+            switch legacyRawValue {
+            case "compact": return .tight
+            case "loose": return .loose
+            default: return .comfortable
             }
         }
     }

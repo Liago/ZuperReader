@@ -1,85 +1,232 @@
 import SwiftUI
 
-// MARK: - Reading Preferences View
+// MARK: - Reading Preferences Sheet (05)
 
+/// Half-height sheet over the dimmed article — every control applies
+/// immediately, there is no Done-to-commit step (docs/revamp-ios/README.md ·
+/// "05 Reading preferences sheet").
 struct ReadingPreferencesView: View {
     @Binding var preferences: ReadingPreferences
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
-        NavigationStack {
-            Form {
-                // Font Size Section
-                Section(header: Text("Text Size")) {
-                    HStack {
-                        Image(systemName: "textformat.size.smaller")
-                        Slider(value: Binding(
-                            get: { self.preferences.fontSize },
-                            set: { self.preferences.fontSize = $0 }
-                        ), in: 12...32, step: 2)
-                        Image(systemName: "textformat.size.larger")
-                    }
-                    .padding(.vertical, 8)
+        VStack(spacing: 0) {
+            Capsule()
+                .fill(themeManager.colors.line)
+                .frame(width: 42, height: 5)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 26) {
+                    sizeControl
+                    typefaceControl
+                    spacingControl
+                    themeControl
                 }
-                
-                // Font Family Section
-                Section(header: Text("Font")) {
-                    ForEach(Typography.FontFamily.allCases, id: \.self) { font in
-                        HStack {
-                            Text(font.displayName)
-                                .font(font.font(size: 16))
-                            Spacer()
-                            if preferences.fontFamily == font {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation {
-                                preferences.fontFamily = font
-                            }
-                        }
-                    }
-                }
-                
-                // Line Height Section
-                Section(header: Text("Line Height")) {
-                    Picker("Line Height", selection: $preferences.lineHeight) {
-                        ForEach(Typography.LineHeight.allCases, id: \.self) { height in
-                            Text(height.displayName).tag(height)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-                
-                // Preview
-                Section(header: Text("Preview")) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("The quick brown fox jumps over the lazy dog.")
-                            .font(preferences.fontFamily.font(size: preferences.fontSize))
-                            .lineSpacing(preferences.fontSize * (preferences.lineHeight.multiplier - 1))
-                            .foregroundColor(themeManager.colors.textPrimary)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(themeManager.colors.bgPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
-                }
+                .padding(.horizontal, 22)
+                .padding(.top, 12)
+                .padding(.bottom, 30)
             }
-            .navigationTitle("Reading Preferences")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+        }
+        .background(themeManager.colors.card)
+        .cornerRadius(CornerRadius.sheet, corners: [.topLeft, .topRight])
+    }
+
+    // MARK: Size
+
+    private var sizeControl: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Size")
+                    .font(Typography.sectionLabel)
+                    .textCase(.uppercase)
+                    .foregroundColor(themeManager.colors.muted)
+                Spacer()
+                Text(preferences.fontSizeFormatted)
+                    .font(Typography.figtree(13, weight: .bold))
+                    .foregroundColor(themeManager.colors.accent700)
+            }
+
+            PillSlider(
+                value: Binding(
+                    get: { preferences.fontSize },
+                    set: { preferences.fontSize = $0 }
+                ),
+                range: 14...28,
+                trackColor: themeManager.colors.line,
+                fillColor: themeManager.colors.accent,
+                knobFillColor: themeManager.colors.accent,
+                knobBorderColor: themeManager.colors.card
+            )
+        }
+    }
+
+    // MARK: Typeface
+
+    private var typefaceControl: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Typeface")
+                .font(Typography.sectionLabel)
+                .textCase(.uppercase)
+                .foregroundColor(themeManager.colors.muted)
+
+            HStack(spacing: 10) {
+                ForEach(Typography.FontFamily.allCases, id: \.self) { family in
+                    typefaceCard(family)
                 }
             }
         }
+    }
+
+    private func typefaceCard(_ family: Typography.FontFamily) -> some View {
+        let isSelected = preferences.fontFamily == family
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) { preferences.fontFamily = family }
+        }) {
+            VStack(spacing: 8) {
+                Text("Aa")
+                    .font(family.font(size: 19))
+                Text(family.displayName)
+                    .font(Typography.figtree(11.5, weight: .heavy))
+            }
+            .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(isSelected ? themeManager.colors.text : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Spacing
+
+    private var spacingControl: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Spacing")
+                .font(Typography.sectionLabel)
+                .textCase(.uppercase)
+                .foregroundColor(themeManager.colors.muted)
+
+            HStack(spacing: 4) {
+                ForEach(Typography.LineHeight.allCases, id: \.self) { height in
+                    spacingSegment(height)
+                }
+            }
+            .padding(4)
+            .background(themeManager.colors.sink)
+            .clipShape(Capsule())
+        }
+    }
+
+    private func spacingSegment(_ height: Typography.LineHeight) -> some View {
+        let isSelected = preferences.lineHeight == height
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) { preferences.lineHeight = height }
+        }) {
+            Text(height.displayName)
+                .font(Typography.figtree(13.5, weight: .semibold))
+                .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(isSelected ? themeManager.colors.card : Color.clear)
+                .clipShape(Capsule())
+                .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Theme
+
+    private var themeControl: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Theme")
+                .font(Typography.sectionLabel)
+                .textCase(.uppercase)
+                .foregroundColor(themeManager.colors.muted)
+
+            HStack(spacing: 10) {
+                themeSwatch(.cream)
+                themeSwatch(.sepia)
+                themeSwatch(.dark)
+            }
+        }
+    }
+
+    private func themeSwatch(_ theme: ColorTheme) -> some View {
+        let isSelected = preferences.colorTheme == theme
+        let swatchColors = theme.colors
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) { preferences.colorTheme = theme }
+        }) {
+            ZStack(alignment: .bottomLeading) {
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(swatchColors.page)
+                    .frame(height: 52)
+                Text(theme.displayName)
+                    .font(Typography.figtree(11, weight: .bold))
+                    .foregroundColor(swatchColors.text)
+                    .padding(8)
+            }
+            .frame(maxWidth: .infinity)
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(themeManager.colors.line, lineWidth: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .inset(by: 2)
+                    .stroke(themeManager.colors.accent, lineWidth: isSelected ? 2 : 0)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Pill Slider
+
+/// A 6pt track with a 24pt knob (4pt border) — the slider styling from
+/// docs/revamp-ios/README.md · "05 Reading preferences sheet" isn't
+/// achievable with a stock `Slider`, so this drives a bound value directly
+/// off drag location.
+struct PillSlider: View {
+    @Binding var value: CGFloat
+    let range: ClosedRange<CGFloat>
+    let trackColor: Color
+    let fillColor: Color
+    let knobFillColor: Color
+    let knobBorderColor: Color
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let fraction = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+            let knobX = width * fraction
+
+            ZStack(alignment: .leading) {
+                Capsule().fill(trackColor).frame(height: 6)
+                Capsule().fill(fillColor).frame(width: max(0, knobX), height: 6)
+                Circle()
+                    .fill(knobFillColor)
+                    .frame(width: 24, height: 24)
+                    .overlay(Circle().stroke(knobBorderColor, lineWidth: 4))
+                    .offset(x: knobX - 12)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { drag in
+                        let clampedX = min(max(0, drag.location.x), width)
+                        let newFraction = clampedX / width
+                        value = range.lowerBound + newFraction * (range.upperBound - range.lowerBound)
+                    }
+            )
+        }
+        .frame(height: 24)
     }
 }
 

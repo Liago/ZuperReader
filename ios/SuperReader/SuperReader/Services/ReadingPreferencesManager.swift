@@ -120,8 +120,8 @@ private struct ReadingPreferencesStorage: Codable {
         ReadingPreferences(
             fontFamily: Typography.FontFamily(rawValue: fontFamily) ?? .migrated(from: fontFamily),
             fontSize: fontSize,
-            colorTheme: ColorTheme(rawValue: colorTheme) ?? .cream,
-            lineHeight: Typography.LineHeight(rawValue: lineHeight) ?? .relaxed,
+            colorTheme: ColorTheme(rawValue: colorTheme) ?? .system,
+            lineHeight: Typography.LineHeight(rawValue: lineHeight) ?? .migrated(from: lineHeight),
             contentWidth: Typography.ContentWidth(rawValue: contentWidth) ?? .normal
         )
     }
