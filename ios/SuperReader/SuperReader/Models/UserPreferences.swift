@@ -27,10 +27,10 @@ struct UserPreferences: Codable {
     
     init(
         id: String,
-        fontFamily: Typography.FontFamily = .serif,
+        fontFamily: Typography.FontFamily = .lora,
         fontSize: Int = 18,
-        colorTheme: ColorTheme = .light,
-        lineHeight: Typography.LineHeight = .relaxed,
+        colorTheme: ColorTheme = .system,
+        lineHeight: Typography.LineHeight = .comfortable,
         contentWidth: Typography.ContentWidth = .normal,
         viewMode: ViewMode = .grid,
         createdAt: String? = nil,
@@ -55,21 +55,24 @@ struct UserPreferences: Codable {
 // MARK: - Local Reading Preferences (for article reader)
 
 struct ReadingPreferences: Equatable {
-    var fontFamily: Typography.FontFamily = .serif
-    var fontSize: CGFloat = 18
-    var colorTheme: ColorTheme = .light
-    var lineHeight: Typography.LineHeight = .relaxed
+    var fontFamily: Typography.FontFamily = .lora
+    var fontSize: CGFloat = 18.5
+    /// `.system` follows the app's global theme (Cream/Dark); Cream, Sepia
+    /// and Dark are explicit overrides set from the reading preferences
+    /// sheet, independent of the app chrome's theme.
+    var colorTheme: ColorTheme = .system
+    var lineHeight: Typography.LineHeight = .comfortable
     var contentWidth: Typography.ContentWidth = .normal
-    
+
     var fontSizeFormatted: String {
-        "\(Int(fontSize))pt"
+        String(format: "%.1f pt", fontSize)
     }
-    
+
     mutating func increaseFontSize() {
-        fontSize = min(50, fontSize + 2)
+        fontSize = min(28, fontSize + 0.5)
     }
-    
+
     mutating func decreaseFontSize() {
-        fontSize = max(12, fontSize - 2)
+        fontSize = max(14, fontSize - 0.5)
     }
 }

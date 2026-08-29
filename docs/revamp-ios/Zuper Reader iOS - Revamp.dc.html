@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/organic-5d845faa-eaf6-4be2-a3f5-9c40e2282f29/styles.css">
+<script src="_ds/organic-5d845faa-eaf6-4be2-a3f5-9c40e2282f29/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#cfc6b6}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-600)}
+[data-ph]{--app-page:#f5ead8;--app-rail:#efe2ca;--app-card:#fffaf1;--app-line:rgba(32,30,29,.12);--app-muted:rgba(32,30,29,.58);--app-hover:rgba(32,30,29,.05);--app-sink:rgba(32,30,29,.045)}
+[data-ph="dark"]{--color-bg:#23201c;--color-surface:#332f28;--color-text:#f3ebdf;--color-accent:#e2975f;--color-accent-2:#a9bd8c;--app-page:#23201c;--app-rail:#1c1a17;--app-card:#2b2823;--app-line:rgba(243,235,223,.14);--app-muted:rgba(243,235,223,.6);--app-hover:rgba(243,235,223,.06);--app-sink:rgba(243,235,223,.05)}
+[data-tap]{cursor:pointer}
+[data-tap]:active{filter:brightness(.96)}
+</style>
+</helmet>
+
+<div style="padding:56px 64px 96px;background:#cfc6b6;font-family:var(--font-body);color:#201e1d;min-width:2200px">
+
+<div style="max-width:900px;margin-bottom:52px">
+<div style="font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(32,30,29,.55);margin-bottom:10px">Zuper Reader · iOS</div>
+<div style="font-family:var(--font-heading);font-size:52px;line-height:1.05;letter-spacing:-.01em;margin-bottom:16px">Revamp della app iOS</div>
+<div style="font-size:16.5px;line-height:1.65;color:rgba(32,30,29,.72);text-wrap:pretty;max-width:720px">Stessa direzione del web: fondo caldo, accento terracotta, stati di lettura silenziosi al posto dei badge. Le cinque tab diventano quattro (Inbox e Friends si uniscono in People), i gradienti viola spariscono, il reader guadagna una modalità Focus e le preferenze di lettura diventano un foglio che si applica dal vivo.</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:56px 40px;align-items:flex-start">
+
+<!-- 1 · LIBRARY GRID -->
+<div data-screen-label="01 Library" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">01 · Library</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Titolo grande, ricerca a pillola, filtri quieti. Le card mostrano lo stato con un punto e una barra sottile.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="17" height="13" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 6.5a15 15 0 0 1 20 0"></path><path d="M6 11a9 9 0 0 1 12 0"></path><circle cx="12" cy="15.5" r="1.2" fill="currentColor"></circle></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect><path d="M25 5.2v3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"></path></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="padding:26px 20px 0">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px">
+<div style="font-family:var(--font-heading);font-size:34px;line-height:1;letter-spacing:-.01em">Library</div>
+<div style="display:flex;gap:8px">
+<div data-tap="" style="width:38px;height:38px;border-radius:999px;background:var(--app-sink);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"></rect><rect x="14" y="3" width="7" height="7" rx="1.6"></rect><rect x="3" y="14" width="7" height="7" rx="1.6"></rect><rect x="14" y="14" width="7" height="7" rx="1.6"></rect></svg></div>
+<div data-tap="" style="width:38px;height:38px;border-radius:999px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:999px;background:var(--app-sink);margin-bottom:14px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" opacity=".55"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path></svg>
+<span style="font-size:15px;color:var(--app-muted)">Search 248 articles</span>
+</div>
+
+<div style="display:flex;gap:7px;margin-bottom:20px">
+<div data-tap="" style="padding:7px 15px;border-radius:999px;background:var(--color-text);color:var(--app-page);font-size:13.5px;font-weight:700">All</div>
+<div data-tap="" style="padding:7px 15px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent-2)"></span>Unread</div>
+<div data-tap="" style="padding:7px 15px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent)"></span>Reading</div>
+<div data-tap="" style="padding:7px 15px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600">Done</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div data-tap="" style="border-radius:26px;background:var(--app-card);overflow:hidden;box-shadow:0 6px 22px rgba(46,43,37,.08)">
+<div style="height:150px;background:var(--color-accent-200);display:flex;align-items:flex-end;padding:12px;position:relative">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.35"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-800)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="position:relative;padding:5px 11px;border-radius:999px;background:var(--app-card);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-800)">theverge.com</div>
+</div>
+<div style="height:3px;background:var(--app-line)"><div style="width:38%;height:100%;background:var(--color-accent)"></div></div>
+<div style="padding:16px 18px 18px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px"><span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent)"></span><span style="font-size:12.5px;font-weight:700;color:var(--app-muted)">Reading · 38%</span><span style="margin-left:auto;font-size:12.5px;color:var(--app-muted)">7 min</span></div>
+<div style="font-family:var(--font-heading);font-size:20px;line-height:1.25;letter-spacing:-.005em;margin-bottom:8px;text-wrap:pretty">The quiet return of the personal website</div>
+<div style="font-size:14px;line-height:1.55;color:var(--app-muted);margin-bottom:14px">Why people are leaving platforms and building small corners of the web again.</div>
+<div style="display:flex;align-items:center;gap:7px">
+<span style="padding:4px 10px;border-radius:999px;background:var(--app-sink);font-size:12px;font-weight:600">web</span>
+<span style="padding:4px 10px;border-radius:999px;background:var(--app-sink);font-size:12px;font-weight:600">culture</span>
+<div style="margin-left:auto;display:flex;gap:14px;opacity:.55"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.6-7-9.4A4 4 0 0 1 12 8a4 4 0 0 1 7-2.6C19 11 12 20 12 20z"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="M8.4 10.8l7.2-4.2M8.4 13.2l7.2 4.2"></path></svg></div>
+</div>
+</div>
+</div>
+
+<div data-tap="" style="display:flex;gap:14px;padding:14px;border-radius:26px;background:var(--app-card);box-shadow:0 6px 22px rgba(46,43,37,.08);margin-bottom:100px">
+<div style="width:66px;height:66px;flex:none;border-radius:18px;background:var(--color-accent-2-200);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-2-800)" stroke-width="2.2" opacity=".5"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2)"></span><span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--app-muted)">nautil.us</span><span style="margin-left:auto;font-size:12px;color:var(--app-muted)">12 min</span></div>
+<div style="font-size:15.5px;font-weight:700;line-height:1.35;text-wrap:pretty">What forests know about time</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 10px 0;height:84px;background:var(--app-rail);border-top:1px solid var(--app-line);display:flex">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--color-accent)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10.5px;font-weight:800">Library</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="font-size:10.5px;font-weight:700">Feeds</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted);position:relative"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5A3.5 3.5 0 0 0 13.5 15h-6A3.5 3.5 0 0 0 4 18.5V20"></path><circle cx="10.5" cy="8" r="3.5"></circle><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M16 4.2a3.5 3.5 0 0 1 0 6.6"></path></svg><span style="font-size:10.5px;font-weight:700">People</span><span style="position:absolute;top:-2px;left:calc(50% + 9px);min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--color-accent);color:var(--app-page);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center">3</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg><span style="font-size:10.5px;font-weight:700">You</span></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+<!-- 2 · LIBRARY LIST -->
+<div data-screen-label="02 Library list" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">02 · Library, lista</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Righe dense senza card: miniatura, punto di stato, barra di avanzamento sotto il titolo. Swipe per archiviare.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="padding:26px 20px 0">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px">
+<div style="font-family:var(--font-heading);font-size:34px;line-height:1">Library</div>
+<div style="display:flex;gap:8px">
+<div data-tap="" style="width:38px;height:38px;border-radius:999px;background:var(--color-text);color:var(--app-page);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
+<div data-tap="" style="width:38px;height:38px;border-radius:999px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+</div>
+</div>
+<div style="display:flex;gap:7px;margin-bottom:8px">
+<div style="padding:7px 15px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600">All</div>
+<div style="padding:7px 15px;border-radius:999px;background:var(--color-text);color:var(--app-page);font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent-2)"></span>Unread</div>
+<div style="padding:7px 15px;border-radius:999px;border:1px solid var(--app-line);font-size:13.5px;font-weight:600">Favorites</div>
+</div>
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--app-muted);padding:16px 2px 8px">Today</div>
+
+<div style="display:flex;flex-direction:column">
+<div data-tap="" style="display:flex;gap:14px;padding:14px 2px;border-bottom:1px solid var(--app-line)">
+<div style="width:66px;height:66px;flex:none;border-radius:18px;background:var(--color-accent-200);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-800)" stroke-width="2.2" opacity=".55"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent-2)"></span><span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--app-muted)">wired.com</span><span style="margin-left:auto;font-size:12px;color:var(--app-muted)">9 min</span></div>
+<div style="font-size:15.5px;font-weight:700;line-height:1.35;margin-bottom:8px;text-wrap:pretty">A field guide to the new offline internet</div>
+<div style="height:2px;border-radius:999px;background:var(--app-line)"></div>
+</div>
+</div>
+<div data-tap="" style="display:flex;gap:14px;padding:14px 2px;border-bottom:1px solid var(--app-line)">
+<div style="width:66px;height:66px;flex:none;border-radius:18px;background:var(--color-accent-2-200);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-2-800)" stroke-width="2.2" opacity=".55"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent)"></span><span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--app-muted)">craigmod.com</span><span style="margin-left:auto;font-size:12px;color:var(--app-muted)">22 min</span></div>
+<div style="font-size:15.5px;font-weight:700;line-height:1.35;margin-bottom:8px;text-wrap:pretty">Walking the coast, one newsletter at a time</div>
+<div style="height:2px;border-radius:999px;background:var(--app-line)"><div style="width:64%;height:100%;border-radius:999px;background:var(--color-accent)"></div></div>
+</div>
+</div>
+<div data-tap="" style="display:flex;gap:14px;padding:14px 2px;border-bottom:1px solid var(--app-line)">
+<div style="width:66px;height:66px;flex:none;border-radius:18px;background:var(--app-sink);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" opacity=".35"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--app-muted)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"></path></svg><span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--app-muted)">nytimes.com</span><span style="margin-left:auto;font-size:12px;color:var(--app-muted)">5 min</span></div>
+<div style="font-size:15.5px;font-weight:700;line-height:1.35;margin-bottom:8px;color:var(--app-muted);text-wrap:pretty">The kitchen table as a public square</div>
+<div style="height:2px;border-radius:999px;background:var(--app-line)"><div style="width:100%;height:100%;border-radius:999px;background:var(--app-muted);opacity:.45"></div></div>
+</div>
+</div>
+</div>
+
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--app-muted);padding:20px 2px 8px">Earlier this week</div>
+<div data-tap="" style="display:flex;gap:14px;padding:14px 2px 0">
+<div style="width:66px;height:66px;flex:none;border-radius:18px;background:var(--color-accent-200)"></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-accent-2)"></span><span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--app-muted)">ft.com</span></div>
+<div style="font-size:15.5px;font-weight:700;line-height:1.35">Ports, chips and the long supply line</div>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 10px 0;height:84px;background:var(--app-rail);border-top:1px solid var(--app-line);display:flex">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--color-accent)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10.5px;font-weight:800">Library</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="font-size:10.5px;font-weight:700">Feeds</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5A3.5 3.5 0 0 0 13.5 15h-6A3.5 3.5 0 0 0 4 18.5V20"></path><circle cx="10.5" cy="8" r="3.5"></circle><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M16 4.2a3.5 3.5 0 0 1 0 6.6"></path></svg><span style="font-size:10.5px;font-weight:700">People</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg><span style="font-size:10.5px;font-weight:700">You</span></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+<!-- 3 · READER -->
+<div data-screen-label="03 Reader" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">03 · Reader</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Barra sottile con avanzamento, testo in colonna stretta, azioni in un'unica barra flottante invece che sparse.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="display:flex;align-items:center;gap:12px;padding:16px 18px 12px">
+<div data-tap="" style="width:36px;height:36px;border-radius:999px;background:var(--app-sink);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div>
+<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--app-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">theverge.com · 7 min</div>
+<div data-tap="" style="width:36px;height:36px;border-radius:999px;background:var(--app-sink);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"></path></svg></div>
+<div data-tap="" style="width:36px;height:36px;border-radius:999px;background:var(--color-text);color:var(--app-page);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"></path></svg></div>
+</div>
+<div style="height:2px;background:var(--app-line);margin:0 18px 18px"><div style="width:38%;height:100%;background:var(--color-accent)"></div></div>
+
+<div style="padding:0 26px">
+<div style="font-family:var(--font-heading);font-size:31px;line-height:1.14;letter-spacing:-.01em;margin-bottom:14px;text-wrap:pretty">The quiet return of the personal website</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
+<div style="width:30px;height:30px;border-radius:999px;background:var(--color-accent-2-300)"></div>
+<div style="font-size:13.5px;color:var(--app-muted)"><span style="font-weight:700;color:var(--color-text)">Nilay Patel</span> · 14 Aug</div>
+</div>
+<div style="height:158px;border-radius:22px;background:var(--color-accent-200);margin-bottom:22px;display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-800)" stroke-width="2" opacity=".4"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-9 9"></path></svg></div>
+<div style="font-size:18.5px;line-height:1.72;letter-spacing:.002em">For about a decade the answer to “where do you write?” was the name of a company. That is changing, slowly, in a way that is easy to miss unless you are looking for it.</div>
+<div style="font-size:18.5px;line-height:1.72;margin-top:18px;color:var(--color-text)">The new personal sites are small. They load in a blink, they carry a single voice, and most of them have no analytics at all.</div>
+</div>
+
+<div style="position:absolute;left:18px;right:18px;bottom:22px;height:60px;border-radius:999px;background:var(--app-card);border:1px solid var(--app-line);box-shadow:0 10px 30px rgba(46,43,37,.16);display:flex;align-items:center;justify-content:space-around;padding:0 10px">
+<div data-tap="" style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--color-accent)"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 20s-7-4.6-7-9.4A4 4 0 0 1 12 8a4 4 0 0 1 7-2.6C19 11 12 20 12 20z"></path></svg></div>
+<div data-tap="" style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.9-5A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg></div>
+<div data-tap="" style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.4"></circle><circle cx="6" cy="12" r="2.4"></circle><circle cx="18" cy="19" r="2.4"></circle><path d="M8.4 10.8l7.2-4.2M8.4 13.2l7.2 4.2"></path></svg></div>
+<div data-tap="" style="width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M4 11h9M4 16h5"></path><path d="M17 5v14l3-3"></path></svg></div>
+<div data-tap="" style="padding:0 16px;height:44px;border-radius:999px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;gap:7px;font-family:var(--font-heading);font-size:13.5px">Focus</div>
+</div>
+</div>
+</div>
+
+<!-- 4 · FOCUS -->
+<div data-screen-label="04 Reader focus" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">04 · Focus</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Un tap toglie tutto: resta il testo, una linea di avanzamento e il tempo che manca. Toccare di nuovo riporta la barra.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--app-line)"><div style="width:52%;height:100%;background:var(--color-accent)"></div></div>
+<div style="padding:78px 30px 0">
+<div style="font-size:19px;line-height:1.78;letter-spacing:.002em">The new personal sites are small. They load in a blink, they carry a single voice, and most of them have no analytics at all.</div>
+<div style="font-size:19px;line-height:1.78;margin-top:22px">What replaced the feed was not another feed. It was a habit: a handful of pages you check the way you used to check a shop window, on a walk, without a plan.</div>
+<div style="font-size:19px;line-height:1.78;margin-top:22px">Nobody is monetising a walk. That is exactly the point, and it is why the format keeps surviving every prediction of its death.</div>
+<div style="margin:34px 0;height:1px;background:var(--app-line)"></div>
+<div style="font-size:19px;line-height:1.78">A personal site asks for something the platform never did: a reason to come back that is not a notification.</div>
+</div>
+<div style="position:absolute;bottom:34px;left:0;right:0;display:flex;justify-content:center"><div style="padding:8px 16px;border-radius:999px;background:var(--app-sink);font-size:12.5px;font-weight:700;color:var(--app-muted)">4 min left</div></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.22"></div>
+</div>
+</div>
+
+<!-- 5 · READING PREFS SHEET -->
+<div data-screen-label="05 Reading sheet" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">05 · Preferenze di lettura</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Foglio a mezza altezza sopra l'articolo: si vede il testo cambiare mentre si regola. Cinque temi diventano due più Sepia.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="padding:56px 26px 0;opacity:.5">
+<div style="font-family:var(--font-heading);font-size:29px;line-height:1.15;margin-bottom:14px">The quiet return of the personal website</div>
+<div style="font-size:18px;line-height:1.7;color:var(--app-muted)">For about a decade the answer to “where do you write?” was the name of a company. That is changing, slowly.</div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(20,18,16,.28)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:var(--app-card);border-radius:32px 32px 0 0;padding:12px 22px 30px;box-shadow:0 -12px 40px rgba(46,43,37,.22)">
+<div style="width:42px;height:5px;border-radius:999px;background:var(--app-line);margin:0 auto 18px"></div>
+<div style="font-family:var(--font-heading);font-size:22px;margin-bottom:20px">Reading</div>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px"><span style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted)">Size</span><span style="font-size:13px;font-weight:700;color:var(--color-accent-700)">18.5 pt</span></div>
+<div style="height:6px;border-radius:999px;background:var(--app-line);position:relative;margin-bottom:24px"><div style="width:46%;height:100%;border-radius:999px;background:var(--color-accent)"></div><div style="position:absolute;left:46%;top:50%;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:999px;background:var(--color-accent);border:4px solid var(--app-card);box-shadow:0 2px 8px rgba(46,43,37,.25)"></div></div>
+
+<div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Typeface</div>
+<div style="display:flex;gap:9px;margin-bottom:24px">
+<div data-tap="" style="flex:1;padding:12px 8px;border-radius:18px;background:var(--color-text);color:var(--app-page);text-align:center"><div style="font-size:19px;font-family:Georgia,serif;line-height:1">Aa</div><div style="font-size:11.5px;font-weight:700;margin-top:5px">Lora</div></div>
+<div data-tap="" style="flex:1;padding:12px 8px;border-radius:18px;border:1px solid var(--app-line);text-align:center"><div style="font-size:19px;line-height:1">Aa</div><div style="font-size:11.5px;font-weight:600;margin-top:5px">Figtree</div></div>
+<div data-tap="" style="flex:1;padding:12px 8px;border-radius:18px;border:1px solid var(--app-line);text-align:center"><div style="font-size:19px;font-family:ui-monospace,monospace;line-height:1">Aa</div><div style="font-size:11.5px;font-weight:600;margin-top:5px">Mono</div></div>
+</div>
+
+<div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Spacing</div>
+<div style="display:flex;gap:5px;padding:5px;border-radius:999px;border:1px solid var(--app-line);margin-bottom:24px">
+<div data-tap="" style="flex:1;padding:9px;border-radius:999px;text-align:center;font-size:13.5px;font-weight:600">Tight</div>
+<div data-tap="" style="flex:1;padding:9px;border-radius:999px;text-align:center;font-size:13.5px;font-weight:700;background:var(--color-text);color:var(--app-page)">Comfortable</div>
+<div data-tap="" style="flex:1;padding:9px;border-radius:999px;text-align:center;font-size:13.5px;font-weight:600">Loose</div>
+</div>
+
+<div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Theme</div>
+<div style="display:flex;gap:9px">
+<div data-tap="" style="flex:1;padding:14px 8px;border-radius:18px;background:#f5ead8;color:#201e1d;text-align:center;font-size:13px;font-weight:700;box-shadow:inset 0 0 0 2px var(--color-accent)">Cream</div>
+<div data-tap="" style="flex:1;padding:14px 8px;border-radius:18px;background:#efe0c4;color:#3a2f1f;text-align:center;font-size:13px;font-weight:600">Sepia</div>
+<div data-tap="" style="flex:1;padding:14px 8px;border-radius:18px;background:#23201c;color:#f3ebdf;text-align:center;font-size:13px;font-weight:600">Dark</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.25"></div>
+</div>
+</div>
+</div>
+
+<!-- 6 · FEEDS -->
+<div data-screen-label="06 Feeds" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">06 · Feeds</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Le due stat card spariscono: il conteggio sta nel sottotitolo. I feed si raggruppano in cartelle, il refresh è un pull.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="padding:26px 20px 0">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+<div><div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:6px">Feeds</div><div style="font-size:13.5px;color:var(--app-muted)">12 channels · 52 unread · synced 4 min ago</div></div>
+<div data-tap="" style="width:38px;height:38px;border-radius:999px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+</div>
+
+<div data-tap="" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:22px;background:var(--color-accent);color:var(--app-page);margin-bottom:18px">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg>
+<div style="flex:1"><div style="font-family:var(--font-heading);font-size:16px;line-height:1.2">All feeds</div><div style="font-size:12.5px;opacity:.85;margin-top:3px">Everything, newest first</div></div>
+<span style="font-size:14px;font-weight:800">52</span>
+</div>
+
+<div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--app-muted);padding:0 2px 10px">Design</div>
+<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px">
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:16px">
+<div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-2-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--color-accent-2-800)">A</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">A Working Library</div><div style="font-size:12.5px;color:var(--app-muted)">workinglibrary.com</div></div>
+<span style="font-size:13.5px;font-weight:800;color:var(--color-accent)">8</span>
+</div>
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:16px">
+<div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--color-accent-800)">D</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Design Systems Weekly</div><div style="font-size:12.5px;color:var(--app-muted)">news.design.systems</div></div>
+<span style="font-size:13.5px;font-weight:800;color:var(--color-accent)">3</span>
+</div>
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:16px;opacity:.62">
+<div style="width:36px;height:36px;border-radius:999px;background:var(--app-sink);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">S</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Sidebar</div><div style="font-size:12.5px;color:var(--app-muted)">sidebar.io</div></div>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--app-muted)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+</div>
+</div>
+
+<div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--app-muted);padding:0 2px 10px">Long reads</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:16px">
+<div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--color-accent-800)">C</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Craig Mod</div><div style="font-size:12.5px;color:var(--app-muted)">craigmod.com</div></div>
+<span style="font-size:13.5px;font-weight:800;color:var(--color-accent)">2</span>
+</div>
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:16px">
+<div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-2-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--color-accent-2-800)">N</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Nautilus</div><div style="font-size:12.5px;color:var(--app-muted)">nautil.us</div></div>
+<span style="font-size:13.5px;font-weight:800;color:var(--color-accent)">14</span>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 10px 0;height:84px;background:var(--app-rail);border-top:1px solid var(--app-line);display:flex">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10.5px;font-weight:700">Library</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--color-accent)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="font-size:10.5px;font-weight:800">Feeds</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5A3.5 3.5 0 0 0 13.5 15h-6A3.5 3.5 0 0 0 4 18.5V20"></path><circle cx="10.5" cy="8" r="3.5"></circle><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M16 4.2a3.5 3.5 0 0 1 0 6.6"></path></svg><span style="font-size:10.5px;font-weight:700">People</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg><span style="font-size:10.5px;font-weight:700">You</span></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+<!-- 7 · PEOPLE -->
+<div data-screen-label="07 People" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">07 · People</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Inbox e Friends erano due tab: qui sono un segmented control. Le richieste in attesa restano in cima, non in un badge.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="padding:26px 20px 0">
+<div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:16px">People</div>
+<div style="display:flex;gap:5px;padding:5px;border-radius:999px;background:var(--app-sink);margin-bottom:20px">
+<div data-tap="" style="flex:1;padding:9px;border-radius:999px;text-align:center;font-size:14px;font-weight:700;background:var(--app-card);box-shadow:0 2px 8px rgba(46,43,37,.1)">Shared with me</div>
+<div data-tap="" style="flex:1;padding:9px;border-radius:999px;text-align:center;font-size:14px;font-weight:600;color:var(--app-muted)">Friends</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:20px;border:1px solid var(--color-accent);margin-bottom:20px">
+<div style="width:34px;height:34px;border-radius:999px;background:var(--color-accent-2-300)"></div>
+<div style="flex:1;font-size:14px;line-height:1.4"><span style="font-weight:700">Marta</span> wants to connect</div>
+<div data-tap="" style="padding:7px 13px;border-radius:999px;background:var(--color-accent);color:var(--app-page);font-size:13px;font-weight:700">Accept</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div data-tap="" style="padding:16px;border-radius:24px;background:var(--app-card);box-shadow:0 6px 20px rgba(46,43,37,.07)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+<div style="width:32px;height:32px;border-radius:999px;background:var(--color-accent-300)"></div>
+<div style="flex:1;font-size:14px"><span style="font-weight:700">Luca</span> <span style="color:var(--app-muted)">shared this</span></div>
+<span style="width:8px;height:8px;border-radius:999px;background:var(--color-accent)"></span>
+</div>
+<div style="font-size:14.5px;line-height:1.55;padding:11px 14px;border-radius:16px;background:var(--app-sink);margin-bottom:12px">Questo pezzo sulle mappe è esattamente quello di cui parlavamo giovedì.</div>
+<div style="display:flex;gap:12px;align-items:center">
+<div style="width:56px;height:56px;flex:none;border-radius:14px;background:var(--color-accent-2-200)"></div>
+<div style="min-width:0"><div style="font-size:14.5px;font-weight:700;line-height:1.35;margin-bottom:3px;text-wrap:pretty">How maps decide what counts as a place</div><div style="font-size:12.5px;color:var(--app-muted)">longreads.com · 16 min</div></div>
+</div>
+</div>
+
+<div data-tap="" style="padding:16px;border-radius:24px;background:var(--app-card);box-shadow:0 6px 20px rgba(46,43,37,.07);opacity:.75">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+<div style="width:32px;height:32px;border-radius:999px;background:var(--color-accent-2-300)"></div>
+<div style="flex:1;font-size:14px"><span style="font-weight:700">Marta</span> <span style="color:var(--app-muted)">shared this · 2d</span></div>
+</div>
+<div style="display:flex;gap:12px;align-items:center">
+<div style="width:56px;height:56px;flex:none;border-radius:14px;background:var(--color-accent-200)"></div>
+<div style="min-width:0"><div style="font-size:14.5px;font-weight:700;line-height:1.35;margin-bottom:3px">The office plant survival index</div><div style="font-size:12.5px;color:var(--app-muted)">theatlantic.com · 6 min</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 10px 0;height:84px;background:var(--app-rail);border-top:1px solid var(--app-line);display:flex">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10.5px;font-weight:700">Library</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="font-size:10.5px;font-weight:700">Feeds</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--color-accent)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5A3.5 3.5 0 0 0 13.5 15h-6A3.5 3.5 0 0 0 4 18.5V20"></path><circle cx="10.5" cy="8" r="3.5"></circle><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M16 4.2a3.5 3.5 0 0 1 0 6.6"></path></svg><span style="font-size:10.5px;font-weight:800">People</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg><span style="font-size:10.5px;font-weight:700">You</span></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+<!-- 8 · PROFILE -->
+<div data-screen-label="08 You" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">08 · You</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Otto stat card colorate diventano una riga di numeri e una lista di impostazioni. Il tema vive qui, non in un foglio a parte.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px 0;font-size:14.5px;font-weight:800"><span>9:41</span><div style="display:flex;gap:6px;align-items:center;opacity:.85"><svg width="17" height="12" viewBox="0 0 24 16" fill="currentColor"><rect x="0" y="10" width="4" height="6" rx="1"></rect><rect x="6" y="7" width="4" height="9" rx="1"></rect><rect x="12" y="4" width="4" height="12" rx="1"></rect><rect x="18" y="0" width="4" height="16" rx="1"></rect></svg><svg width="25" height="13" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="4" stroke="currentColor" stroke-width="1.6" opacity=".5"></rect><rect x="3" y="3" width="15" height="8" rx="2.5" fill="currentColor"></rect></svg></div></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="padding:30px 20px 0">
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:26px">
+<div style="width:72px;height:72px;border-radius:999px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:26px">AL</div>
+<div style="flex:1;min-width:0">
+<div style="font-family:var(--font-heading);font-size:24px;line-height:1.1;margin-bottom:4px">Andrea Liguori</div>
+<div style="font-size:13.5px;color:var(--app-muted);margin-bottom:8px">andrea@zuper.app</div>
+<div data-tap="" style="display:inline-flex;padding:6px 14px;border-radius:999px;border:1px solid var(--app-line);font-size:13px;font-weight:700">Edit profile</div>
+</div>
+</div>
+
+<div style="display:flex;padding:18px 4px;border-top:1px solid var(--app-line);border-bottom:1px solid var(--app-line);margin-bottom:26px">
+<div style="flex:1;text-align:center"><div style="font-family:var(--font-heading);font-size:24px;line-height:1">248</div><div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--app-muted);margin-top:6px">Saved</div></div>
+<div style="width:1px;background:var(--app-line)"></div>
+<div style="flex:1;text-align:center"><div style="font-family:var(--font-heading);font-size:24px;line-height:1">163</div><div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--app-muted);margin-top:6px">Read</div></div>
+<div style="width:1px;background:var(--app-line)"></div>
+<div style="flex:1;text-align:center"><div style="font-family:var(--font-heading);font-size:24px;line-height:1">41</div><div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--app-muted);margin-top:6px">Shared</div></div>
+<div style="width:1px;background:var(--app-line)"></div>
+<div style="flex:1;text-align:center"><div style="font-family:var(--font-heading);font-size:24px;line-height:1">12</div><div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--app-muted);margin-top:6px">Friends</div></div>
+</div>
+
+<div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--app-muted);padding:0 4px 12px">Appearance</div>
+<div style="display:flex;gap:9px;margin-bottom:26px">
+<div data-tap="" style="flex:1;height:76px;border-radius:20px;background:#f5ead8;box-shadow:inset 0 0 0 2px var(--color-accent);display:flex;align-items:flex-end;padding:10px;color:#201e1d;font-size:13px;font-weight:700">Cream</div>
+<div data-tap="" style="flex:1;height:76px;border-radius:20px;background:#23201c;display:flex;align-items:flex-end;padding:10px;color:#f3ebdf;font-size:13px;font-weight:600">Dark</div>
+<div data-tap="" style="flex:1;height:76px;border-radius:20px;border:1px solid var(--app-line);display:flex;align-items:flex-end;padding:10px;font-size:13px;font-weight:600">System</div>
+</div>
+
+<div style="display:flex;flex-direction:column">
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:15px 4px;border-top:1px solid var(--app-line);font-size:15px;font-weight:600"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".65"><path d="M4 7h16M7 12h10M10 17h4"></path></svg><span style="flex:1">Reading defaults</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round" opacity=".35"><path d="M9 5l7 7-7 7"></path></svg></div>
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:15px 4px;border-top:1px solid var(--app-line);font-size:15px;font-weight:600"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".65"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="flex:1">Feed sync</span><span style="font-size:13.5px;color:var(--app-muted)">Every hour</span></div>
+<div data-tap="" style="display:flex;align-items:center;gap:13px;padding:15px 4px;border-top:1px solid var(--app-line);border-bottom:1px solid var(--app-line);font-size:15px;font-weight:600;color:var(--color-accent-800)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M9 16l-4-4 4-4M5 12h11"></path></svg><span style="flex:1">Sign out</span></div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 10px 0;height:84px;background:var(--app-rail);border-top:1px solid var(--app-line);display:flex">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10.5px;font-weight:700">Library</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4"></circle></svg><span style="font-size:10.5px;font-weight:700">Feeds</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--app-muted)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5A3.5 3.5 0 0 0 13.5 15h-6A3.5 3.5 0 0 0 4 18.5V20"></path><circle cx="10.5" cy="8" r="3.5"></circle><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M16 4.2a3.5 3.5 0 0 1 0 6.6"></path></svg><span style="font-size:10.5px;font-weight:700">People</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--color-accent)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg><span style="font-size:10.5px;font-weight:800">You</span></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+<!-- 9 · SAVE A LINK -->
+<div data-screen-label="09 Save a link" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">09 · Save a link</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Il foglio incolla dagli appunti da solo e mostra l'anteprima appena l'URL è valido. I tag suggeriti si accettano con un tap.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="padding:56px 20px 0;opacity:.45">
+<div style="font-family:var(--font-heading);font-size:34px;line-height:1;margin-bottom:14px">Library</div>
+<div style="height:44px;border-radius:999px;background:var(--app-sink);margin-bottom:14px"></div>
+<div style="height:150px;border-radius:26px;background:var(--app-card)"></div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(20,18,16,.3)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:var(--app-card);border-radius:32px 32px 0 0;padding:12px 22px 30px;box-shadow:0 -12px 40px rgba(46,43,37,.22)">
+<div style="width:42px;height:5px;border-radius:999px;background:var(--app-line);margin:0 auto 18px"></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+<div style="font-family:var(--font-heading);font-size:22px">Save a link</div>
+<div data-tap="" style="width:32px;height:32px;border-radius:999px;background:var(--app-sink);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:20px;border:1.5px solid var(--color-accent);margin-bottom:10px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"></path></svg>
+<span style="font-size:15px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">theverge.com/personal-websites</span>
+</div>
+<div style="font-size:12.5px;color:var(--app-muted);padding:0 4px 18px">Pasted from clipboard</div>
+
+<div style="display:flex;gap:12px;padding:12px;border-radius:20px;background:var(--app-sink);margin-bottom:20px">
+<div style="width:56px;height:56px;flex:none;border-radius:14px;background:var(--color-accent-200)"></div>
+<div style="min-width:0"><div style="font-size:14.5px;font-weight:700;line-height:1.35;margin-bottom:4px;text-wrap:pretty">The quiet return of the personal website</div><div style="font-size:12.5px;color:var(--app-muted)">The Verge · 7 min read</div></div>
+</div>
+
+<div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Tags</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+<div style="padding:7px 14px;border-radius:999px;background:var(--color-accent);color:var(--app-page);font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px">web<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+<div data-tap="" style="padding:7px 14px;border-radius:999px;border:1px dashed var(--app-line);font-size:13.5px;font-weight:600;color:var(--app-muted)">+ culture</div>
+<div data-tap="" style="padding:7px 14px;border-radius:999px;border:1px dashed var(--app-line);font-size:13.5px;font-weight:600;color:var(--app-muted)">+ media</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 4px;border-top:1px solid var(--app-line);margin-bottom:18px">
+<div><div style="font-size:15px;font-weight:700">Add to Up next</div><div style="font-size:12.5px;color:var(--app-muted);margin-top:2px">Reads first on the home screen</div></div>
+<div style="width:50px;height:30px;border-radius:999px;background:var(--color-accent);position:relative"><div style="position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:999px;background:var(--app-card)"></div></div>
+</div>
+
+<div data-tap="" style="padding:16px;border-radius:999px;background:var(--color-accent);color:var(--app-page);text-align:center;font-family:var(--font-heading);font-size:16px">Save article</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.25"></div>
+</div>
+</div>
+</div>
+
+<!-- 10 · LOGIN -->
+<div data-screen-label="10 Login" style="width:390px">
+<div style="font-family:var(--font-heading);font-size:19px;margin-bottom:4px">10 · Login</div>
+<div style="font-size:13.5px;line-height:1.5;color:rgba(32,30,29,.62);margin-bottom:16px;height:40px">Via il gradiente viola e i cerchi sfocati: fondo crema, una forma tonda in terracotta, un campo e un bottone.</div>
+<div data-ph="{{ theme }}" style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--app-page);color:var(--color-text);box-shadow:0 20px 60px rgba(46,43,37,.28)">
+<div style="position:absolute;top:-90px;right:-70px;width:280px;height:280px;border-radius:999px;background:var(--color-accent-200)"></div>
+<div style="position:absolute;bottom:-60px;left:-80px;width:220px;height:220px;border-radius:999px;background:var(--color-accent-2-200)"></div>
+<div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:112px;height:33px;border-radius:999px;background:#0c0b0a"></div>
+
+<div style="position:relative;padding:150px 32px 0">
+<div style="width:64px;height:64px;border-radius:22px;background:var(--color-accent);color:var(--app-page);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:30px;margin-bottom:28px">Z</div>
+<div style="font-family:var(--font-heading);font-size:40px;line-height:1.06;letter-spacing:-.01em;margin-bottom:14px">Everything<br>you meant<br>to read.</div>
+<div style="font-size:16px;line-height:1.6;color:var(--app-muted);margin-bottom:40px;max-width:280px">Sign in with a link. No password to remember, nothing to reset.</div>
+
+<div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--app-muted);margin-bottom:10px">Email</div>
+<div style="display:flex;align-items:center;gap:10px;padding:16px 18px;border-radius:999px;background:var(--app-card);border:1px solid var(--app-line);margin-bottom:14px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M3.5 7.5l8.5 6 8.5-6"></path></svg>
+<span style="font-size:16px;color:var(--app-muted)">you@example.com</span>
+</div>
+<div data-tap="" style="padding:17px;border-radius:999px;background:var(--color-accent);color:var(--app-page);text-align:center;font-family:var(--font-heading);font-size:16.5px;margin-bottom:22px">Send magic link</div>
+<div style="font-size:12.5px;line-height:1.6;color:var(--app-muted);text-align:center;padding:0 12px">Continuando accetti i Termini di servizio e la Privacy policy.</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-text);opacity:.3"></div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:80px;max-width:900px">
+<div style="font-family:var(--font-heading);font-size:30px;margin-bottom:20px">Cosa cambia rispetto al codice attuale</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:26px 44px;font-size:15px;line-height:1.6">
+<div><div style="font-weight:800;margin-bottom:5px">Cinque tab → quattro</div><div style="color:rgba(32,30,29,.7)">In <code>MainTabView</code> Inbox e Friends hanno lo stesso <code>.tag(2)</code>: una delle due non è raggiungibile. Diventano una sola tab People con segmented control.</div></div>
+<div><div style="font-weight:800;margin-bottom:5px">Gradienti viola → accento unico</div><div style="color:rgba(32,30,29,.7)"><code>PremiumGradients</code> compare su titolo, bottoni, chip, badge e avatar. Resta un accento terracotta pieno, usato solo per lo stato selezionato e l'azione primaria.</div></div>
+<div><div style="font-weight:800;margin-bottom:5px">Badge di stato → punti e barre</div><div style="color:rgba(32,30,29,.7)">Lo <code>StatusBadge</code> maiuscolo su ogni card lascia il posto a un punto da 7px e a una barra di avanzamento da 2–3px sotto il titolo.</div></div>
+<div><div style="font-weight:800;margin-bottom:5px">Sei temi → tre</div><div style="color:rgba(32,30,29,.7)">Ocean, Forest e Sunset escono da <code>ColorTheme</code>. Restano Cream, Sepia e Dark, scelti nel reader e nella tab You, non in un foglio a lista.</div></div>
+<div><div style="font-weight:800;margin-bottom:5px">Form di preferenze → foglio dal vivo</div><div style="color:rgba(32,30,29,.7)"><code>ReadingPreferencesView</code> è una <code>Form</code> a schermo intero con 12 font in lista. Diventa un foglio a mezza altezza con tre famiglie e l'articolo visibile dietro.</div></div>
+<div><div style="font-weight:800;margin-bottom:5px">Otto stat card → una riga</div><div style="color:rgba(32,30,29,.7)">La griglia colorata di <code>ProfileView</code> diventa quattro numeri su una riga; il resto del profilo è una lista di impostazioni.</div></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme || 'light' };
+  }
+}
+</script>
+</body>
+</html>

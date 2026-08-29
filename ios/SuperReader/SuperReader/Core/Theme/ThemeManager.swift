@@ -33,7 +33,7 @@ class ThemeManager: ObservableObject {
            let theme = ColorTheme(rawValue: savedTheme) {
             self.currentTheme = theme
         } else {
-            self.currentTheme = .auto
+            self.currentTheme = .system
         }
 
         // Load saved view mode

@@ -123,21 +123,27 @@ extension View {
 // MARK: - Reading Indicator
 
 extension View {
-    func readingProgressBar(_ progress: Double, color: Color = .purple) -> some View {
+    func readingProgressBar(_ progress: Double, color: Color = Color(hex: "#C67139")) -> some View {
         self.overlay(alignment: .top) {
             GeometryReader { geometry in
                 Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#9333EA"), Color(hex: "#EC4899")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .fill(color)
                     .frame(width: geometry.size.width * progress, height: 3)
                     .animation(.easeOut(duration: 0.1), value: progress)
             }
             .frame(height: 3)
         }
+    }
+}
+
+// MARK: - Press Feedback
+
+/// Standard tap feedback across the Organic design system — 0.98 scale, spring
+/// response 0.3 (docs/revamp-ios/README.md · "Interactions and behavior").
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }

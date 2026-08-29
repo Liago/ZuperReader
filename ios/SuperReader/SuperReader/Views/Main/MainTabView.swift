@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import UIKit
 
 
 // MARK: - Main Tab View
@@ -11,43 +12,39 @@ struct MainTabView: View {
     @State private var selectedTab = 0
     @State private var unreadSharesCount = 0
     @State private var pendingRequestsCount = 0
-    
+
+    private var peopleBadgeCount: Int {
+        unreadSharesCount + pendingRequestsCount
+    }
+
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Home - Articles
+            // Library
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("Library", systemImage: "books.vertical.fill")
                 }
                 .tag(0)
-            
-            // RSS
+
+            // Feeds
             RSSListView()
                 .tabItem {
-                    Label("RSS", systemImage: "dot.radiowaves.up.forward")
+                    Label("Feeds", systemImage: "dot.radiowaves.up.forward")
                 }
                 .tag(1)
-            
-            // Shared Inbox
-            SharedInboxView()
+
+            // People — merged Shared Inbox + Friends (docs/revamp-ios/README.md · "07 People")
+            PeopleView()
                 .tabItem {
-                    Label("Inbox", systemImage: "tray.fill")
+                    Label("People", systemImage: "person.2.fill")
                 }
-                .badge(unreadSharesCount > 0 ? unreadSharesCount : 0)
+                .badge(peopleBadgeCount > 0 ? peopleBadgeCount : 0)
                 .tag(2)
-            
-            // Friends
-            FriendsView()
-                .tabItem {
-                    Label("Friends", systemImage: "person.2.fill")
-                }
-                .badge(pendingRequestsCount > 0 ? pendingRequestsCount : 0)
-                .tag(2)
-            
-            // Profile
+
+            // You
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.circle.fill")
+                    Label("You", systemImage: "person.circle.fill")
                 }
                 .tag(3)
         }
@@ -57,8 +54,20 @@ struct MainTabView: View {
         .task {
             await loadBadgeCounts()
         }
+        .onAppear { updateTabBarAppearance() }
+        .onChange(of: themeManager.resolvedTheme) { _, _ in updateTabBarAppearance() }
     }
-    
+
+    // Organic design system tab bar chrome (rail fill, 1pt top hairline).
+    private func updateTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(themeManager.colors.rail)
+        appearance.shadowColor = UIColor(themeManager.colors.line)
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+
     private func loadBadgeCounts() async {
         guard let userId = authManager.user?.id.uuidString else { return }
         

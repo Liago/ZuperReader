@@ -148,10 +148,10 @@ actor SupabaseService {
         return articles.first
     }
     
-    func saveArticle(parsedData: ParseResult, userId: String) async throws -> Article {
+    func saveArticle(parsedData: ParseResult, userId: String, tags: [String] = []) async throws -> Article {
         let domain = URL(string: parsedData.url)?.host ?? ""
         let estimatedReadTime = parsedData.wordCount.map { Int(ceil(Double($0) / 200.0)) }
-        
+
         let articleData: [String: AnyJSON] = [
             "user_id": .string(userId.lowercased()),
             "url": .string(parsedData.url),
@@ -162,7 +162,8 @@ actor SupabaseService {
             "author": parsedData.author.map { .string($0) } ?? .null,
             "published_date": parsedData.datePublished.map { .string($0) } ?? .null,
             "domain": .string(domain),
-            "estimated_read_time": estimatedReadTime.map { .integer($0) } ?? .null
+            "estimated_read_time": estimatedReadTime.map { .integer($0) } ?? .null,
+            "tags": .array(tags.map { .string($0) })
         ]
         
         let articles: [Article] = try await client

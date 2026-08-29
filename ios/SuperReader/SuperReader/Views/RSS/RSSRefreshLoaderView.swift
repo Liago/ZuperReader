@@ -14,26 +14,24 @@ struct RSSRefreshLoaderView: View {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                
+
                 VStack(spacing: 20) {
                     // Header with Icon and Title
                     HStack(spacing: 16) {
                         Circle()
-                            .fill(LinearGradient(colors: [.orange, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .fill(themeManager.colors.accent)
                             .frame(width: 50, height: 50)
                             .overlay(
                                 Image(systemName: "arrow.triangle.2.circlepath")
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(themeManager.colors.page)
                                     .rotationEffect(.degrees(viewModel.isRefreshing ? 360 : 0))
                                     .animation(viewModel.isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: viewModel.isRefreshing)
                             )
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Updating RSS feeds")
-                                .font(.headline)
-                                .foregroundColor(themeManager.colors.textPrimary)
-                        }
+
+                        Text("Updating feeds")
+                            .font(Typography.figtree(15, weight: .semibold))
+                            .foregroundColor(themeManager.colors.text)
 
                         Spacer()
                     }
@@ -44,11 +42,11 @@ struct RSSRefreshLoaderView: View {
                         let segment = barWidth * 0.4
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(Color.gray.opacity(0.2))
+                                .fill(themeManager.colors.sink)
                                 .frame(height: 8)
 
                             Capsule()
-                                .fill(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing))
+                                .fill(themeManager.colors.accent)
                                 .frame(width: segment, height: 8)
                                 .offset(x: animateBar ? barWidth : -segment)
                                 .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: false), value: animateBar)
@@ -59,16 +57,21 @@ struct RSSRefreshLoaderView: View {
 
                     // Status
                     Text(viewModel.refreshProgress ?? "Retrieving latest articles...")
-                        .font(.caption)
-                        .foregroundColor(themeManager.colors.textSecondary)
+                        .font(Typography.figtree(12.5))
+                        .foregroundColor(themeManager.colors.muted)
                         .multilineTextAlignment(.center)
                 }
                 .onAppear { animateBar = true }
                 .onDisappear { animateBar = false }
                 .padding(24)
-                .background(themeManager.colors.bgPrimary)
-                .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
+                .background(themeManager.colors.card)
+                .cornerRadius(CornerRadius.card)
+                .shadow(
+                    color: AppShadows.floatingBar.color,
+                    radius: AppShadows.floatingBar.radius,
+                    x: AppShadows.floatingBar.x,
+                    y: AppShadows.floatingBar.y
+                )
                 .padding(.horizontal, 30)
                 .transition(.scale.combined(with: .opacity))
             }

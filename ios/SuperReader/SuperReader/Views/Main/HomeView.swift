@@ -8,26 +8,24 @@ struct HomeView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var viewModel = ArticleListViewModel()
-    
+
     @State private var showAddArticle = false
-    @State private var showThemeSelector = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                themeManager.colors.backgroundGradient
+                themeManager.colors.page
                     .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
+
+                VStack(spacing: Spacing.md) {
                     // Header
                     headerView
-                    
+
                     // Filter Bar
                     filterBar
-                    
+
                     // Article List
-                    ArticleListView(viewModel: viewModel)
+                    ArticleListView(viewModel: viewModel, onAddArticle: { showAddArticle = true })
                 }
 
             }
@@ -36,10 +34,8 @@ struct HomeView: View {
                     Task { await viewModel.refresh() }
                 })
                 .environmentObject(themeManager)
-            }
-            .sheet(isPresented: $showThemeSelector) {
-                ThemeSelectorSheet()
-                    .environmentObject(themeManager)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
             }
         }
         .task {
@@ -48,120 +44,97 @@ struct HomeView: View {
             }
         }
     }
-    
+
     // MARK: - Header
-    
+
     private var headerView: some View {
-        VStack(spacing: Spacing.sm) {
+        VStack(spacing: Spacing.md) {
             HStack {
-                // Title
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("SuperReader")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(PremiumGradients.primary)
-                    
-                    Text("Save and read your favorite articles")
-                        .font(.system(size: 14))
-                        .foregroundColor(themeManager.colors.textSecondary)
-                }
-                
+                Text("Library")
+                    .font(Typography.largeTitle)
+                    .foregroundColor(themeManager.colors.text)
+
                 Spacer()
-                
-                // Action Buttons
+
                 HStack(spacing: Spacing.sm) {
-                    // Theme Button
-                    Button(action: { showThemeSelector = true }) {
-                        Image(systemName: themeManager.currentTheme.iconName)
-                            .font(.system(size: 18))
-                            .foregroundColor(themeManager.colors.textSecondary)
-                            .frame(width: 40, height: 40)
-                            .background(themeManager.colors.bgSecondary)
-                            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
+                    // View Mode Toggle
+                    Button(action: { themeManager.toggleViewMode() }) {
+                        Image(systemName: "square.grid.2x2.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(themeManager.viewMode == .list ? themeManager.colors.page : themeManager.colors.text)
+                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
+                            .background(themeManager.viewMode == .list ? themeManager.colors.text : themeManager.colors.sink)
+                            .clipShape(Circle())
                     }
-                    
+
                     // Add Article Button
                     Button(action: { showAddArticle = true }) {
-                        HStack(spacing: Spacing.xs) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .semibold))
-                            
-                            Text("Add")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, Spacing.md)
-                        .padding(.vertical, Spacing.sm)
-                        .background(PremiumGradients.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(themeManager.colors.page)
+                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
+                            .background(themeManager.colors.accent)
+                            .clipShape(Circle())
                     }
                 }
             }
-            
-            // View Mode Toggle & Search
+
+            // Search Bar
             HStack(spacing: Spacing.sm) {
-                // Search Bar
-                HStack(spacing: Spacing.sm) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(themeManager.colors.textSecondary)
-                    
-                    TextField("Search articles...", text: $viewModel.searchQuery)
-                        .font(.system(size: 15))
-                }
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm + 2)
-                .background(themeManager.colors.bgSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-                
-                // View Mode Toggle
-                Button(action: { themeManager.toggleViewMode() }) {
-                    Image(systemName: themeManager.viewMode.icon)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(themeManager.colors.textSecondary)
-                        .frame(width: 40, height: 40)
-                        .background(themeManager.colors.bgSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
-                }
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(themeManager.colors.text.opacity(0.55))
+
+                TextField(
+                    "",
+                    text: $viewModel.searchQuery,
+                    prompt: Text("Search articles").foregroundColor(themeManager.colors.muted)
+                )
+                .font(Typography.figtree(15))
+                .foregroundColor(themeManager.colors.text)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .background(themeManager.colors.sink)
+            .clipShape(Capsule())
         }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.md)
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.top, Spacing.contentTop)
     }
-    
+
     // MARK: - Filter Bar
-    
+
     private var filterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.sm) {
-                // All
+            HStack(spacing: 7) {
                 FilterChip(
-                    title: "Tutti",
+                    title: "All",
+                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == nil,
                     action: { viewModel.setReadingStatusFilter(nil) }
                 )
-                
-                // Read / Started (Letti use .reading based on elimination)
+
                 FilterChip(
-                    title: "Letti",
-                    isSelected: viewModel.filters.readingStatus == .reading,
-                    action: { viewModel.setReadingStatusFilter(.reading) }
-                )
-                
-                // Unread (Non Letti)
-                FilterChip(
-                    title: "Non Letti",
+                    title: "Unread",
+                    dotColor: themeManager.colors.accent2,
                     isSelected: viewModel.filters.readingStatus == .unread,
                     action: { viewModel.setReadingStatusFilter(.unread) }
                 )
-                
-                // Completed (Completati)
+
                 FilterChip(
-                    title: "Completati",
+                    title: "Reading",
+                    dotColor: themeManager.colors.accent,
+                    isSelected: viewModel.filters.readingStatus == .reading,
+                    action: { viewModel.setReadingStatusFilter(.reading) }
+                )
+
+                FilterChip(
+                    title: "Done",
+                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == .completed,
                     action: { viewModel.setReadingStatusFilter(.completed) }
                 )
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.bottom, Spacing.md)
+            .padding(.horizontal, Spacing.screenHorizontal)
         }
     }
 }
@@ -170,120 +143,31 @@ struct HomeView: View {
 
 struct FilterChip: View {
     let title: String
+    let dotColor: Color?
     let isSelected: Bool
     let action: () -> Void
     @EnvironmentObject var themeManager: ThemeManager
-    
+
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? .white : themeManager.colors.textSecondary)
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, 8)
-                .background(
-                    isSelected ? AnyShapeStyle(PremiumGradients.primary) : AnyShapeStyle(themeManager.colors.bgSecondary)
-                )
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(isSelected ? Color.clear : themeManager.colors.border, lineWidth: 1)
-                )
-        }
-    }
-}
-
-// MARK: - Theme Selector Sheet
-
-struct ThemeSelectorSheet: View {
-    @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-
-    private func previewTheme(_ theme: ColorTheme) -> ColorTheme {
-        if theme == .auto {
-            return colorScheme == .dark ? .dark : .light
-        }
-        return theme
-    }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(ColorTheme.allCases, id: \.self) { theme in
-                    Button(action: {
-                        themeManager.setTheme(theme)
-                        dismiss()
-                    }) {
-                        HStack {
-                            // Theme preview
-                            if theme == .auto {
-                                ZStack {
-                                    HStack(spacing: 0) {
-                                        Rectangle()
-                                            .fill(ColorTheme.light.colors.bgPrimary)
-                                        Rectangle()
-                                            .fill(ColorTheme.dark.colors.bgPrimary)
-                                    }
-                                    Image(systemName: "circle.lefthalf.filled")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.gray)
-                                }
-                                .frame(width: 50, height: 50)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                )
-                            } else {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                theme.colors.bgGradientFrom,
-                                                theme.colors.bgGradientVia,
-                                                theme.colors.bgGradientTo
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 50, height: 50)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(theme.colors.border, lineWidth: 1)
-                                    )
-                            }
-
-                            VStack(alignment: .leading) {
-                                Text(theme.displayName)
-                                    .font(.headline)
-                                    .foregroundColor(themeManager.colors.textPrimary)
-                                if theme == .auto {
-                                    Text("Follows system setting")
-                                        .font(.caption)
-                                        .foregroundColor(themeManager.colors.textSecondary)
-                                }
-                            }
-
-                            Spacer()
-
-                            if themeManager.currentTheme == theme {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.purple)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
+            HStack(spacing: 6) {
+                if let dotColor {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: 6, height: 6)
                 }
+                Text(title)
+                    .font(Typography.figtree(13.5, weight: .semibold))
             }
-            .navigationTitle("Choose Theme")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
+            .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isSelected ? themeManager.colors.text : Color.clear)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
+            )
         }
     }
 }

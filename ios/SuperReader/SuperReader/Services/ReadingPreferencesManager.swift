@@ -118,10 +118,10 @@ private struct ReadingPreferencesStorage: Codable {
 
     func toReadingPreferences() -> ReadingPreferences {
         ReadingPreferences(
-            fontFamily: Typography.FontFamily(rawValue: fontFamily) ?? .serif,
+            fontFamily: Typography.FontFamily(rawValue: fontFamily) ?? .migrated(from: fontFamily),
             fontSize: fontSize,
-            colorTheme: ColorTheme(rawValue: colorTheme) ?? .light,
-            lineHeight: Typography.LineHeight(rawValue: lineHeight) ?? .relaxed,
+            colorTheme: ColorTheme(rawValue: colorTheme) ?? .system,
+            lineHeight: Typography.LineHeight(rawValue: lineHeight) ?? .migrated(from: lineHeight),
             contentWidth: Typography.ContentWidth(rawValue: contentWidth) ?? .normal
         )
     }

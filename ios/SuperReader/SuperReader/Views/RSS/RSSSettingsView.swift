@@ -17,22 +17,22 @@ struct RSSSettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("Intervallo", selection: selection) {
+                    Picker("Interval", selection: selection) {
                         ForEach(RSSRefreshInterval.allCases) { option in
                             Text(option.displayName).tag(option)
                         }
                     }
                 } header: {
-                    Text("Aggiornamento automatico")
+                    Text("Automatic refresh")
                 } footer: {
-                    Text("Quando rientri nel tab RSS, i feed vengono aggiornati solo se è trascorso questo intervallo dall'ultimo aggiornamento. \"Subito\" aggiorna sempre, \"Mai\" disabilita l'aggiornamento automatico. Il pulsante di aggiornamento manuale resta sempre attivo.")
+                    Text("When you return to the Feeds tab, feeds only refresh if this interval has passed since the last update. \"Immediately\" always refreshes, \"Never\" disables auto-refresh. The manual refresh button always stays active.")
                 }
             }
-            .navigationTitle("Impostazioni RSS")
+            .navigationTitle("Feed Sync")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fine") { dismiss() }
+                    Button("Done") { dismiss() }
                 }
             }
         }

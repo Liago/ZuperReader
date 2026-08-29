@@ -218,32 +218,18 @@ class ArticleListViewModel: ObservableObject {
 struct ArticleListView: View {
     @ObservedObject var viewModel: ArticleListViewModel
     @EnvironmentObject var themeManager: ThemeManager
-    
+    var onAddArticle: () -> Void = {}
+
     private let gridColumns = [
         GridItem(.flexible(), spacing: Spacing.md)
     ]
-    
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.articles.isEmpty {
                 loadingView
             } else if let error = viewModel.errorMessage {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 40))
-                    .foregroundColor(.red)
-                    Text("Error loading articles")
-                    .font(.headline)
-                    Text(error)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    Button("Retry") {
-                        Task { await viewModel.refresh() }
-                    }
-                    .padding()
-                }
-                .padding()
+                errorView(error)
             } else if viewModel.articles.isEmpty {
                 emptyView
             } else if themeManager.viewMode == .grid {
@@ -253,9 +239,9 @@ struct ArticleListView: View {
             }
         }
     }
-    
+
     // MARK: - Loading View
-    
+
     private var loadingView: some View {
         ScrollView {
             if themeManager.viewMode == .grid {
@@ -264,41 +250,86 @@ struct ArticleListView: View {
                         ArticleCardSkeleton()
                     }
                 }
-                .padding(Spacing.md)
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .padding(.top, Spacing.md)
             } else {
                 LazyVStack(spacing: Spacing.sm) {
                     ForEach(0..<6, id: \.self) { _ in
                         ArticleRowSkeleton()
                     }
                 }
-                .padding(Spacing.md)
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .padding(.top, Spacing.md)
             }
         }
     }
-    
-    // MARK: - Empty View
-    
-    private var emptyView: some View {
-        VStack(spacing: Spacing.lg) {
-            Image(systemName: "newspaper")
-            .font(.system(size: 60))
-            .foregroundColor(themeManager.colors.textSecondary.opacity(0.5))
-            
-            Text("No articles yet")
-            .font(.system(size: 20, weight: .semibold))
-            .foregroundColor(themeManager.colors.textPrimary)
-            
-            Text("Add your first article by tapping the + button above")
-            .font(.system(size: 15))
-            .foregroundColor(themeManager.colors.textSecondary)
-            .multilineTextAlignment(.center)
+
+    // MARK: - Error View
+
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: Spacing.md) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundColor(themeManager.colors.accent)
+            Text("Error loading articles")
+                .font(Typography.sheetTitle)
+                .foregroundColor(themeManager.colors.text)
+            Text(message)
+                .font(Typography.figtree(13))
+                .foregroundColor(themeManager.colors.muted)
+                .multilineTextAlignment(.center)
+            Button("Retry") {
+                Task { await viewModel.refresh() }
+            }
+            .font(Typography.figtree(15, weight: .bold))
+            .foregroundColor(themeManager.colors.page)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(themeManager.colors.accent)
+            .clipShape(Capsule())
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
+    // MARK: - Empty View
+
+    private var emptyView: some View {
+        VStack(spacing: Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(themeManager.colors.sink)
+                    .frame(width: 96, height: 96)
+                Image(systemName: "book.closed")
+                    .font(.system(size: 40))
+                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+            }
+
+            Text("No articles yet")
+                .font(Typography.sheetTitle)
+                .foregroundColor(themeManager.colors.text)
+
+            Text("Add your first article by tapping the + button above")
+                .font(Typography.figtree(15))
+                .foregroundColor(themeManager.colors.muted)
+                .multilineTextAlignment(.center)
+
+            Button(action: onAddArticle) {
+                Text("Add article")
+                    .font(Typography.figtree(15, weight: .bold))
+                    .foregroundColor(themeManager.colors.page)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(themeManager.colors.accent)
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(Spacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     // MARK: - Grid View
-    
+
     private var gridView: some View {
         ScrollView {
             LazyVGrid(columns: gridColumns, spacing: Spacing.md) {
@@ -312,59 +343,146 @@ struct ArticleListView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                
+
                 // Load more trigger
                 if viewModel.hasMore {
                     ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .onAppear {
-                        Task { await viewModel.loadMore() }
-                    }
+                        .tint(themeManager.colors.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .onAppear {
+                            Task { await viewModel.loadMore() }
+                        }
                 }
             }
-            .padding(Spacing.md)
+            .padding(.horizontal, Spacing.screenHorizontal)
+            .padding(.top, Spacing.md)
+            .padding(.bottom, Spacing.scrollBottomInset)
         }
         .refreshable {
             await viewModel.refresh()
         }
     }
-    
+
     // MARK: - List View
-    
+
+    private var groupedArticles: [(label: String, articles: [Article])] {
+        let calendar = Calendar.current
+        var today: [Article] = []
+        var thisWeek: [Article] = []
+        var older: [Article] = []
+
+        for article in viewModel.filteredArticles {
+            guard let date = article.createdAtDate else {
+                older.append(article)
+                continue
+            }
+            if calendar.isDateInToday(date) {
+                today.append(article)
+            } else if let days = calendar.dateComponents([.day], from: date, to: Date()).day, days <= 7 {
+                thisWeek.append(article)
+            } else {
+                older.append(article)
+            }
+        }
+
+        var groups: [(String, [Article])] = []
+        if !today.isEmpty { groups.append(("Today", today)) }
+        if !thisWeek.isEmpty { groups.append(("Earlier this week", thisWeek)) }
+        if !older.isEmpty { groups.append(("Older", older)) }
+        return groups
+    }
+
     private var listView: some View {
-        ScrollView {
-            // Request 2: Ridotto spazio tra card (Spacing.sm o anche 8/10)
-            LazyVStack(spacing: 10) {
-                ForEach(viewModel.filteredArticles) { article in
-                    NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
-                        ArticleRowView(
-                            article: article,
-                            onFavorite: { Task { await viewModel.toggleFavorite(article) } }
-                        )
+        List {
+            ForEach(groupedArticles, id: \.label) { group in
+                Section {
+                    ForEach(group.articles) { article in
+                        ZStack {
+                            NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+
+                            ArticleRowView(article: article)
+                        }
+                        .listRowInsets(EdgeInsets(
+                            top: 0,
+                            leading: Spacing.screenHorizontal,
+                            bottom: 0,
+                            trailing: Spacing.screenHorizontal
+                        ))
+                        .listRowSeparatorTint(themeManager.colors.line)
+                        .listRowBackground(themeManager.colors.page)
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                Task { await viewModel.toggleFavorite(article) }
+                            } label: {
+                                Label(
+                                    article.isFavorite ? "Unfavorite" : "Favorite",
+                                    systemImage: article.isFavorite ? "heart.slash" : "heart"
+                                )
+                            }
+                            .tint(themeManager.colors.accent)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Task { await viewModel.deleteArticle(article) }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
+                            Button {
+                                Task { await viewModel.toggleFavorite(article) }
+                            } label: {
+                                Label(
+                                    article.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                                    systemImage: article.isFavorite ? "heart.slash" : "heart"
+                                )
+                            }
+                            if let url = URL(string: article.url) {
+                                ShareLink(item: url) {
+                                    Label("Share", systemImage: "square.and.arrow.up")
+                                }
+                            }
+                            Button(role: .destructive) {
+                                Task { await viewModel.deleteArticle(article) }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
-                    .buttonStyle(.plain) // Request 1: Togli simbolo > (rimosso stile navigazione List)
-                    .contextMenu {
-                         Button(role: .destructive) {
-                             Task { await viewModel.deleteArticle(article) }
-                         } label: {
-                             Label("Delete", systemImage: "trash")
-                         }
-                    }
-                }
-                
-                // Load more trigger
-                if viewModel.hasMore {
-                    ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .onAppear {
-                        Task { await viewModel.loadMore() }
-                    }
+                } header: {
+                    Text(group.label.uppercased())
+                        .font(Typography.figtree(12.5, weight: .bold))
+                        .foregroundColor(themeManager.colors.muted)
+                        .textCase(nil)
                 }
             }
-            .padding(10) // Padding uniforme esterno
+
+            // Load more trigger
+            if viewModel.hasMore {
+                HStack {
+                    Spacer()
+                    ProgressView().tint(themeManager.colors.accent)
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .onAppear {
+                    Task { await viewModel.loadMore() }
+                }
+            }
+
+            Color.clear
+                .frame(height: Spacing.scrollBottomInset)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(themeManager.colors.page)
         .refreshable {
             await viewModel.refresh()
         }
