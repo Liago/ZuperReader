@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import Auth
 
 // MARK: - Save a Link Sheet (09)
 

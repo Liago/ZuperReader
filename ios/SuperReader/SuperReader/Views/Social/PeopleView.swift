@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import Auth
 
 // MARK: - People View (07) — merged Shared Inbox + Friends
 
