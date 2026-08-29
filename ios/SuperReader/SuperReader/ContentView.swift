@@ -17,6 +17,7 @@ struct ContentView: View {
                 MainTabView()
             } else {
                 LoginView()
+                    .environmentObject(themeManager)
             }
         }
         .onChange(of: colorScheme) { _, newValue in

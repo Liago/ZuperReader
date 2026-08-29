@@ -170,12 +170,6 @@ struct PremiumGradients {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-
-    static let login = LinearGradient(
-        colors: [Color(hex: "#F5EAD8"), Color(hex: "#F5EAD8")],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
 }
 
 // MARK: - Typography

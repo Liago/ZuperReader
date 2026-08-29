@@ -1,40 +1,63 @@
 import SwiftUI
 
-// MARK: - Login View
+// MARK: - Login (10)
 
 struct LoginView: View {
     @StateObject private var authManager = AuthManager.shared
+    @EnvironmentObject var themeManager: ThemeManager
+
     @State private var email = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showMagicLinkSent = false
-    
+
+    private var errorColor: Color { Color(hex: "#C0392B") }
+
     var body: some View {
         ZStack {
-            // Animated background
-            backgroundView
-            
-            // Content
+            AuthBackground()
+
             ScrollView {
-                VStack(spacing: 0) {
-                    Spacer(minLength: 80)
-                    
-                    // Logo and Title
-                    logoSection
-                    
-                    Spacer(minLength: 40)
-                    
-                    // Login Card
-                    loginCard
-                    
-                    Spacer(minLength: 40)
-                    
-                    // Footer
-                    footerText
-                    
-                    Spacer(minLength: 20)
+                VStack(alignment: .leading, spacing: 0) {
+                    Spacer().frame(height: 150)
+
+                    logo
+
+                    Text("Everything you meant\nto read.")
+                        .font(Typography.caprasimo(40))
+                        .lineSpacing(2)
+                        .foregroundColor(themeManager.colors.text)
+                        .padding(.top, 24)
+
+                    Text("Sign in with a link. No password to remember, nothing to reset.")
+                        .font(Typography.figtree(16))
+                        .lineSpacing(6)
+                        .foregroundColor(themeManager.colors.muted)
+                        .frame(maxWidth: 280, alignment: .leading)
+                        .padding(.top, 16)
+
+                    emailField
+                        .padding(.top, 32)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(Typography.figtree(13))
+                            .foregroundColor(errorColor)
+                            .padding(.top, 8)
+                    }
+
+                    sendButton
+                        .padding(.top, 16)
+
+                    Text("By continuing, you agree to our Terms of Service and Privacy Policy.")
+                        .font(Typography.figtree(12.5))
+                        .foregroundColor(themeManager.colors.muted)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 16)
                 }
-                .padding(.horizontal, Spacing.lg)
+                .padding(.horizontal, Spacing.loginHorizontal)
+                .padding(.bottom, 40)
             }
         }
         .fullScreenCover(isPresented: $showMagicLinkSent) {
@@ -43,199 +66,138 @@ struct LoginView: View {
                 onResend: { await resendMagicLink() },
                 onTryDifferentEmail: { showMagicLinkSent = false }
             )
+            .environmentObject(themeManager)
         }
     }
-    
-    // MARK: - Background
-    
-    private var backgroundView: some View {
-        ZStack {
-            PremiumGradients.login
-                .ignoresSafeArea()
-            
-            // Floating circles
-            Circle()
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 300, height: 300)
-                .blur(radius: 60)
-                .offset(x: -100, y: -200)
-            
-            Circle()
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 300, height: 300)
-                .blur(radius: 60)
-                .offset(x: 100, y: 300)
-        }
+
+    // MARK: - Logo
+
+    private var logo: some View {
+        Text("Z")
+            .font(Typography.caprasimo(30))
+            .foregroundColor(themeManager.colors.page)
+            .frame(width: 64, height: 64)
+            .background(themeManager.colors.accent)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
     }
-    
-    // MARK: - Logo Section
-    
-    private var logoSection: some View {
-        VStack(spacing: Spacing.md) {
-            // App Icon
-            ZStack {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#6366F1"), Color(hex: "#8B5CF6")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: Color.purple.opacity(0.4), radius: 12, x: 0, y: 6)
-                
-                Image(systemName: "book.fill")
-                    .font(.system(size: 36))
-                    .foregroundColor(.white)
-            }
-            .scaleEffect(1.0)
-            .animation(.spring(response: 0.5, dampingFraction: 0.6), value: isLoading)
-            
-            VStack(spacing: Spacing.xs) {
-                Text("Welcome to")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Text("SuperReader")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            
-            Text("Sign in with a magic link – no password needed")
-                .font(.system(size: 15))
-                .foregroundColor(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-        }
-    }
-    
-    // MARK: - Login Card
-    
-    private var loginCard: some View {
-        VStack(spacing: Spacing.lg) {
-            // Email Input
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Email Address")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.gray)
-                
-                HStack(spacing: Spacing.sm) {
-                    Image(systemName: "at")
-                        .foregroundColor(.gray)
-                        .frame(width: 24)
-                    
-                    TextField("you@example.com", text: $email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled()
-                        .font(.system(size: 16))
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+
+    // MARK: - Email Field
+
+    private var emailField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Email")
+                .font(Typography.fieldLabel)
+                .textCase(.uppercase)
+                .foregroundColor(themeManager.colors.muted)
+
+            HStack(spacing: 10) {
+                Image(systemName: "envelope")
+                    .foregroundColor(themeManager.colors.muted)
+
+                TextField(
+                    "",
+                    text: $email,
+                    prompt: Text("you@example.com").foregroundColor(themeManager.colors.muted)
                 )
+                .keyboardType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .foregroundColor(themeManager.colors.text)
             }
-            
-            // Error Message
-            if let error = errorMessage {
-                HStack(spacing: Spacing.sm) {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.red)
-                    
-                    Text(error)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.red)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-            }
-            
-            // Submit Button
-            Button(action: { Task { await sendMagicLink() } }) {
-                HStack(spacing: Spacing.sm) {
-                    if isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text("Send Magic Link")
-                            .font(.system(size: 16, weight: .semibold))
-                        
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Spacing.md + 2)
-                .background(
-                    LinearGradient(
-                        colors: [Color(hex: "#6366F1"), Color(hex: "#8B5CF6")],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-                .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
-            }
-            .disabled(isLoading || email.isEmpty)
-            .opacity(email.isEmpty ? 0.6 : 1)
-            .scaleEffect(isLoading ? 0.98 : 1)
-            .animation(.spring(response: 0.3), value: isLoading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(themeManager.colors.card)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(themeManager.colors.line, lineWidth: 1)
+            )
         }
-        .padding(Spacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.xl)
-                .fill(Color.white.opacity(0.95))
-        )
-        .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
     }
-    
-    // MARK: - Footer
-    
-    private var footerText: some View {
-        Text("By signing in, you agree to our Terms of Service and Privacy Policy")
-            .font(.system(size: 12))
-            .foregroundColor(.white.opacity(0.6))
-            .multilineTextAlignment(.center)
+
+    // MARK: - Send Button
+
+    private var sendButton: some View {
+        Button(action: { Task { await sendMagicLink() } }) {
+            Group {
+                if isLoading {
+                    ProgressView()
+                        .tint(themeManager.colors.page)
+                } else {
+                    Text("Send magic link")
+                        .font(Typography.caprasimo(16.5))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundColor(themeManager.colors.page)
+            .padding(.vertical, 16)
+            .background(themeManager.colors.accent)
+            .clipShape(Capsule())
+        }
+        .disabled(isLoading || email.isEmpty)
+        .opacity(email.isEmpty ? 0.6 : 1)
     }
-    
+
     // MARK: - Actions
-    
+
     private func sendMagicLink() async {
         guard !email.isEmpty else { return }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
         do {
             try await authManager.signInWithMagicLink(email: email)
             showMagicLinkSent = true
         } catch {
             errorMessage = error.localizedDescription
         }
-        
+
         isLoading = false
     }
-    
+
     private func resendMagicLink() async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             try await authManager.signInWithMagicLink(email: email)
         } catch {
             errorMessage = error.localizedDescription
         }
-        
+
         isLoading = false
+    }
+}
+
+// MARK: - Shared Auth Shell Background
+
+/// Two soft off-screen circles over a flat `page` background — shared by
+/// LoginView and MagicLinkSentView (docs/revamp-ios/README.md · "10 Login").
+struct AuthBackground: View {
+    @EnvironmentObject var themeManager: ThemeManager
+
+    var body: some View {
+        ZStack {
+            themeManager.colors.page
+
+            Circle()
+                .fill(themeManager.colors.accent200)
+                .frame(width: 280, height: 280)
+                .offset(x: 90, y: -70)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+
+            Circle()
+                .fill(themeManager.colors.accent2_200)
+                .frame(width: 220, height: 220)
+                .offset(x: -70, y: 70)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        }
+        .ignoresSafeArea()
+        .clipped()
     }
 }
 
 #Preview {
     LoginView()
+        .environmentObject(ThemeManager.shared)
 }
