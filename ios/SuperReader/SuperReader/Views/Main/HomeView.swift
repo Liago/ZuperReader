@@ -34,6 +34,8 @@ struct HomeView: View {
                     Task { await viewModel.refresh() }
                 })
                 .environmentObject(themeManager)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
             }
         }
         .task {
