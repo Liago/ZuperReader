@@ -196,6 +196,12 @@ class ArticleListViewModel: ObservableObject {
         }
     }
     
+    /// Append to "Up next"; the shared store owns the queued/pending state shown on rows.
+    func addToQueue(_ article: Article) async {
+        guard let userId = userId else { return }
+        await ReadingQueueStore.shared.add(articleId: article.id, userId: userId)
+    }
+
     func setReadingStatusFilter(_ status: ReadingStatus?) {
         filters.readingStatus = status
         
@@ -217,6 +223,7 @@ class ArticleListViewModel: ObservableObject {
 
 struct ArticleListView: View {
     @ObservedObject var viewModel: ArticleListViewModel
+    @ObservedObject private var queueStore = ReadingQueueStore.shared
     @EnvironmentObject var themeManager: ThemeManager
     var onAddArticle: () -> Void = {}
 
@@ -238,6 +245,13 @@ struct ArticleListView: View {
                 listView
             }
         }
+    }
+
+    /// Web `queueState`: nil → can add, `.saving` → in flight, `.done` → already queued.
+    private func queueState(for article: Article) -> QueueActionState? {
+        if queueStore.isPending(article.id) { return .saving }
+        if queueStore.isQueued(article.id) { return .done }
+        return nil
     }
 
     // MARK: - Loading View
@@ -337,7 +351,9 @@ struct ArticleListView: View {
                     NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
                         ArticleCardView(
                             article: article,
+                            queueState: queueState(for: article),
                             onFavorite: { Task { await viewModel.toggleFavorite(article) } },
+                            onAddToQueue: { Task { await viewModel.addToQueue(article) } },
                             onDelete: { Task { await viewModel.deleteArticle(article) } }
                         )
                     }
@@ -404,7 +420,7 @@ struct ArticleListView: View {
                             }
                             .opacity(0)
 
-                            ArticleRowView(article: article)
+                            ArticleRowView(article: article, queueState: queueState(for: article))
                         }
                         .listRowInsets(EdgeInsets(
                             top: 0,
@@ -424,6 +440,15 @@ struct ArticleListView: View {
                                 )
                             }
                             .tint(themeManager.colors.accent)
+
+                            if queueState(for: article) == nil {
+                                Button {
+                                    Task { await viewModel.addToQueue(article) }
+                                } label: {
+                                    Label("Up next", systemImage: "text.badge.plus")
+                                }
+                                .tint(themeManager.colors.accent2)
+                            }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -446,6 +471,15 @@ struct ArticleListView: View {
                                     Label("Share", systemImage: "square.and.arrow.up")
                                 }
                             }
+                            Button {
+                                Task { await viewModel.addToQueue(article) }
+                            } label: {
+                                Label(
+                                    queueState(for: article) == .done ? "Added to Up next" : "Add to Up next",
+                                    systemImage: queueState(for: article) == .done ? "checkmark" : "text.badge.plus"
+                                )
+                            }
+                            .disabled(queueState(for: article) != nil)
                             Button(role: .destructive) {
                                 Task { await viewModel.deleteArticle(article) }
                             } label: {

@@ -6,6 +6,7 @@ import Auth
 
 struct PeopleView: View {
     @StateObject private var viewModel = PeopleViewModel()
+    @ObservedObject private var queueStore = ReadingQueueStore.shared
     @EnvironmentObject var themeManager: ThemeManager
     @State private var showSearch = false
 
@@ -129,6 +130,15 @@ struct PeopleView: View {
                                     }
                                 }
                                 .contextMenu {
+                                    Button {
+                                        Task { await viewModel.addToQueue(share) }
+                                    } label: {
+                                        Label(
+                                            queueStore.isQueued(share.articleId) ? "Added to Up next" : "Add to Up next",
+                                            systemImage: queueStore.isQueued(share.articleId) ? "checkmark" : "text.badge.plus"
+                                        )
+                                    }
+                                    .disabled(queueStore.isQueued(share.articleId) || queueStore.isPending(share.articleId))
                                     Button(role: .destructive) {
                                         Task { await viewModel.deleteShare(share) }
                                     } label: {

@@ -22,6 +22,7 @@ struct AddArticleSheet: View {
 
     @State private var acceptedTags: [String] = []
     @State private var suggestedTags: [String] = []
+    @State private var addToQueue = false
 
     private var errorColor: Color { Color(hex: "#C0392B") }
 
@@ -42,6 +43,7 @@ struct AddArticleSheet: View {
                     if let result = parseResult {
                         previewCard(result)
                         tagsSection
+                        upNextRow
                     } else if isLoading {
                         previewSkeleton
                     }
@@ -251,6 +253,34 @@ struct AddArticleSheet: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Add to Up next
+
+    /// "Add to Up next" row with a 50×30 switch (docs/revamp-ios/README.md · "09 Save a link").
+    private var upNextRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "list.number")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(themeManager.colors.text.opacity(0.65))
+
+            Text("Add to Up next")
+                .font(Typography.figtree(14.5, weight: .semibold))
+                .foregroundColor(themeManager.colors.text)
+
+            Spacer()
+
+            Toggle("", isOn: $addToQueue)
+                .labelsHidden()
+                .tint(themeManager.colors.accent)
+                .scaleEffect(0.98)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(themeManager.colors.sink)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .contentShape(RoundedRectangle(cornerRadius: 20))
+        .onTapGesture { addToQueue.toggle() }
+    }
+
     // MARK: - Save Button
 
     private var saveButton: some View {
@@ -344,7 +374,11 @@ struct AddArticleSheet: View {
         isSaving = true
 
         do {
-            _ = try await SupabaseService.shared.saveArticle(parsedData: result, userId: userId, tags: acceptedTags)
+            let saved = try await SupabaseService.shared.saveArticle(parsedData: result, userId: userId, tags: acceptedTags)
+            if addToQueue {
+                // Queueing is best-effort: the article is already saved, so don't fail the sheet.
+                await ReadingQueueStore.shared.add(articleId: saved.id, userId: userId)
+            }
             onArticleAdded()
             dismiss()
         } catch {

@@ -9,6 +9,7 @@ struct HomeView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var viewModel = ArticleListViewModel()
+    @ObservedObject private var queueStore = ReadingQueueStore.shared
 
     @State private var showAddArticle = false
 
@@ -41,7 +42,9 @@ struct HomeView: View {
         }
         .task {
             if let userId = authManager.user?.id.uuidString {
-                await viewModel.loadArticles(userId: userId)
+                async let articles: Void = viewModel.loadArticles(userId: userId)
+                async let queue: Void = queueStore.load(userId: userId)
+                _ = await (articles, queue)
             }
         }
     }
@@ -58,6 +61,31 @@ struct HomeView: View {
                 Spacer()
 
                 HStack(spacing: Spacing.sm) {
+                    // Up next (reading queue) — mirrors the web sidebar entry + count badge
+                    NavigationLink(destination: QueueView()) {
+                        Image(systemName: "list.number")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(themeManager.colors.text)
+                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
+                            .background(themeManager.colors.sink)
+                            .clipShape(Circle())
+                            .overlay(alignment: .topTrailing) {
+                                if queueStore.count > 0 {
+                                    Text(queueStore.count > 99 ? "99+" : "\(queueStore.count)")
+                                        .font(Typography.figtree(10.5, weight: .heavy))
+                                        .foregroundColor(themeManager.colors.page)
+                                        .padding(.horizontal, 5)
+                                        .frame(minWidth: 18, minHeight: 18)
+                                        .background(themeManager.colors.accent2)
+                                        .clipShape(Capsule())
+                                        .offset(x: 5, y: -4)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Up next")
+                    .accessibilityValue(queueStore.count > 0 ? "\(queueStore.count) queued" : "Empty")
+
                     // View Mode Toggle
                     Button(action: { themeManager.toggleViewMode() }) {
                         Image(systemName: "square.grid.2x2.fill")

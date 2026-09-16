@@ -4,7 +4,10 @@ import SwiftUI
 
 struct ArticleCardView: View {
     let article: Article
+    /// "Up next" action state (nil = can add, .saving, .done = already queued).
+    var queueState: QueueActionState? = nil
     let onFavorite: () -> Void
+    var onAddToQueue: () -> Void = {}
     let onDelete: () -> Void
 
     @EnvironmentObject var themeManager: ThemeManager
@@ -32,6 +35,13 @@ struct ArticleCardView: View {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
             }
+            Button(action: onAddToQueue) {
+                Label(
+                    queueState == .done ? "Added to Up next" : "Add to Up next",
+                    systemImage: queueState == .done ? "checkmark" : "text.badge.plus"
+                )
+            }
+            .disabled(queueState != nil)
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
             }
@@ -164,6 +174,17 @@ struct ArticleCardView: View {
                     Image(systemName: article.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(article.isFavorite ? themeManager.colors.accent : themeManager.colors.text.opacity(0.55))
                 }
+                // Add to Up next (web ArticleRow: ListPlus → spinner → check)
+                Button(action: onAddToQueue) {
+                    if let queueState {
+                        QueueStateGlyph(state: queueState, size: 15)
+                    } else {
+                        Image(systemName: "text.badge.plus")
+                            .foregroundColor(themeManager.colors.text.opacity(0.55))
+                    }
+                }
+                .disabled(queueState != nil)
+                .accessibilityLabel(queueState == .done ? "Added to Up next" : "Add to Up next")
                 if let url = URL(string: article.url) {
                     ShareLink(item: url) {
                         Image(systemName: "square.and.arrow.up")
@@ -207,6 +228,9 @@ struct ArticleCardView: View {
                             .foregroundColor(themeManager.colors.muted)
                     }
                     Spacer()
+                    if let queueState {
+                        QueueStateGlyph(state: queueState, size: 11)
+                    }
                     if let readTime = article.estimatedReadTime {
                         Text("\(readTime) min")
                             .font(Typography.meta)
