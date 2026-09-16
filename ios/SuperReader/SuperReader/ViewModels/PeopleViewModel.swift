@@ -64,6 +64,12 @@ final class PeopleViewModel: ObservableObject {
         }
     }
 
+    /// "Queue" action on a shared article (web /shared page parity).
+    func addToQueue(_ share: ArticleShare) async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        await ReadingQueueStore.shared.add(articleId: share.articleId, userId: userId)
+    }
+
     func deleteShare(_ share: ArticleShare) async {
         do {
             try await SupabaseService.shared.deleteArticleShare(shareId: share.id)

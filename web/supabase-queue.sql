@@ -3,9 +3,9 @@
 -- ----------------------------------------------------------------------------
 -- Ordered, per-user reading queue backing the revamp's "Up next" screen.
 --
--- STATUS: DRAFT — NOT YET APPLIED.
--- Run this manually in the Supabase SQL editor before wiring the Up next screen
--- (a later revamp pass). No application code depends on it yet.
+-- Run this once in the Supabase SQL editor (idempotent). Both clients depend on it:
+--   web: web/src/lib/api.ts ("Up next" reading queue) + /queue page
+--   iOS: ios/.../Services/SupabaseService.swift (Reading Queue) + Views/Queue/QueueView.swift
 --
 -- Follows the new-table template in CLAUDE.md: RLS on, policies scoped to
 -- auth.uid(), grants to authenticated + service_role, nothing to anon.

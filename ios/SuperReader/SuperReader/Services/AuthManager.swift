@@ -85,6 +85,7 @@ class AuthManager: ObservableObject {
         try await SupabaseService.shared.signOut()
         user = nil
         isAuthenticated = false
+        ReadingQueueStore.shared.reset()
     }
     
     // MARK: - Handle deep link

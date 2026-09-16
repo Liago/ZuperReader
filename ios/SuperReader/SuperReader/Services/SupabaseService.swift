@@ -363,6 +363,88 @@ actor SupabaseService {
         return article
     }
     
+    // MARK: - Reading Queue ("Up next" · public.reading_queue)
+    //
+    // Same contract as web/src/lib/api.ts: one row per (user, article), ordered by
+    // `position`; adding appends at the end, reordering rewrites positions 0..n-1.
+
+    /// Ordered queue for a user, joined with the article rows. Orphaned rows
+    /// (article deleted) are dropped.
+    func getReadingQueue(userId: String) async throws -> [QueueItem] {
+        let items: [QueueItem] = try await client
+            .from("reading_queue")
+            .select("id, article_id, position, article:articles(*)")
+            .eq("user_id", value: userId.lowercased())
+            .order("position", ascending: true)
+            .execute()
+            .value
+
+        return items.filter { $0.article != nil }
+    }
+
+    func getReadingQueueCount(userId: String) async throws -> Int {
+        let response = try await client
+            .from("reading_queue")
+            .select(head: true, count: .exact)
+            .eq("user_id", value: userId.lowercased())
+            .execute()
+
+        return response.count ?? 0
+    }
+
+    /// Append an article to the end of the queue. No-op if already queued.
+    func addToQueue(userId: String, articleId: String) async throws {
+        struct QueueInsert: Encodable {
+            let user_id: String
+            let article_id: String
+            let position: Int
+        }
+
+        let count = try await getReadingQueueCount(userId: userId)
+        try await client
+            .from("reading_queue")
+            .upsert(
+                QueueInsert(user_id: userId.lowercased(), article_id: articleId, position: count),
+                onConflict: "user_id,article_id",
+                ignoreDuplicates: true
+            )
+            .execute()
+    }
+
+    func removeFromQueue(queueItemId: String) async throws {
+        try await client
+            .from("reading_queue")
+            .delete()
+            .eq("id", value: queueItemId)
+            .execute()
+    }
+
+    /// Remove an article from the queue by article id (used to advance on finish).
+    func removeFromQueueByArticle(userId: String, articleId: String) async throws {
+        try await client
+            .from("reading_queue")
+            .delete()
+            .eq("user_id", value: userId.lowercased())
+            .eq("article_id", value: articleId)
+            .execute()
+    }
+
+    /// Persist a new order: `orderedIds` are reading_queue row ids in the desired order.
+    func reorderQueue(orderedIds: [String]) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for (index, id) in orderedIds.enumerated() {
+                group.addTask { [client] in
+                    try await client
+                        .from("reading_queue")
+                        .update(["position": index])
+                        .eq("id", value: id)
+                        .execute()
+                }
+            }
+            try await group.waitForAll()
+        }
+    }
+
     // MARK: - Likes
     
     func toggleLike(articleId: String, userId: String) async throws -> (liked: Bool, likeCount: Int) {

@@ -4,6 +4,8 @@ import SwiftUI
 
 struct ArticleRowView: View {
     let article: Article
+    /// "Up next" membership indicator (nil = not queued).
+    var queueState: QueueActionState? = nil
 
     @EnvironmentObject var themeManager: ThemeManager
 
@@ -25,6 +27,9 @@ struct ArticleRowView: View {
                             .foregroundColor(themeManager.colors.muted)
                     }
                     Spacer()
+                    if let queueState {
+                        QueueStateGlyph(state: queueState, size: 11)
+                    }
                     if let readTime = article.estimatedReadTime {
                         Text("\(readTime) min")
                             .font(Typography.meta)
@@ -83,6 +88,33 @@ struct ArticleRowView: View {
     private var progressFraction: CGFloat {
         if article.readingStatus == .completed { return 1 }
         return min(max(CGFloat(article.readingProgress) / 100, 0), 1)
+    }
+}
+
+// MARK: - Queue State Glyph
+
+/// Small "in Up next" marker shared by the Library list row and grid card:
+/// a spinner while adding, a numbered-list glyph in `accent-2` once queued.
+struct QueueStateGlyph: View {
+    let state: QueueActionState
+    var size: CGFloat = 13
+
+    @EnvironmentObject var themeManager: ThemeManager
+
+    var body: some View {
+        Group {
+            switch state {
+            case .saving:
+                ProgressView()
+                    .controlSize(.mini)
+                    .tint(themeManager.colors.accent)
+            case .done:
+                Image(systemName: "list.number")
+                    .font(.system(size: size, weight: .bold))
+                    .foregroundColor(themeManager.colors.accent2)
+            }
+        }
+        .accessibilityLabel(state == .done ? "In Up next" : "Adding to Up next")
     }
 }
 

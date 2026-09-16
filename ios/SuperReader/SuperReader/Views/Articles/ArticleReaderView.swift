@@ -822,6 +822,7 @@ struct ArticleReaderView: View {
         do {
             try await SupabaseService.shared.updateReadingStatus(articleId: articleId, status: status)
             article = try await SupabaseService.shared.getArticleById(articleId)
+            if status == .completed { await advanceQueue() }
         } catch {
             print("Failed to update reading status: \(error)")
         }
@@ -849,8 +850,20 @@ struct ArticleReaderView: View {
         do {
             try await SupabaseService.shared.updateReadingStatus(articleId: articleId, status: .completed)
             self.article = try await SupabaseService.shared.getArticleById(articleId)
+            await advanceQueue()
         } catch {
             print("Failed to mark as completed: \(error)")
+        }
+    }
+
+    /// Finishing an article advances "Up next": drop it from the queue (web reader parity).
+    private func advanceQueue() async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        do {
+            try await SupabaseService.shared.removeFromQueueByArticle(userId: userId, articleId: articleId)
+            ReadingQueueStore.shared.removeLocally(articleId: articleId)
+        } catch {
+            print("Failed to advance queue: \(error)")
         }
     }
 
