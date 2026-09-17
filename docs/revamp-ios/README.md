@@ -188,6 +188,7 @@ No gradient. `page` background with two soft circles bleeding off-screen: 280pt 
 
 - **Tabs**: Library, Feeds, People, You. Fix the duplicate `.tag(2)`; tags become 0–3. Selected tab = `accent` icon and label at weight 800.
 - **Card / row tap** → reader push. **Long press** → context menu (favorite, share, add to Up next, delete).
+- **Feed article long press** → context menu: Save to Library (same parse-and-save as the reader bookmark, without opening the article), Mark as Read, Read Original, Share. Result is reported by the toast capsule; the saved row keeps a small `accent` bookmark glyph.
 - **Press feedback**: 0.98 scale, spring response 0.3 (keep `ScaleButtonStyle`).
 - **Focus toggle**: 0.25s ease fade of all chrome; status bar hidden in Focus.
 - **Preferences**: live application, no commit step.
