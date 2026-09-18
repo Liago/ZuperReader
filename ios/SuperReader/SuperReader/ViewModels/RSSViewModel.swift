@@ -62,79 +62,131 @@ class RSSViewModel: ObservableObject {
         isLoading = false
     }
     
+    // MARK: - Refresh progress
+
+    /// Stato di scansione di una singola fonte, mostrato nella modale di attesa.
+    struct FeedScanItem: Identifiable, Equatable {
+        enum State: Equatable {
+            case pending
+            case scanning
+            case done
+            case failed
+        }
+
+        let id: UUID
+        let title: String
+        var state: State
+    }
+
     @Published var refreshProgress: String? = nil
     @Published var progressPercentage: Double = 0.0
     @Published var processedFeedsCount: Int = 0
     @Published var totalFeedsCount: Int = 0
+    /// Fonti coinvolte nel refresh in corso, con il rispettivo stato.
+    @Published var scanItems: [FeedScanItem] = []
+    /// `true` solo quando conosciamo il progresso reale fonte per fonte (parser
+    /// on-device). Il refresh server-side è una singola richiesta: sappiamo
+    /// quante e quali fonti sono coinvolte, non quale sia in corso.
+    @Published var hasDeterminateProgress: Bool = false
+
+    private func updateScanItem(_ feedId: UUID, to state: FeedScanItem.State) {
+        guard let index = scanItems.firstIndex(where: { $0.id == feedId }) else { return }
+        scanItems[index].state = state
+    }
+
+    private func resetRefreshProgress() {
+        refreshProgress = nil
+        progressPercentage = 0.0
+        processedFeedsCount = 0
+        totalFeedsCount = 0
+        scanItems = []
+        hasDeterminateProgress = false
+    }
+
+    private func sourcesLabel(_ count: Int) -> String {
+        "\(count) \(count == 1 ? "source" : "sources")"
+    }
+
+    /// "Scanning 9to5Mac, The Verge +3 more…" per il batch in corso.
+    private func scanningLabel(for batch: [RSSFeed]) -> String {
+        let names = batch.prefix(2).map(\.title).joined(separator: ", ")
+        if batch.count > 2 {
+            return "Scanning \(names) +\(batch.count - 2) more…"
+        }
+        return "Scanning \(names)…"
+    }
 
     func refreshFeeds() async {
         guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
+
+        let feedsToRefresh = self.feeds
+        guard !feedsToRefresh.isEmpty else { return }
 
         isRefreshing = true
         errorMessage = nil
         refreshProgress = "Starting update..."
         progressPercentage = 0.0
         processedFeedsCount = 0
-
-        let feedsToRefresh = self.feeds
-        if feedsToRefresh.isEmpty {
-            isRefreshing = false
-            refreshProgress = nil
-            return
-        }
-
         totalFeedsCount = feedsToRefresh.count
+        hasDeterminateProgress = true
+        scanItems = feedsToRefresh.map { FeedScanItem(id: $0.id, title: $0.title, state: .pending) }
+
+        let service = rssService
         var completed = 0
 
-        do {
-            // Refresh feeds in batches of 5 with real progress tracking
-            let batchSize = 5
+        // Refresh feeds in batches of 5 with real progress tracking
+        let batchSize = 5
 
-            for i in stride(from: 0, to: totalFeedsCount, by: batchSize) {
-                let end = min(i + batchSize, totalFeedsCount)
-                let batch = feedsToRefresh[i..<end]
+        for i in stride(from: 0, to: feedsToRefresh.count, by: batchSize) {
+            let end = min(i + batchSize, feedsToRefresh.count)
+            let batch = Array(feedsToRefresh[i..<end])
 
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    for feed in batch {
-                        group.addTask {
-                            do {
-                                _ = try await self.rssService.refreshFeed(feedId: feed.id, url: feed.url)
-                            } catch {
-                                print("Error refreshing feed \(feed.title) (\(feed.url)): \(error.localizedDescription)")
-                            }
+            for feed in batch {
+                updateScanItem(feed.id, to: .scanning)
+            }
+            refreshProgress = scanningLabel(for: batch)
+
+            await withTaskGroup(of: (UUID, Bool).self) { group in
+                for feed in batch {
+                    let feedId = feed.id
+                    let url = feed.url
+                    let title = feed.title
+
+                    group.addTask {
+                        do {
+                            _ = try await service.refreshFeed(feedId: feedId, url: url)
+                            return (feedId, true)
+                        } catch {
+                            print("Error refreshing feed \(title) (\(url)): \(error.localizedDescription)")
+                            return (feedId, false)
                         }
                     }
-                    try await group.waitForAll()
                 }
 
-                completed += batch.count
-                processedFeedsCount = completed
-                progressPercentage = Double(completed) / Double(totalFeedsCount)
-                refreshProgress = "Updating \(completed)/\(totalFeedsCount)..."
+                // Ogni fonte aggiorna la modale appena finisce, non a fine batch.
+                for await (feedId, success) in group {
+                    completed += 1
+                    updateScanItem(feedId, to: success ? .done : .failed)
+                    processedFeedsCount = completed
+                    progressPercentage = Double(completed) / Double(totalFeedsCount)
+                }
             }
-
-            refreshProgress = "Finalizing..."
-            progressPercentage = 1.0
-
-            // Reload feeds and unread counts from Supabase
-            await loadFeeds()
-
-        } catch {
-            self.errorMessage = "Failed to refresh feeds: \(error.localizedDescription)"
-            await loadFeeds()
         }
 
-        // Small delay to let user see 100%
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        refreshProgress = "Finalizing..."
+        progressPercentage = 1.0
 
-        refreshProgress = nil
+        // Reload feeds and unread counts from Supabase
+        await loadFeeds()
+
+        // Small delay to let user see 100%
+        try? await Task.sleep(nanoseconds: 800_000_000)
+
+        resetRefreshProgress()
         isRefreshing = false
-        progressPercentage = 0.0
-        processedFeedsCount = 0
-        totalFeedsCount = 0
     }
-    
+
     /// Refresh all feeds through the web API (server-side, same path as the web app,
     /// which parses feeds with the robust `rss-parser` library). Falls back to the
     /// on-device client parser if the server is unreachable (offline resilience).
@@ -142,26 +194,42 @@ class RSSViewModel: ObservableObject {
         guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
 
+        let sources = self.feeds
+
         do {
             isRefreshing = true
             errorMessage = nil
-            refreshProgress = "Aggiornamento feed..."
+            totalFeedsCount = sources.count
+            processedFeedsCount = 0
             progressPercentage = 0.0
+            // Il server aggiorna tutte le fonti in un colpo solo: le mostriamo
+            // tutte in scansione, con barra indeterminata.
+            hasDeterminateProgress = false
+            scanItems = sources.map { FeedScanItem(id: $0.id, title: $0.title, state: .scanning) }
+            refreshProgress = sources.isEmpty
+                ? "Updating feeds…"
+                : "Scanning \(sourcesLabel(sources.count))…"
 
             _ = try await rssService.refreshFeedsViaAPI()   // server-side, come il web
             lastRefreshDate = Date()
+
+            for item in scanItems {
+                updateScanItem(item.id, to: .done)
+            }
+            processedFeedsCount = sources.count
+            progressPercentage = 1.0
+            refreshProgress = "Finalizing…"
+
             await loadFeeds()                               // ricarica feed + unread counts
 
-            refreshProgress = nil
+            resetRefreshProgress()
             isRefreshing = false
-            progressPercentage = 0.0
         } catch {
             // Fallback offline / server non raggiungibile → parser client on-device.
             // Release the guard first so refreshFeeds() can run its own lifecycle.
             print("refreshFeedsViaAPI server failed, falling back to client parser: \(error.localizedDescription)")
-            refreshProgress = nil
+            resetRefreshProgress()
             isRefreshing = false
-            progressPercentage = 0.0
 
             await refreshFeeds()
             lastRefreshDate = Date()

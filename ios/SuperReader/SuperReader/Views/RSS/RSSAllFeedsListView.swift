@@ -33,6 +33,7 @@ struct RSSAllFeedsListView: View {
         }
         .navigationTitle("All feeds")
         .navigationBarTitleDisplayMode(.inline)
+        .rssLibrarySaveBanner(bottomPadding: 28)
         .task { await loadArticles() }
     }
 
@@ -44,6 +45,9 @@ struct RSSAllFeedsListView: View {
                         row(for: article)
                     }
                     .buttonStyle(ScaleButtonStyle())
+                    .rssArticleContextMenu(article: article) {
+                        Task { await markAsRead(article: article, at: index) }
+                    }
 
                     if index < articles.count - 1 {
                         Rectangle()
@@ -131,6 +135,18 @@ struct RSSAllFeedsListView: View {
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func markAsRead(article: RSSArticle, at index: Int) async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        do {
+            try await RSSService.shared.markArticleAsRead(articleId: article.id, userId: userId)
+            guard articles.indices.contains(index), articles[index].id == article.id else { return }
+            articles[index].isRead = true
+            articles[index].readAt = Date()
+        } catch {
+            print("Failed to mark article as read: \(error)")
+        }
     }
 
     private func loadArticles() async {

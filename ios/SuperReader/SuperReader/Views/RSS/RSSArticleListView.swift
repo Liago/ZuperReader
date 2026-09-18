@@ -86,6 +86,7 @@ struct RSSArticleListView: View {
         }
         .clipped()
         .navigationBarHidden(true)
+        .rssLibrarySaveBanner(bottomPadding: 28)
         .task {
             showReadArticles = false
             await loadArticles(showLoadingIndicator: true)
@@ -201,6 +202,11 @@ struct RSSArticleListView: View {
                         Label("Mark as Read", systemImage: "envelope.open")
                     }
                     .tint(themeManager.colors.accent)
+                }
+                .rssArticleContextMenu(article: article) {
+                    Task {
+                        await markAsRead(article: article, at: originalIndex)
+                    }
                 }
             }
         }
@@ -398,6 +404,7 @@ struct RSSFeedHeader: View {
 
 struct RSSArticleRow: View {
     let article: RSSArticle
+    @ObservedObject private var saveStore = RSSLibrarySaveStore.shared
     @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
@@ -413,6 +420,17 @@ struct RSSArticleRow: View {
                         Text(date.formatted(date: .abbreviated, time: .shortened))
                             .font(Typography.meta)
                             .foregroundColor(themeManager.colors.muted)
+                    }
+
+                    // Esito dell'action menu (long press → Save to Library).
+                    if saveStore.isSaving(article) {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(themeManager.colors.accent)
+                    } else if saveStore.isSaved(article) {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(themeManager.colors.accent)
                     }
                 }
 
@@ -462,9 +480,7 @@ struct RSSArticleReader: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
 
-    @State private var isSaving = false
-    @State private var isSaved = false
-    @State private var saveMessage: String?
+    @ObservedObject private var saveStore = RSSLibrarySaveStore.shared
     @State private var hasInitialized = false
     @State private var displayedContent: String = ""
 
@@ -493,32 +509,16 @@ struct RSSArticleReader: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(themeManager.colors.page)
-        .ignoresSafeArea(edges: .top)
+        // Il colore riempie anche la striscia della status bar, ma il contenuto
+        // NON ignora la safe area: così l'inset della top bar arriva alle
+        // pagine e il titolo non finisce sotto l'header (stessa struttura del
+        // reader della Libreria, ArticleReaderView).
+        .background(themeManager.colors.page.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .top, spacing: 0) {
             topBar
         }
-        .overlay(alignment: .bottom) {
-            if let msg = saveMessage {
-                Text(msg)
-                    .font(Typography.figtree(14, weight: .semibold))
-                    .foregroundColor(themeManager.colors.text)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(themeManager.colors.card)
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(themeManager.colors.line, lineWidth: 1))
-                    .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
-                    .padding(.bottom, 20)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation { saveMessage = nil }
-                        }
-                    }
-            }
-        }
+        .rssLibrarySaveBanner()
         .onAppear {
             if !hasInitialized {
                 currentIndex = initialIndex
@@ -607,6 +607,7 @@ struct RSSArticleReader: View {
                 .clipShape(Circle())
             }
             .disabled(isSaving || isSaved)
+            .animation(.easeInOut(duration: 0.2), value: isSaved)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -622,9 +623,17 @@ struct RSSArticleReader: View {
 
     // MARK: - Actions
 
+    /// Stato di salvataggio dell'articolo corrente, condiviso con l'action menu
+    /// della lista (long press): salvando da lì il bookmark risulta già pieno.
+    private var isSaving: Bool {
+        saveStore.isSaving(currentArticle)
+    }
+
+    private var isSaved: Bool {
+        saveStore.isSaved(currentArticle)
+    }
+
     private func resetState() {
-        isSaved = false
-        saveMessage = nil
         displayedContent = ""
         loadContent()
     }
@@ -663,25 +672,7 @@ struct RSSArticleReader: View {
     }
 
     private func saveArticle() async {
-        isSaving = true
-        do {
-            _ = try await SupabaseService.shared.saveRSSArticleWithParsing(currentArticle)
-            await MainActor.run {
-                withAnimation {
-                    isSaved = true
-                    saveMessage = "Saved to Library"
-                    let generator = UINotificationFeedbackGenerator()
-                    generator.notificationOccurred(.success)
-                }
-            }
-        } catch {
-            await MainActor.run {
-                withAnimation {
-                    saveMessage = "Failed to save: \(error.localizedDescription)"
-                }
-            }
-        }
-        isSaving = false
+        await saveStore.saveToLibrary(currentArticle)
     }
 
     private func getDomain(from urlString: String) -> String? {
