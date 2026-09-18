@@ -15,7 +15,7 @@ struct MediaPlayerView: View {
                     Spacer()
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(Typography.symbol(18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(10)
                             .background(Color.white.opacity(0.2))

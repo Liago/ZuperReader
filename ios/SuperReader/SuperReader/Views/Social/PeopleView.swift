@@ -50,13 +50,8 @@ struct PeopleView: View {
 
                 Spacer()
 
-                Button(action: { showSearch = true }) {
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(themeManager.colors.page)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.accent)
-                        .clipShape(Circle())
+                IconCircleButton(systemImage: "person.badge.plus", label: "Find people", style: .accent, glyphSize: 16) {
+                    showSearch = true
                 }
             }
 
@@ -88,11 +83,14 @@ struct PeopleView: View {
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
+                .frame(minHeight: Spacing.minTapTarget - 8)
                 .background(isSelected ? themeManager.colors.card : Color.clear)
                 .clipShape(Capsule())
                 .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+        .contentShape(Capsule())
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     // MARK: - Content
@@ -130,15 +128,14 @@ struct PeopleView: View {
                                     }
                                 }
                                 .contextMenu {
-                                    Button {
-                                        Task { await viewModel.addToQueue(share) }
-                                    } label: {
-                                        Label(
-                                            queueStore.isQueued(share.articleId) ? "Added to Up next" : "Add to Up next",
-                                            systemImage: queueStore.isQueued(share.articleId) ? "checkmark" : "text.badge.plus"
-                                        )
+                                    // HIG · Context menus: unavailable items are hidden, not dimmed.
+                                    if !queueStore.isQueued(share.articleId) && !queueStore.isPending(share.articleId) {
+                                        Button {
+                                            Task { await viewModel.addToQueue(share) }
+                                        } label: {
+                                            Label("Add to Up next", systemImage: "text.badge.plus")
+                                        }
                                     }
-                                    .disabled(queueStore.isQueued(share.articleId) || queueStore.isPending(share.articleId))
                                     Button(role: .destructive) {
                                         Task { await viewModel.deleteShare(share) }
                                     } label: {
@@ -280,7 +277,7 @@ private struct PendingRequestRow: View {
 
             Button(action: onReject) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(Typography.symbol(12, weight: .bold))
                     .foregroundColor(themeManager.colors.muted)
                     .frame(width: 28, height: 28)
                     .background(themeManager.colors.sink)

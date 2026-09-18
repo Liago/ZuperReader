@@ -67,7 +67,7 @@ struct RSSRefreshLoaderView: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(Typography.symbol(24, weight: .bold))
                         .foregroundColor(themeManager.colors.page)
                         .rotationEffect(.degrees(viewModel.isRefreshing ? 360 : 0))
                         .animation(
@@ -194,11 +194,11 @@ struct RSSRefreshLoaderView: View {
                 .tint(themeManager.colors.accent)
         case .done:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 13, weight: .bold))
+                .font(Typography.symbol(13, weight: .bold))
                 .foregroundColor(themeManager.colors.accent)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 12, weight: .bold))
+                .font(Typography.symbol(12, weight: .bold))
                 .foregroundColor(themeManager.colors.accent2)
         }
     }

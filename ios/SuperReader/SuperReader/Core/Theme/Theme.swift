@@ -44,7 +44,9 @@ enum ColorTheme: String, CaseIterable, Codable {
                 card: Color(hex: "#FFFAF1"),
                 surface: Color(hex: "#FFFAF1"),
                 text: Color(hex: "#201E1D"),
-                muted: Color(hex: "#201E1D").opacity(0.58),
+                // 64% (not the spec's 58%) — the lowest opacity at which muted
+                // meta text clears WCAG AA 4.5:1 on `page` (HIG · Accessibility).
+                muted: Color(hex: "#201E1D").opacity(0.64),
                 line: Color(hex: "#201E1D").opacity(0.12),
                 sink: Color(hex: "#201E1D").opacity(0.045),
                 accent: Color(hex: "#C67139"),
@@ -65,7 +67,9 @@ enum ColorTheme: String, CaseIterable, Codable {
                 card: Color(hex: "#F7ECD3"),
                 surface: Color(hex: "#F7ECD3"),
                 text: Color(hex: "#3A2F1F"),
-                muted: Color(hex: "#3A2F1F").opacity(0.58),
+                // 72% — Sepia's page is darker, so muted needs more ink to
+                // reach 4.5:1.
+                muted: Color(hex: "#3A2F1F").opacity(0.72),
                 line: Color(hex: "#3A2F1F").opacity(0.12),
                 sink: Color(hex: "#3A2F1F").opacity(0.045),
                 accent: Color(hex: "#C67139"),
@@ -136,6 +140,33 @@ struct ThemeColors {
             colors: [bgGradientFrom, bgGradientVia, bgGradientTo],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
+        )
+    }
+
+    // MARK: Increase Contrast
+
+    /// Variant served when the system "Increase Contrast" setting is on
+    /// (HIG · Color: custom colors need "an increased contrast option for each
+    /// variant"). Muted text and hairlines get more ink, and the terracotta
+    /// accent — 3:1 against `page` in the light palettes — steps down the ramp
+    /// to accent-700 (5.7:1) so accent-filled buttons and accent text clear
+    /// WCAG AA. The dark palette lifts the accent instead.
+    func increasedContrast(isDark: Bool) -> ThemeColors {
+        ThemeColors(
+            page: page,
+            rail: rail,
+            card: card,
+            surface: surface,
+            text: text,
+            muted: text.opacity(0.82),
+            line: text.opacity(0.32),
+            sink: text.opacity(0.08),
+            accent: isDark ? Color(hex: "#F0B584") : accent700,
+            accent200: accent200,
+            accent700: isDark ? Color(hex: "#F0B584") : accent800,
+            accent800: accent800,
+            accent2: isDark ? Color(hex: "#C5D6A8") : Color(hex: "#55643E"),
+            accent2_200: accent2_200
         )
     }
 }
@@ -216,9 +247,12 @@ struct Typography {
 
         func font(size: CGFloat) -> Font {
             guard let name = regularFontName else {
-                return .system(size: size, design: .monospaced)
+                // No named face to hand to `.custom(_:size:relativeTo:)`, so
+                // scale the point size through UIFontMetrics instead.
+                let scaled = UIFontMetrics(forTextStyle: .body).scaledValue(for: size)
+                return .system(size: scaled, design: .monospaced)
             }
-            return .custom(name, size: size)
+            return .custom(name, size: size, relativeTo: .body)
         }
 
         /// Maps legacy stored raw values (sans, serif, mono, inter, poppins,
@@ -297,11 +331,18 @@ struct Typography {
     // falls back to the system font automatically until Caprasimo-Regular is
     // bundled too (see docs/revamp-ios/README.md · "Assets").
 
-    static func caprasimo(_ size: CGFloat) -> Font {
-        .custom("Caprasimo-Regular", size: size)
+    /// Display face. `relativeTo` ties the size to a Dynamic Type text style so
+    /// the ramp follows the user's text-size setting (HIG · Designing for iOS:
+    /// "adapt seamlessly to … Dynamic Type").
+    static func caprasimo(_ size: CGFloat, relativeTo style: Font.TextStyle = .body) -> Font {
+        .custom("Caprasimo-Regular", size: size, relativeTo: style)
     }
 
-    static func figtree(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+    static func figtree(
+        _ size: CGFloat,
+        weight: Font.Weight = .regular,
+        relativeTo style: Font.TextStyle = .body
+    ) -> Font {
         let name: String
         switch weight {
         case .black: name = "Figtree-Black"
@@ -311,41 +352,61 @@ struct Typography {
         case .medium: name = "Figtree-Medium"
         default: name = "Figtree-Regular"
         }
-        return .custom(name, size: size)
+        return .custom(name, size: size, relativeTo: style)
+    }
+
+    /// Dynamic Type–aware replacement for `.system(size:weight:)` on SF Symbols
+    /// and system text. Fixed point sizes never scale; this maps the design
+    /// size onto the closest system text style, which does.
+    static func symbol(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> Font {
+        let style: Font.TextStyle
+        switch size {
+        case ..<11.5: style = .caption2
+        case ..<12.5: style = .caption
+        case ..<14: style = .footnote
+        case ..<15.5: style = .subheadline
+        case ..<16.5: style = .callout
+        case ..<19: style = .body
+        case ..<21: style = .title3
+        case ..<25: style = .title2
+        case ..<31: style = .title
+        default: style = .largeTitle
+        }
+        return .system(style, design: design, weight: weight)
     }
 
     /// Screen title — Library / Feeds / People / You headers.
-    static let largeTitle = caprasimo(34)
+    static let largeTitle = caprasimo(34, relativeTo: .largeTitle)
     /// Reader article title.
-    static let articleTitle = caprasimo(31)
+    static let articleTitle = caprasimo(31, relativeTo: .largeTitle)
     /// Library grid card title.
-    static let cardTitle = caprasimo(20)
+    static let cardTitle = caprasimo(20, relativeTo: .title3)
     /// Reading preferences / Save-a-link sheet titles.
-    static let sheetTitle = caprasimo(22)
+    static let sheetTitle = caprasimo(22, relativeTo: .title2)
     /// "You" screen stat numbers.
-    static let statNumber = caprasimo(24)
+    static let statNumber = caprasimo(24, relativeTo: .title2)
 
     /// List row title (Library list, Feeds, People).
-    static let listRowTitle = figtree(15.5, weight: .semibold)
+    static let listRowTitle = figtree(15.5, weight: .semibold, relativeTo: .subheadline)
     /// Card excerpt / general body copy.
-    static let bodyExcerpt = figtree(14)
+    static let bodyExcerpt = figtree(14, relativeTo: .footnote)
     /// Uppercase section label.
-    static let sectionLabel = figtree(12, weight: .heavy)
+    static let sectionLabel = figtree(12, weight: .heavy, relativeTo: .caption)
     /// Uppercase field label (Save a link, Login).
-    static let fieldLabel = figtree(11.5, weight: .heavy)
+    static let fieldLabel = figtree(11.5, weight: .heavy, relativeTo: .caption2)
     /// Meta / caption text (timestamps, read time, domain).
-    static let meta = figtree(12.5)
+    static let meta = figtree(12.5, relativeTo: .caption)
     /// Tab bar label.
     static func tabLabel(selected: Bool) -> Font {
-        figtree(10.5, weight: selected ? .heavy : .bold)
+        figtree(10.5, weight: selected ? .heavy : .bold, relativeTo: .caption2)
     }
     /// Status / sync banner copy.
-    static let statusBar = figtree(14.5, weight: .heavy)
+    static let statusBar = figtree(14.5, weight: .heavy, relativeTo: .subheadline)
 
     /// Reader body default (Lora, "Comfortable" line height).
-    static let readerBody = Font.custom("Lora-Regular", size: 18.5)
+    static let readerBody = Font.custom("Lora-Regular", size: 18.5, relativeTo: .body)
     /// Focus-mode body.
-    static let focusBody = Font.custom("Lora-Regular", size: 19)
+    static let focusBody = Font.custom("Lora-Regular", size: 19, relativeTo: .body)
 }
 
 // MARK: - Spacing

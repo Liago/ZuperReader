@@ -18,7 +18,7 @@ struct AISummaryView: View {
             HStack(alignment: .top) {
                 HStack(spacing: 12) {
                     Image(systemName: "wand.and.stars")
-                        .font(.system(size: 20))
+                        .font(Typography.symbol(20))
                         .foregroundColor(.white)
                         .padding(8)
                         .background(
@@ -79,7 +79,7 @@ struct AISummaryView: View {
                     
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
+                            .font(Typography.symbol(24))
                             .foregroundColor(.gray.opacity(0.4))
                     }
                 }

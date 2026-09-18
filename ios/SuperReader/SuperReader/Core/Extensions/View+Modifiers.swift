@@ -65,12 +65,13 @@ extension View {
 struct ShimmerModifier: ViewModifier {
     let isActive: Bool
     @State private var phase: CGFloat = 0
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func body(content: Content) -> some View {
         content
             .overlay(
                 GeometryReader { geometry in
-                    if isActive {
+                    if isActive && !reduceMotion {
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0),
@@ -141,9 +142,28 @@ extension View {
 /// Standard tap feedback across the Organic design system — 0.98 scale, spring
 /// response 0.3 (docs/revamp-ios/README.md · "Interactions and behavior").
 struct ScaleButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .opacity(reduceMotion && configuration.isPressed ? 0.7 : 1)
+            .animation(
+                reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.7),
+                value: configuration.isPressed
+            )
+    }
+}
+
+// MARK: - Minimum Tap Target
+
+extension View {
+    /// Guarantees the HIG minimum 44×44pt hit area without changing how the
+    /// control looks — small glyphs, 38pt circles and text chips keep their
+    /// size while the tappable region grows around them.
+    func minimumTapTarget() -> some View {
+        self
+            .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
+            .contentShape(Rectangle())
     }
 }

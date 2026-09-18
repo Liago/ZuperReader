@@ -52,13 +52,8 @@ struct QueueView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: 12) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(themeManager.colors.text)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.sink)
-                        .clipShape(Circle())
+                IconCircleButton(systemImage: "chevron.backward", label: "Back") {
+                    dismiss()
                 }
 
                 Spacer()
@@ -292,13 +287,13 @@ private struct QueueRowView: View {
                         .clipShape(Capsule())
                 } else {
                     Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(Typography.symbol(15, weight: .bold))
                         .foregroundColor(themeManager.colors.muted.opacity(0.5))
                 }
 
                 Button(action: onRemove) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(Typography.symbol(13, weight: .bold))
                         .foregroundColor(themeManager.colors.muted.opacity(0.7))
                         .frame(width: 30, height: 30)
                         .contentShape(Circle())

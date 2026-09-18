@@ -471,15 +471,14 @@ struct ArticleListView: View {
                                     Label("Share", systemImage: "square.and.arrow.up")
                                 }
                             }
-                            Button {
-                                Task { await viewModel.addToQueue(article) }
-                            } label: {
-                                Label(
-                                    queueState(for: article) == .done ? "Added to Up next" : "Add to Up next",
-                                    systemImage: queueState(for: article) == .done ? "checkmark" : "text.badge.plus"
-                                )
+                            // HIG · Context menus: unavailable items are hidden, not dimmed.
+                            if queueState(for: article) == nil {
+                                Button {
+                                    Task { await viewModel.addToQueue(article) }
+                                } label: {
+                                    Label("Add to Up next", systemImage: "text.badge.plus")
+                                }
                             }
-                            .disabled(queueState(for: article) != nil)
                             Button(role: .destructive) {
                                 Task { await viewModel.deleteArticle(article) }
                             } label: {

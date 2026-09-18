@@ -76,12 +76,15 @@ struct AddArticleSheet: View {
 
             Button(action: { dismiss() }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(Typography.symbol(14, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                     .frame(width: 34, height: 34)
                     .background(themeManager.colors.sink)
                     .clipShape(Circle())
+                    .minimumTapTarget()
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close")
         }
     }
 
@@ -223,8 +226,12 @@ struct AddArticleSheet: View {
                 }
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(Typography.symbol(11, weight: .bold))
+                    .frame(minWidth: 28, minHeight: 28)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove tag \(tag)")
         }
         .font(Typography.figtree(13.5, weight: .semibold))
         .foregroundColor(themeManager.colors.page)
@@ -259,7 +266,7 @@ struct AddArticleSheet: View {
     private var upNextRow: some View {
         HStack(spacing: 12) {
             Image(systemName: "list.number")
-                .font(.system(size: 15, weight: .semibold))
+                .font(Typography.symbol(15, weight: .semibold))
                 .foregroundColor(themeManager.colors.text.opacity(0.65))
 
             Text("Add to Up next")

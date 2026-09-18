@@ -70,22 +70,12 @@ struct RSSListView: View {
                 Spacer()
 
                 HStack(spacing: Spacing.sm) {
-                    Button(action: { showingSettings = true }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(themeManager.colors.text)
-                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                            .background(themeManager.colors.sink)
-                            .clipShape(Circle())
+                    IconCircleButton(systemImage: "gearshape", label: "Feed settings") {
+                        showingSettings = true
                     }
 
-                    Button(action: { showingDiscovery = true }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(themeManager.colors.page)
-                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                            .background(themeManager.colors.accent)
-                            .clipShape(Circle())
+                    IconCircleButton(systemImage: "plus", label: "Add feed", style: .accent, glyphSize: 18) {
+                        showingDiscovery = true
                     }
                 }
             }
@@ -112,7 +102,7 @@ struct RSSListView: View {
         NavigationLink(destination: RSSAllFeedsListView(viewModel: viewModel)) {
             HStack(spacing: 14) {
                 Image(systemName: "dot.radiowaves.up.forward")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(Typography.symbol(20, weight: .semibold))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("All feeds")
@@ -261,7 +251,7 @@ struct RSSFeedRow: View {
 
             if isFullyRead {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(Typography.symbol(13, weight: .bold))
                     .foregroundColor(themeManager.colors.muted)
             } else {
                 Text("\(unreadCount)")

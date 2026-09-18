@@ -175,7 +175,7 @@ struct ShareFriendRow: View {
                 )
                 
                 Text(friend.user.displayName ?? "Unknown")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.symbol(16, weight: .medium))
                     .foregroundColor(.primary)
                 
                 Spacer()

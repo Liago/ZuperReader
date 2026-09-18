@@ -59,6 +59,20 @@ struct RSSLibrarySaveBannerModifier: ViewModifier {
         .shadow(color: AppShadows.card.color, radius: 8, x: 0, y: 4)
         .padding(.horizontal, Spacing.screenHorizontal)
         .padding(.bottom, bottomPadding)
+        // HIG · Accessibility: time-boxed elements need an explicit way out
+        // too — tap dismisses, and VoiceOver hears the message as it appears.
+        .contentShape(Capsule())
+        .onTapGesture {
+            withAnimation { store.dismissBanner() }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityAction(named: "Dismiss") {
+            withAnimation { store.dismissBanner() }
+        }
+        .onAppear {
+            UIAccessibility.post(notification: .announcement, argument: banner.message)
+        }
     }
 }
 

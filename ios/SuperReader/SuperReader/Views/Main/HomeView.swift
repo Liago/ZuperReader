@@ -63,16 +63,11 @@ struct HomeView: View {
                 HStack(spacing: Spacing.sm) {
                     // Up next (reading queue) — mirrors the web sidebar entry + count badge
                     NavigationLink(destination: QueueView()) {
-                        Image(systemName: "list.number")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(themeManager.colors.text)
-                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                            .background(themeManager.colors.sink)
-                            .clipShape(Circle())
+                        IconCircleGlyph(systemImage: "list.number")
                             .overlay(alignment: .topTrailing) {
                                 if queueStore.count > 0 {
                                     Text(queueStore.count > 99 ? "99+" : "\(queueStore.count)")
-                                        .font(Typography.figtree(10.5, weight: .heavy))
+                                        .font(Typography.figtree(11, weight: .heavy, relativeTo: .caption2))
                                         .foregroundColor(themeManager.colors.page)
                                         .padding(.horizontal, 5)
                                         .frame(minWidth: 18, minHeight: 18)
@@ -83,27 +78,22 @@ struct HomeView: View {
                             }
                     }
                     .buttonStyle(.plain)
+                    .minimumTapTarget()
                     .accessibilityLabel("Up next")
                     .accessibilityValue(queueStore.count > 0 ? "\(queueStore.count) queued" : "Empty")
 
                     // View Mode Toggle
-                    Button(action: { themeManager.toggleViewMode() }) {
-                        Image(systemName: "square.grid.2x2.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(themeManager.viewMode == .list ? themeManager.colors.page : themeManager.colors.text)
-                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                            .background(themeManager.viewMode == .list ? themeManager.colors.text : themeManager.colors.sink)
-                            .clipShape(Circle())
+                    IconCircleButton(
+                        systemImage: "square.grid.2x2.fill",
+                        label: themeManager.viewMode == .list ? "Switch to grid view" : "Switch to list view",
+                        style: themeManager.viewMode == .list ? .filled : .sink
+                    ) {
+                        themeManager.toggleViewMode()
                     }
 
                     // Add Article Button
-                    Button(action: { showAddArticle = true }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(themeManager.colors.page)
-                            .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                            .background(themeManager.colors.accent)
-                            .clipShape(Circle())
+                    IconCircleButton(systemImage: "plus", label: "Save a link", style: .accent, glyphSize: 18) {
+                        showAddArticle = true
                     }
                 }
             }
@@ -112,17 +102,21 @@ struct HomeView: View {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(themeManager.colors.text.opacity(0.55))
+                    .accessibilityHidden(true)
 
                 TextField(
                     "",
                     text: $viewModel.searchQuery,
                     prompt: Text("Search articles").foregroundColor(themeManager.colors.muted)
                 )
-                .font(Typography.figtree(15))
+                .font(Typography.figtree(15, relativeTo: .subheadline))
                 .foregroundColor(themeManager.colors.text)
+                .submitLabel(.search)
+                .accessibilityLabel("Search articles")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 11)
+            .frame(minHeight: Spacing.minTapTarget)
             .background(themeManager.colors.sink)
             .clipShape(Capsule())
         }
@@ -186,7 +180,7 @@ struct FilterChip: View {
                         .frame(width: 6, height: 6)
                 }
                 Text(title)
-                    .font(Typography.figtree(13.5, weight: .semibold))
+                    .font(Typography.figtree(13.5, weight: .semibold, relativeTo: .footnote))
             }
             .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
             .padding(.horizontal, 14)
@@ -198,6 +192,9 @@ struct FilterChip: View {
                     .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
             )
         }
+        .buttonStyle(.plain)
+        .minimumTapTarget()
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 

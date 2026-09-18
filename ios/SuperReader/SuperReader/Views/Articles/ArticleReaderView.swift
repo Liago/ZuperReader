@@ -73,7 +73,7 @@ struct ArticleReaderView: View {
     /// from `themeManager.colors` used by the reader's chrome (top bar,
     /// floating action bar).
     private var readingColors: ThemeColors {
-        themedPreferences.colorTheme.colors
+        themeManager.colors(for: themedPreferences.colorTheme)
     }
 
     // Get all media items from article
@@ -242,6 +242,9 @@ struct ArticleReaderView: View {
                         withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = false }
                     }
                 }
+                .accessibilityAction(named: "Exit Focus mode") {
+                    withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = false }
+                }
                 .overlay(
                     GeometryReader { contentGeometry in
                         ZStack {
@@ -311,30 +314,20 @@ struct ArticleReaderView: View {
     private func readerTopChrome(_ article: Article) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(themeManager.colors.text)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.sink)
-                        .clipShape(Circle())
+                IconCircleButton(systemImage: "chevron.backward", label: "Back") {
+                    dismiss()
                 }
 
                 Text(topBarSubtitle(article))
-                    .font(Typography.figtree(13, weight: .bold))
+                    .font(Typography.figtree(13, weight: .bold, relativeTo: .footnote))
                     .foregroundColor(themeManager.colors.muted)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
                 Spacer(minLength: 8)
 
-                Button(action: { showPreferences = true }) {
-                    Image(systemName: "textformat.size")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(themeManager.colors.text)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.sink)
-                        .clipShape(Circle())
+                IconCircleButton(systemImage: "textformat.size", label: "Reading preferences") {
+                    showPreferences = true
                 }
 
                 Menu {
@@ -359,21 +352,18 @@ struct ArticleReaderView: View {
                         Label("Delete Article", systemImage: "trash")
                     }
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(themeManager.colors.text)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.sink)
-                        .clipShape(Circle())
+                    IconCircleGlyph(systemImage: "ellipsis")
                 }
+                .minimumTapTarget()
+                .accessibilityLabel("More actions")
 
-                Button(action: { withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true } }) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(themeManager.colors.page)
-                        .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                        .background(themeManager.colors.text)
-                        .clipShape(Circle())
+                IconCircleButton(
+                    systemImage: "arrow.up.left.and.arrow.down.right",
+                    label: "Enter Focus mode",
+                    style: .filled,
+                    glyphSize: 14
+                ) {
+                    withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true }
                 }
             }
             .padding(.horizontal, 16)
@@ -390,6 +380,9 @@ struct ArticleReaderView: View {
             .frame(height: 2)
             .padding(.horizontal, 18)
             .padding(.bottom, 10)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reading progress")
+            .accessibilityValue("\(Int(readingProgress * 100)) percent")
         }
         .background(themeManager.colors.page)
     }
@@ -439,44 +432,51 @@ struct ArticleReaderView: View {
     // MARK: - Floating Action Bar
 
     private func floatingActionBar(_ article: Article) -> some View {
-        HStack(spacing: 22) {
-            Button(action: { Task { await toggleFavorite() } }) {
-                Image(systemName: article.isFavorite ? "heart.fill" : "heart")
+        HStack(spacing: 0) {
+            actionBarButton(
+                systemImage: article.isFavorite ? "heart.fill" : "heart",
+                label: article.isFavorite ? "Remove from favorites" : "Add to favorites",
+                tint: article.isFavorite ? themeManager.colors.accent : themeManager.colors.text
+            ) {
+                Task { await toggleFavorite() }
             }
-            .foregroundColor(article.isFavorite ? themeManager.colors.accent : themeManager.colors.text)
 
-            Button(action: { showComments = true }) {
-                Image(systemName: "bubble.left")
+            actionBarButton(systemImage: "bubble.left", label: "Comments") {
+                showComments = true
             }
-            .foregroundColor(themeManager.colors.text)
 
             if let url = URL(string: article.url) {
                 ShareLink(item: url) {
                     Image(systemName: "square.and.arrow.up")
+                        .foregroundColor(themeManager.colors.text)
+                        .minimumTapTarget()
                 }
-                .foregroundColor(themeManager.colors.text)
+                .accessibilityLabel("Share")
             }
 
-            Button(action: { showSummarySheet = true }) {
-                Image(systemName: "wand.and.stars")
+            actionBarButton(systemImage: "wand.and.stars", label: "AI summary") {
+                showSummarySheet = true
             }
-            .foregroundColor(themeManager.colors.text)
 
             Spacer(minLength: 0)
 
             Button(action: { withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true } }) {
                 Text("Focus")
-                    .font(Typography.caprasimo(13.5))
+                    .font(Typography.caprasimo(13.5, relativeTo: .footnote))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 10)
                     .background(themeManager.colors.accent)
                     .clipShape(Capsule())
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
+            .accessibilityLabel("Enter Focus mode")
+            .accessibilityHint("Hides the controls. Tap the article to show them again.")
         }
-        .font(.system(size: 18, weight: .medium))
-        .padding(.horizontal, 18)
-        .frame(height: Spacing.readerActionBarHeight)
+        .font(Typography.symbol(18, weight: .medium))
+        .padding(.horizontal, 10)
+        .frame(minHeight: Spacing.readerActionBarHeight)
         .background(themeManager.colors.card)
         .clipShape(Capsule())
         .overlay(
@@ -490,6 +490,23 @@ struct ArticleReaderView: View {
         )
         .padding(.horizontal, 18)
         .padding(.bottom, 22)
+    }
+
+    /// One 44×44 target in the floating bar — glyph-only, so it always carries
+    /// a VoiceOver label.
+    private func actionBarButton(
+        systemImage: String,
+        label: String,
+        tint: Color? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .foregroundColor(tint ?? themeManager.colors.text)
+                .minimumTapTarget()
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .accessibilityLabel(label)
     }
 
     // MARK: - Content Column
@@ -648,8 +665,8 @@ struct ArticleReaderView: View {
                         .background(readingColors.accent)
                         .clipShape(Capsule())
                 }
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13))
+                Image(systemName: "chevron.forward")
+                    .font(Typography.symbol(13))
             }
             .foregroundColor(readingColors.text)
             .padding()

@@ -18,7 +18,7 @@ struct TagBadge: View {
     var body: some View {
         Button(action: { onTap?() }) {
             Text(tag)
-                .font(.system(size: 12, weight: .medium))
+                .font(Typography.symbol(12, weight: .medium))
                 .foregroundColor(isSelected ? .white : themeManager.colors.accent)
                 .padding(.horizontal, Spacing.sm + 2)
                 .padding(.vertical, Spacing.xs + 2)
@@ -72,7 +72,7 @@ struct TagListView: View {
             
             if tags.count > maxVisible {
                 Text("+\(tags.count - maxVisible)")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Typography.symbol(11, weight: .medium))
                     .foregroundColor(themeManager.colors.textSecondary)
                     .padding(.horizontal, Spacing.xs + 2)
                     .padding(.vertical, Spacing.xs)
@@ -91,9 +91,9 @@ struct ReadingStatusBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: status.icon)
-                .font(.system(size: 10, weight: .medium))
+                .font(Typography.symbol(10, weight: .medium))
             Text(status.displayName)
-                .font(.system(size: 11, weight: .medium))
+                .font(Typography.symbol(11, weight: .medium))
         }
         .foregroundColor(Color(hex: status.color))
         .padding(.horizontal, Spacing.sm)
@@ -117,7 +117,7 @@ struct BadgeView: View {
     var body: some View {
         if count > 0 {
             Text(count > 99 ? "99+" : "\(count)")
-                .font(.system(size: 10, weight: .bold))
+                .font(Typography.symbol(11, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, count > 9 ? 6 : 4)
                 .padding(.vertical, 2)

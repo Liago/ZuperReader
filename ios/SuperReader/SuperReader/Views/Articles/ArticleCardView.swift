@@ -35,13 +35,12 @@ struct ArticleCardView: View {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
             }
-            Button(action: onAddToQueue) {
-                Label(
-                    queueState == .done ? "Added to Up next" : "Add to Up next",
-                    systemImage: queueState == .done ? "checkmark" : "text.badge.plus"
-                )
+            // HIG · Context menus: unavailable items are hidden, not dimmed.
+            if queueState == nil {
+                Button(action: onAddToQueue) {
+                    Label("Add to Up next", systemImage: "text.badge.plus")
+                }
             }
-            .disabled(queueState != nil)
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
             }
@@ -169,30 +168,41 @@ struct ArticleCardView: View {
 
             Spacer()
 
-            HStack(spacing: 14) {
+            // Glyph-only footer actions: 44pt hit areas (HIG minimum) around
+            // the 15pt icons, each with a VoiceOver label.
+            HStack(spacing: 0) {
                 Button(action: onFavorite) {
                     Image(systemName: article.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(article.isFavorite ? themeManager.colors.accent : themeManager.colors.text.opacity(0.55))
+                        .minimumTapTarget()
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(article.isFavorite ? "Remove from favorites" : "Add to favorites")
                 // Add to Up next (web ArticleRow: ListPlus → spinner → check)
                 Button(action: onAddToQueue) {
-                    if let queueState {
-                        QueueStateGlyph(state: queueState, size: 15)
-                    } else {
-                        Image(systemName: "text.badge.plus")
-                            .foregroundColor(themeManager.colors.text.opacity(0.55))
+                    Group {
+                        if let queueState {
+                            QueueStateGlyph(state: queueState, size: 15)
+                        } else {
+                            Image(systemName: "text.badge.plus")
+                                .foregroundColor(themeManager.colors.text.opacity(0.55))
+                        }
                     }
+                    .minimumTapTarget()
                 }
+                .buttonStyle(.plain)
                 .disabled(queueState != nil)
                 .accessibilityLabel(queueState == .done ? "Added to Up next" : "Add to Up next")
                 if let url = URL(string: article.url) {
                     ShareLink(item: url) {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundColor(themeManager.colors.text.opacity(0.55))
+                            .minimumTapTarget()
                     }
+                    .accessibilityLabel("Share")
                 }
             }
-            .font(.system(size: 15, weight: .medium))
+            .font(Typography.symbol(15, weight: .medium))
         }
     }
 

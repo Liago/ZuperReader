@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var themeManager = ThemeManager.shared
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @State private var isProcessingSharedURLs = false
 
     var body: some View {
@@ -23,8 +24,12 @@ struct ContentView: View {
         .onChange(of: colorScheme) { _, newValue in
             themeManager.updateSystemColorScheme(newValue)
         }
+        .onChange(of: colorSchemeContrast) { _, newValue in
+            themeManager.updateColorSchemeContrast(newValue)
+        }
         .onAppear {
             themeManager.updateSystemColorScheme(colorScheme)
+            themeManager.updateColorSchemeContrast(colorSchemeContrast)
         }
         .onOpenURL { url in
             Task {

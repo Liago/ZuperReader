@@ -300,9 +300,9 @@ struct RSSFeedHeader: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                iconButton(systemImage: "chevron.left", action: { dismiss() })
+                iconButton(systemImage: "chevron.backward", label: "Back", action: { dismiss() })
 
-                iconButton(systemImage: "arrow.left", enabled: hasPrev, action: onPrev)
+                iconButton(systemImage: "arrow.backward", label: "Previous feed", enabled: hasPrev, action: onPrev)
 
                 Spacer(minLength: 4)
 
@@ -310,7 +310,7 @@ struct RSSFeedHeader: View {
 
                 Spacer(minLength: 4)
 
-                iconButton(systemImage: "arrow.right", enabled: hasNext, action: onNext)
+                iconButton(systemImage: "arrow.forward", label: "Next feed", enabled: hasNext, action: onNext)
 
                 Button(action: onMarkAllRead) {
                     Group {
@@ -319,7 +319,7 @@ struct RSSFeedHeader: View {
                                 .tint(themeManager.colors.page)
                         } else {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(Typography.symbol(14, weight: .bold))
                         }
                     }
                     .foregroundColor(themeManager.colors.page)
@@ -327,6 +327,9 @@ struct RSSFeedHeader: View {
                     .background(themeManager.colors.accent)
                     .clipShape(Circle())
                 }
+                .buttonStyle(.plain)
+                .minimumTapTarget()
+                .accessibilityLabel("Mark all as read")
                 .opacity(unreadCount > 0 ? 1 : 0.35)
                 .disabled(unreadCount == 0 || isMarkingRead)
             }
@@ -347,15 +350,8 @@ struct RSSFeedHeader: View {
         }
     }
 
-    private func iconButton(systemImage: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(themeManager.colors.text)
-                .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                .background(themeManager.colors.sink)
-                .clipShape(Circle())
-        }
+    private func iconButton(systemImage: String, label: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
+        IconCircleButton(systemImage: systemImage, label: label, glyphWeight: .bold, glyphSize: 14, action: action)
         .opacity(enabled ? 1 : 0.35)
         .disabled(!enabled)
     }
@@ -372,7 +368,7 @@ struct RSSFeedHeader: View {
                         .clipShape(Circle())
                 default:
                     Image(systemName: "dot.radiowaves.up.forward")
-                        .font(.system(size: 12))
+                        .font(Typography.symbol(12))
                         .foregroundColor(themeManager.colors.accent)
                         .frame(width: 24, height: 24)
                         .background(Circle().fill(themeManager.colors.sink))
@@ -429,7 +425,7 @@ struct RSSArticleRow: View {
                             .tint(themeManager.colors.accent)
                     } else if saveStore.isSaved(article) {
                         Image(systemName: "bookmark.fill")
-                            .font(.system(size: 10))
+                            .font(Typography.symbol(10))
                             .foregroundColor(themeManager.colors.accent)
                     }
                 }
@@ -553,13 +549,8 @@ struct RSSArticleReader: View {
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                    .background(themeManager.colors.sink)
-                    .clipShape(Circle())
+            IconCircleButton(systemImage: "chevron.backward", label: "Back") {
+                dismiss()
             }
 
             Text(topBarSubtitle)
@@ -570,24 +561,14 @@ struct RSSArticleReader: View {
 
             Spacer(minLength: 8)
 
-            Button(action: { withAnimation { if currentIndex > 0 { currentIndex -= 1 } } }) {
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                    .background(themeManager.colors.sink)
-                    .clipShape(Circle())
+            IconCircleButton(systemImage: "chevron.up", label: "Previous article", glyphSize: 14) {
+                withAnimation { if currentIndex > 0 { currentIndex -= 1 } }
             }
             .opacity(currentIndex == 0 ? 0.35 : 1)
             .disabled(currentIndex == 0)
 
-            Button(action: { withAnimation { if currentIndex < articles.count - 1 { currentIndex += 1 } } }) {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                    .background(themeManager.colors.sink)
-                    .clipShape(Circle())
+            IconCircleButton(systemImage: "chevron.down", label: "Next article", glyphSize: 14) {
+                withAnimation { if currentIndex < articles.count - 1 { currentIndex += 1 } }
             }
             .opacity(currentIndex == articles.count - 1 ? 0.35 : 1)
             .disabled(currentIndex == articles.count - 1)
@@ -600,12 +581,15 @@ struct RSSArticleReader: View {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                     }
                 }
-                .font(.system(size: 14, weight: .semibold))
+                .font(Typography.symbol(14, weight: .semibold))
                 .foregroundColor(isSaved ? themeManager.colors.page : themeManager.colors.text)
                 .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
                 .background(isSaved ? themeManager.colors.accent : themeManager.colors.sink)
                 .clipShape(Circle())
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
+            .accessibilityLabel(isSaved ? "Saved to Library" : "Save to Library")
             .disabled(isSaving || isSaved)
             .animation(.easeInOut(duration: 0.2), value: isSaved)
         }

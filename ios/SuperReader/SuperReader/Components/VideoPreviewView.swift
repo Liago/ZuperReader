@@ -42,7 +42,7 @@ struct VideoPreviewView: View {
                     .frame(width: 64, height: 64)
                     .overlay(
                         Image(systemName: "play.fill")
-                            .font(.system(size: 24))
+                            .font(Typography.symbol(24))
                             .foregroundColor(colorScheme == .dark ? .white : .indigo)
                             .offset(x: 2) // Visual correction
                     )
@@ -53,7 +53,7 @@ struct VideoPreviewView: View {
                     Spacer()
                     HStack {
                         Text(title)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(Typography.symbol(12, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)

@@ -54,6 +54,8 @@ struct ReadingPreferencesView: View {
                     set: { preferences.fontSize = $0 }
                 ),
                 range: 14...28,
+                step: 0.5,
+                accessibilityLabel: "Text size",
                 trackColor: themeManager.colors.line,
                 fillColor: themeManager.colors.accent,
                 knobFillColor: themeManager.colors.accent,
@@ -106,6 +108,8 @@ struct ReadingPreferencesView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(family.displayName) typeface")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     // MARK: Spacing
@@ -138,11 +142,15 @@ struct ReadingPreferencesView: View {
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
+                .frame(minHeight: Spacing.minTapTarget - 8)
                 .background(isSelected ? themeManager.colors.card : Color.clear)
                 .clipShape(Capsule())
                 .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+        .contentShape(Capsule())
+        .accessibilityLabel("\(height.displayName) spacing")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     // MARK: Theme
@@ -164,7 +172,7 @@ struct ReadingPreferencesView: View {
 
     private func themeSwatch(_ theme: ColorTheme) -> some View {
         let isSelected = preferences.colorTheme == theme
-        let swatchColors = theme.colors
+        let swatchColors = themeManager.colors(for: theme)
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { preferences.colorTheme = theme }
         }) {
@@ -189,6 +197,8 @@ struct ReadingPreferencesView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(theme.displayName) theme")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 
@@ -201,6 +211,8 @@ struct ReadingPreferencesView: View {
 struct PillSlider: View {
     @Binding var value: CGFloat
     let range: ClosedRange<CGFloat>
+    var step: CGFloat = 1
+    var accessibilityLabel: String = "Value"
     let trackColor: Color
     let fillColor: Color
     let knobFillColor: Color
@@ -221,6 +233,7 @@ struct PillSlider: View {
                     .overlay(Circle().stroke(knobBorderColor, lineWidth: 4))
                     .offset(x: knobX - 12)
             }
+            .frame(maxHeight: .infinity)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -231,7 +244,23 @@ struct PillSlider: View {
                     }
             )
         }
-        .frame(height: 24)
+        // The visible track is 6pt and the knob 24pt; the gesture area spans
+        // the HIG minimum 44pt so the knob is easy to grab.
+        .frame(height: Spacing.minTapTarget)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(accessibilityValueText)
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: value = min(range.upperBound, value + step)
+            case .decrement: value = max(range.lowerBound, value - step)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var accessibilityValueText: String {
+        String(format: "%.1f", value)
     }
 }
 
@@ -259,9 +288,12 @@ struct TagManagementView: View {
                     Button(action: addTag) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(themeManager.colors.accent)
+                            .minimumTapTarget()
                     }
+                    .buttonStyle(.plain)
                     .disabled(newTag.isEmpty)
+                    .accessibilityLabel("Add tag")
                 }
                 .padding()
                 
@@ -271,11 +303,15 @@ struct TagManagementView: View {
                         ForEach(tags, id: \.self) { tag in
                             HStack(spacing: 4) {
                                 Text(tag)
-                                    .font(.system(size: 14))
+                                    .font(Typography.symbol(14))
                                 Button(action: { removeTag(tag) }) {
                                     Image(systemName: "xmark")
                                         .font(.caption)
+                                        .frame(minWidth: 28, minHeight: 28)
+                                        .contentShape(Rectangle())
                                 }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Remove tag \(tag)")
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)

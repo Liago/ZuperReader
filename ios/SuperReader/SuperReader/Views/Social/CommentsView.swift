@@ -103,7 +103,10 @@ struct CommentsView: View {
                     Button(action: cancelEditing) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
+                            .minimumTapTarget()
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Cancel editing")
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -125,16 +128,21 @@ struct CommentsView: View {
                         Task { await postComment() }
                     }
                 }) {
-                    if isPosting {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                    } else {
-                        Image(systemName: editingComment != nil ? "checkmark.circle.fill" : "paperplane.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(newComment.isEmpty ? .gray : .blue)
+                    Group {
+                        if isPosting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: themeManager.colors.accent))
+                        } else {
+                            Image(systemName: editingComment != nil ? "checkmark.circle.fill" : "paperplane.fill")
+                                .font(Typography.symbol(20))
+                                .foregroundColor(newComment.isEmpty ? .gray : themeManager.colors.accent)
+                        }
                     }
+                    .minimumTapTarget()
                 }
+                .buttonStyle(.plain)
                 .disabled(newComment.isEmpty || isPosting)
+                .accessibilityLabel(editingComment != nil ? "Save comment" : "Post comment")
             }
             .padding()
             .background(themeManager.colors.bgSecondary)
@@ -234,11 +242,11 @@ struct CommentRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(comment.user?.displayName ?? "Unknown")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(Typography.symbol(14, weight: .semibold))
                         .foregroundColor(themeManager.colors.textPrimary)
                     
                     Text(comment.formattedDate)
-                        .font(.system(size: 11))
+                        .font(Typography.symbol(11))
                         .foregroundColor(themeManager.colors.textSecondary)
                     
                     Spacer()
@@ -253,7 +261,7 @@ struct CommentRow: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis")
-                                .font(.system(size: 14))
+                                .font(Typography.symbol(14))
                                 .foregroundColor(themeManager.colors.textSecondary)
                                 .padding(4)
                         }
@@ -261,7 +269,7 @@ struct CommentRow: View {
                 }
                 
                 Text(comment.content)
-                    .font(.system(size: 14))
+                    .font(Typography.symbol(14))
                     .foregroundColor(themeManager.colors.textPrimary)
             }
             .padding(Spacing.sm)

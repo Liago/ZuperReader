@@ -16,7 +16,7 @@ struct LoadingView: View {
                 .scaleEffect(1.2)
             
             Text(message)
-                .font(.system(size: 16, weight: .medium))
+                .font(Typography.symbol(16, weight: .medium))
                 .foregroundColor(.purple)
             
             HStack(spacing: 4) {
@@ -114,7 +114,7 @@ struct FullScreenLoadingView: View {
                 }
                 
                 Text(message)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(Typography.symbol(18, weight: .medium))
                     .foregroundColor(themeManager.colors.textPrimary)
                 
                 AnimatedLoadingDots()

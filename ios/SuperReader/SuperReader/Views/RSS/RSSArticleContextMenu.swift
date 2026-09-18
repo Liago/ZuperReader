@@ -17,14 +17,17 @@ struct RSSArticleContextMenuModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content.contextMenu {
-            Button {
-                Task {
-                    await saveStore.saveToLibrary(article)
+            // HIG · Context menus: unavailable items are hidden, not dimmed —
+            // the row's bookmark glyph already reports the saved state.
+            if saveStore.state(for: article) == nil {
+                Button {
+                    Task {
+                        await saveStore.saveToLibrary(article)
+                    }
+                } label: {
+                    Label(saveTitle, systemImage: saveIcon)
                 }
-            } label: {
-                Label(saveTitle, systemImage: saveIcon)
             }
-            .disabled(saveStore.state(for: article) != nil)
 
             if let onMarkAsRead, !article.isRead {
                 Button(action: onMarkAsRead) {

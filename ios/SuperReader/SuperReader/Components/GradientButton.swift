@@ -33,10 +33,10 @@ struct GradientButton: View {
                 } else {
                     if let icon = icon {
                         Image(systemName: icon)
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(Typography.symbol(16, weight: .semibold))
                     }
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(Typography.symbol(16, weight: .semibold))
                 }
             }
             .foregroundColor(.white)
@@ -72,10 +72,10 @@ struct SecondaryButton: View {
             HStack(spacing: Spacing.sm) {
                 if let icon = icon {
                     Image(systemName: icon)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(Typography.symbol(14, weight: .medium))
                 }
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(Typography.symbol(14, weight: .medium))
             }
             .foregroundColor(themeManager.colors.textPrimary)
             .padding(.horizontal, Spacing.md)
@@ -128,7 +128,7 @@ struct IconButton: View {
                 
                 if let badge = badge, badge > 0 {
                     Text(badge > 9 ? "9+" : "\(badge)")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(Typography.symbol(11, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 18, height: 18)
                         .background(Color.red)

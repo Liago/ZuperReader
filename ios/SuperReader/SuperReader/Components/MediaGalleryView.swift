@@ -96,7 +96,7 @@ struct MediaGalleryView: View {
                             }
                         }) {
                             Image(systemName: showThumbnails ? "photo.stack.fill" : "photo.stack")
-                                .font(.system(size: 24))
+                                .font(Typography.symbol(24))
                                 .foregroundColor(.white)
                                 .padding()
                                 .background(Circle().fill(Color.black.opacity(0.6)))

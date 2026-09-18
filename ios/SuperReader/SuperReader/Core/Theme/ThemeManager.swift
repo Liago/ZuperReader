@@ -13,6 +13,10 @@ class ThemeManager: ObservableObject {
 
     @Published var systemColorScheme: ColorScheme = .light
 
+    /// Mirrors the system "Increase Contrast" accessibility setting
+    /// (`\.colorSchemeContrast`); see `ThemeColors.increasedContrast(isDark:)`.
+    @Published var increaseContrast: Bool = false
+
     @Published var viewMode: ViewMode {
         didSet {
             UserDefaults.standard.set(viewMode.rawValue, forKey: "view_mode")
@@ -24,7 +28,15 @@ class ThemeManager: ObservableObject {
     }
 
     var colors: ThemeColors {
-        resolvedTheme.colors
+        colors(for: resolvedTheme)
+    }
+
+    /// Palette for an explicit theme (e.g. the reader's own Cream / Sepia /
+    /// Dark choice), with the Increase Contrast variant applied when needed.
+    func colors(for theme: ColorTheme) -> ThemeColors {
+        let resolved = theme.resolvedTheme(for: systemColorScheme)
+        let base = resolved.colors
+        return increaseContrast ? base.increasedContrast(isDark: resolved == .dark) : base
     }
 
     private init() {
@@ -59,6 +71,13 @@ class ThemeManager: ObservableObject {
         }
     }
 
+    func updateColorSchemeContrast(_ contrast: ColorSchemeContrast) {
+        let increased = contrast == .increased
+        if increaseContrast != increased {
+            increaseContrast = increased
+        }
+    }
+
     func toggleViewMode() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             viewMode = viewMode == .grid ? .list : .grid
@@ -83,6 +102,7 @@ extension EnvironmentValues {
 
 struct SystemColorSchemeObserver: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     private let themeManager = ThemeManager.shared
 
     func body(content: Content) -> some View {
@@ -90,8 +110,12 @@ struct SystemColorSchemeObserver: ViewModifier {
             .onChange(of: colorScheme) { _, newValue in
                 themeManager.updateSystemColorScheme(newValue)
             }
+            .onChange(of: colorSchemeContrast) { _, newValue in
+                themeManager.updateColorSchemeContrast(newValue)
+            }
             .onAppear {
                 themeManager.updateSystemColorScheme(colorScheme)
+                themeManager.updateColorSchemeContrast(colorSchemeContrast)
             }
     }
 }

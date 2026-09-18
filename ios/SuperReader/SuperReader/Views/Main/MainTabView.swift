@@ -60,7 +60,11 @@ struct MainTabView: View {
     }
 
     // Organic design system tab bar chrome (rail fill, 1pt top hairline).
+    // On iOS 26+ the system tab bar floats on Liquid Glass; the HIG asks apps
+    // not to paint a solid background under controls there, so the custom
+    // appearance is only applied on earlier releases.
     private func updateTabBarAppearance() {
+        if #available(iOS 26, *) { return }
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor(themeManager.colors.rail)

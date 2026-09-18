@@ -122,6 +122,8 @@ struct ProfileView: View {
                         Capsule().stroke(themeManager.colors.line, lineWidth: 1)
                     )
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
         }
     }
 
@@ -179,7 +181,7 @@ struct ProfileView: View {
 
     private func appearanceSwatch(_ theme: ColorTheme, label: String) -> some View {
         let isSelected = themeManager.currentTheme == theme
-        let swatchColors = theme == .system ? themeManager.colors : theme.colors
+        let swatchColors = themeManager.colors(for: theme)
         return Button(action: { themeManager.setTheme(theme) }) {
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: 20)
@@ -202,6 +204,8 @@ struct ProfileView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(label) appearance")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     // MARK: - Settings List
@@ -233,7 +237,7 @@ struct ProfileView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 19))
+                    .font(Typography.symbol(19))
                     .foregroundColor(tint ?? themeManager.colors.text.opacity(0.65))
                     .frame(width: 24)
 
@@ -250,14 +254,17 @@ struct ProfileView: View {
                 }
 
                 if tint == nil {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
+                    Image(systemName: "chevron.forward")
+                        .font(Typography.symbol(13, weight: .semibold))
                         .foregroundColor(themeManager.colors.muted)
                 }
             }
             .padding(.vertical, 15)
+            .frame(minHeight: Spacing.minTapTarget)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
     }
 
     private var hairline: some View {
