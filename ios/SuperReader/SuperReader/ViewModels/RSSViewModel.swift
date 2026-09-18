@@ -116,6 +116,7 @@ class RSSViewModel: ObservableObject {
         return "Scanning \(names)…"
     }
 
+    /// Refresh all feeds with the on-device parser (offline fallback).
     func refreshFeeds() async {
         guard !isRefreshing else { return }
         guard authManager.isAuthenticated else { return }
@@ -123,6 +124,59 @@ class RSSViewModel: ObservableObject {
         let feedsToRefresh = self.feeds
         guard !feedsToRefresh.isEmpty else { return }
 
+        let service = rssService
+        _ = await runBatchedRefresh(of: feedsToRefresh) { feed in
+            _ = try await service.refreshFeed(feedId: feed.id, url: feed.url)
+        }
+
+        await finishRefresh()
+    }
+
+    /// Refresh all feeds through the web API (server-side, same path as the web app,
+    /// which parses feeds with the robust `rss-parser` library). Falls back to the
+    /// on-device client parser if the server is unreachable (offline resilience).
+    ///
+    /// Each source is refreshed with its own request (`/api/rss/feed`, action
+    /// `refresh`) so the loader shows real per-source progress instead of a
+    /// single opaque call with every row stuck on a spinner.
+    func refreshFeedsViaAPI() async {
+        guard !isRefreshing else { return }
+        guard authManager.isAuthenticated else { return }
+
+        let sources = self.feeds
+        guard !sources.isEmpty else {
+            lastRefreshDate = Date()
+            return
+        }
+
+        let service = rssService
+        let succeeded = await runBatchedRefresh(of: sources) { feed in
+            try await service.refreshFeedViaAPI(feedId: feed.id, url: feed.url)
+        }
+
+        // Nessuna fonte aggiornata dal server → probabilmente offline o server
+        // non raggiungibile: rilascia il guard e riprova con il parser on-device.
+        if succeeded == 0 {
+            print("refreshFeedsViaAPI: no source refreshed server-side, falling back to client parser")
+            resetRefreshProgress()
+            isRefreshing = false
+
+            await refreshFeeds()
+            lastRefreshDate = Date()
+            return
+        }
+
+        lastRefreshDate = Date()
+        await finishRefresh()
+    }
+
+    /// Scansiona le fonti a batch di 5 aggiornando la modale fonte per fonte.
+    /// `refresh` esegue l'aggiornamento di una singola fonte (server o on-device);
+    /// un `throw` marca la riga come fallita. Ritorna il numero di fonti riuscite.
+    private func runBatchedRefresh(
+        of feedsToRefresh: [RSSFeed],
+        refresh: @escaping @Sendable (RSSFeed) async throws -> Void
+    ) async -> Int {
         isRefreshing = true
         errorMessage = nil
         refreshProgress = "Starting update..."
@@ -132,10 +186,8 @@ class RSSViewModel: ObservableObject {
         hasDeterminateProgress = true
         scanItems = feedsToRefresh.map { FeedScanItem(id: $0.id, title: $0.title, state: .pending) }
 
-        let service = rssService
         var completed = 0
-
-        // Refresh feeds in batches of 5 with real progress tracking
+        var succeeded = 0
         let batchSize = 5
 
         for i in stride(from: 0, to: feedsToRefresh.count, by: batchSize) {
@@ -149,17 +201,13 @@ class RSSViewModel: ObservableObject {
 
             await withTaskGroup(of: (UUID, Bool).self) { group in
                 for feed in batch {
-                    let feedId = feed.id
-                    let url = feed.url
-                    let title = feed.title
-
                     group.addTask {
                         do {
-                            _ = try await service.refreshFeed(feedId: feedId, url: url)
-                            return (feedId, true)
+                            try await refresh(feed)
+                            return (feed.id, true)
                         } catch {
-                            print("Error refreshing feed \(title) (\(url)): \(error.localizedDescription)")
-                            return (feedId, false)
+                            print("Error refreshing feed \(feed.title) (\(feed.url)): \(error.localizedDescription)")
+                            return (feed.id, false)
                         }
                     }
                 }
@@ -167,6 +215,7 @@ class RSSViewModel: ObservableObject {
                 // Ogni fonte aggiorna la modale appena finisce, non a fine batch.
                 for await (feedId, success) in group {
                     completed += 1
+                    if success { succeeded += 1 }
                     updateScanItem(feedId, to: success ? .done : .failed)
                     processedFeedsCount = completed
                     progressPercentage = Double(completed) / Double(totalFeedsCount)
@@ -174,66 +223,21 @@ class RSSViewModel: ObservableObject {
             }
         }
 
+        return succeeded
+    }
+
+    /// Chiude il refresh: barra al 100%, ricarica feed + unread counts e lascia
+    /// il tempo di vedere tutte le fonti completate prima di nascondere la modale.
+    private func finishRefresh() async {
         refreshProgress = "Finalizing..."
         progressPercentage = 1.0
 
-        // Reload feeds and unread counts from Supabase
         await loadFeeds()
 
-        // Small delay to let user see 100%
         try? await Task.sleep(nanoseconds: 800_000_000)
 
         resetRefreshProgress()
         isRefreshing = false
-    }
-
-    /// Refresh all feeds through the web API (server-side, same path as the web app,
-    /// which parses feeds with the robust `rss-parser` library). Falls back to the
-    /// on-device client parser if the server is unreachable (offline resilience).
-    func refreshFeedsViaAPI() async {
-        guard !isRefreshing else { return }
-        guard authManager.isAuthenticated else { return }
-
-        let sources = self.feeds
-
-        do {
-            isRefreshing = true
-            errorMessage = nil
-            totalFeedsCount = sources.count
-            processedFeedsCount = 0
-            progressPercentage = 0.0
-            // Il server aggiorna tutte le fonti in un colpo solo: le mostriamo
-            // tutte in scansione, con barra indeterminata.
-            hasDeterminateProgress = false
-            scanItems = sources.map { FeedScanItem(id: $0.id, title: $0.title, state: .scanning) }
-            refreshProgress = sources.isEmpty
-                ? "Updating feeds…"
-                : "Scanning \(sourcesLabel(sources.count))…"
-
-            _ = try await rssService.refreshFeedsViaAPI()   // server-side, come il web
-            lastRefreshDate = Date()
-
-            for item in scanItems {
-                updateScanItem(item.id, to: .done)
-            }
-            processedFeedsCount = sources.count
-            progressPercentage = 1.0
-            refreshProgress = "Finalizing…"
-
-            await loadFeeds()                               // ricarica feed + unread counts
-
-            resetRefreshProgress()
-            isRefreshing = false
-        } catch {
-            // Fallback offline / server non raggiungibile → parser client on-device.
-            // Release the guard first so refreshFeeds() can run its own lifecycle.
-            print("refreshFeedsViaAPI server failed, falling back to client parser: \(error.localizedDescription)")
-            resetRefreshProgress()
-            isRefreshing = false
-
-            await refreshFeeds()
-            lastRefreshDate = Date()
-        }
     }
 
     func deleteFeed(_ feed: RSSFeed) async {

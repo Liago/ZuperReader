@@ -138,6 +138,13 @@ class RSSService {
         return result
     }
 
+    /// Refresh a single feed server-side (`/api/rss/feed`, action `refresh`):
+    /// same fetch+parse+upsert path as `refreshFeedsViaAPI`, one source at a
+    /// time so the caller can report real per-source progress.
+    func refreshFeedViaAPI(feedId: UUID, url: String) async throws {
+        try await performFeedAction(action: "refresh", url: url, feedId: feedId.uuidString)
+    }
+
     func addFeed(url: String) async throws {
         try await performFeedAction(action: "add", url: url)
     }
