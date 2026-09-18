@@ -71,7 +71,10 @@ struct ReadingPreferencesView: View {
                 .textCase(.uppercase)
                 .foregroundColor(themeManager.colors.muted)
 
-            HStack(spacing: 10) {
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                spacing: 10
+            ) {
                 ForEach(Typography.FontFamily.allCases, id: \.self) { family in
                     typefaceCard(family)
                 }
@@ -89,6 +92,8 @@ struct ReadingPreferencesView: View {
                     .font(family.font(size: 19))
                 Text(family.displayName)
                     .font(Typography.figtree(11.5, weight: .heavy))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
             .frame(maxWidth: .infinity)

@@ -62,8 +62,54 @@ struct HTMLContentView: UIViewRepresentable {
                     src: url('Lora-Regular.ttf') format('truetype');
                 }
                 @font-face {
+                    font-family: 'Literata';
+                    src: url('Literata-Regular.ttf') format('truetype');
+                    font-weight: 400;
+                }
+                @font-face {
+                    font-family: 'Literata';
+                    src: url('Literata-Bold.ttf') format('truetype');
+                    font-weight: 700;
+                }
+                @font-face {
+                    font-family: 'Merriweather';
+                    src: url('Merriweather-Regular.ttf') format('truetype');
+                    font-weight: 400;
+                }
+                @font-face {
+                    font-family: 'Merriweather';
+                    src: url('Merriweather-Bold.ttf') format('truetype');
+                    font-weight: 700;
+                }
+                @font-face {
                     font-family: 'Figtree';
                     src: url('Figtree-Regular.ttf') format('truetype');
+                    font-weight: 400;
+                }
+                @font-face {
+                    font-family: 'Figtree';
+                    src: url('Figtree-Bold.ttf') format('truetype');
+                    font-weight: 700;
+                }
+                @font-face {
+                    font-family: 'Atkinson Hyperlegible';
+                    src: url('AtkinsonHyperlegible-Regular.ttf') format('truetype');
+                    font-weight: 400;
+                }
+                @font-face {
+                    font-family: 'Atkinson Hyperlegible';
+                    src: url('AtkinsonHyperlegible-Bold.ttf') format('truetype');
+                    font-weight: 700;
+                }
+                @font-face {
+                    font-family: 'Nunito';
+                    src: url('Nunito-Regular.ttf') format('truetype');
+                    font-weight: 400;
+                }
+                @font-face {
+                    font-family: 'Nunito';
+                    src: url('Nunito-Bold.ttf') format('truetype');
+                    font-weight: 700;
                 }
 
                 body {
@@ -211,8 +257,16 @@ struct HTMLContentView: UIViewRepresentable {
         switch family {
         case .lora:
             return "'Lora', Georgia, serif"
+        case .literata:
+            return "'Literata', Georgia, serif"
+        case .merriweather:
+            return "'Merriweather', Georgia, serif"
         case .figtree:
             return "'Figtree', -apple-system, sans-serif"
+        case .atkinson:
+            return "'Atkinson Hyperlegible', -apple-system, sans-serif"
+        case .nunito:
+            return "'Nunito', -apple-system, sans-serif"
         case .mono:
             return "'SF Mono', Menlo, Monaco, monospace"
         }

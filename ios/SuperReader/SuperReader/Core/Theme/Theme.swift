@@ -179,30 +179,51 @@ struct Typography {
 
     enum FontFamily: String, CaseIterable, Codable {
         case lora
+        case literata
+        case merriweather
         case figtree
+        case atkinson
+        case nunito
         case mono
 
         var displayName: String {
             switch self {
             case .lora: return "Lora"
+            case .literata: return "Literata"
+            case .merriweather: return "Merriweather"
             case .figtree: return "Figtree"
+            case .atkinson: return "Atkinson"
+            case .nunito: return "Nunito"
             case .mono: return "Mono"
+            }
+        }
+
+        /// PostScript name of the Regular cut bundled in Resources/Fonts
+        /// (nil for the system monospaced face).
+        var regularFontName: String? {
+            switch self {
+            case .lora: return "Lora-Regular"
+            case .literata: return "Literata-Regular"
+            case .merriweather: return "Merriweather-Regular"
+            case .figtree: return "Figtree-Regular"
+            case .atkinson: return "AtkinsonHyperlegible-Regular"
+            case .nunito: return "Nunito-Regular"
+            case .mono: return nil
             }
         }
 
         var font: Font { font(size: 17) }
 
         func font(size: CGFloat) -> Font {
-            switch self {
-            case .lora: return .custom("Lora-Regular", size: size)
-            case .figtree: return .custom("Figtree-Regular", size: size)
-            case .mono: return .system(size: size, design: .monospaced)
+            guard let name = regularFontName else {
+                return .system(size: size, design: .monospaced)
             }
+            return .custom(name, size: size)
         }
 
         /// Maps legacy stored raw values (sans, serif, mono, inter, poppins,
         /// montserrat, crimsonText, roboto, lato, openSans, ubuntu) onto the
-        /// reduced three-value set, per docs/revamp-ios/README.md · "State".
+        /// bundled families, per docs/revamp-ios/README.md · "State".
         static func migrated(from legacyRawValue: String) -> FontFamily {
             switch legacyRawValue {
             case "mono":
@@ -272,9 +293,9 @@ struct Typography {
 
     // MARK: Display (Caprasimo) / UI (Figtree) type ramp
     //
-    // Falls back to the system font automatically if Caprasimo-Regular /
-    // Figtree-* aren't bundled yet in Resources/Fonts (see
-    // docs/revamp-ios/README.md · "Assets").
+    // Figtree-* (Regular…Black) are bundled in Resources/Fonts. Caprasimo
+    // falls back to the system font automatically until Caprasimo-Regular is
+    // bundled too (see docs/revamp-ios/README.md · "Assets").
 
     static func caprasimo(_ size: CGFloat) -> Font {
         .custom("Caprasimo-Regular", size: size)

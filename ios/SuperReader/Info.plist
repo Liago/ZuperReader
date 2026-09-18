@@ -15,12 +15,26 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Caprasimo-Regular.ttf and the Figtree family still need to be added to
-	     Resources/Fonts/ and registered here once the font assets are sourced
+	<!-- Caprasimo-Regular.ttf still needs to be added to Resources/Fonts/ and
+	     registered here once the font asset is sourced
 	     (see docs/revamp-ios/README.md · "Assets"). -->
 	<key>UIAppFonts</key>
 	<array>
 		<string>Lora-Regular.ttf</string>
+		<string>Literata-Regular.ttf</string>
+		<string>Literata-Bold.ttf</string>
+		<string>Merriweather-Regular.ttf</string>
+		<string>Merriweather-Bold.ttf</string>
+		<string>AtkinsonHyperlegible-Regular.ttf</string>
+		<string>AtkinsonHyperlegible-Bold.ttf</string>
+		<string>Nunito-Regular.ttf</string>
+		<string>Nunito-Bold.ttf</string>
+		<string>Figtree-Regular.ttf</string>
+		<string>Figtree-Medium.ttf</string>
+		<string>Figtree-SemiBold.ttf</string>
+		<string>Figtree-Bold.ttf</string>
+		<string>Figtree-ExtraBold.ttf</string>
+		<string>Figtree-Black.ttf</string>
 	</array>
     <key>NSLocalNetworkUsageDescription</key>
     <string>SuperReader needs access to your local network to communicate with the development server.</string>
