@@ -509,8 +509,11 @@ struct RSSArticleReader: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(themeManager.colors.page)
-        .ignoresSafeArea(edges: .top)
+        // Il colore riempie anche la striscia della status bar, ma il contenuto
+        // NON ignora la safe area: così l'inset della top bar arriva alle
+        // pagine e il titolo non finisce sotto l'header (stessa struttura del
+        // reader della Libreria, ArticleReaderView).
+        .background(themeManager.colors.page.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .top, spacing: 0) {
             topBar

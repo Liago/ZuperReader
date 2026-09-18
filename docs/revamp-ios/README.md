@@ -150,7 +150,7 @@ Header: "Feeds" (Caprasimo 34) with a 13.5pt muted subtitle carrying the counts 
 
 Feeds group under folder labels ("Design", "Long reads"). Row: 36pt circular monogram (accent or accent-2 ramp 200 fill, 800-weight letter in the matching 800 step), title 15pt weight 700, domain 12.5pt muted, unread count in `accent` weight 800; fully-read feeds drop to 62% opacity and show a check glyph instead of a number.
 
-Refresh is pull-to-refresh only — the orange and grey toolbar circles go away. Keep `RSSRefreshLoaderView` for the in-progress state, restyled on the tokens.
+Refresh is pull-to-refresh only — the orange and grey toolbar circles go away. Keep `RSSRefreshLoaderView` for the in-progress state, restyled on the tokens: it names the sources being scanned (title + per-source glyph: pending dot, spinner, check, warning) under a "x of y sources" count. The bar is determinate on the on-device parser, which reports each source as it finishes, and indeterminate on the server-side refresh, which returns in one shot.
 
 ### 07 · People
 
