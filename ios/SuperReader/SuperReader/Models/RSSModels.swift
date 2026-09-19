@@ -51,6 +51,26 @@ struct RSSArticle: Codable, Identifiable, Hashable {
     }
 }
 
+extension RSSArticle {
+    /// Tempo di lettura stimato a 200 parole/minuto — la stessa convenzione
+    /// usata da `SupabaseService` per gli articoli della Libreria. `nil` quando
+    /// il feed non fornisce testo abbastanza lungo da stimare.
+    var estimatedReadTime: Int? {
+        let source = content ?? contentSnippet
+        guard let source, !source.isEmpty else { return nil }
+        let words = source.strippingHTML().split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+        guard words >= 40 else { return nil }
+        return max(1, Int(ceil(Double(words) / 200.0)))
+    }
+
+    /// Snippet ripulito dall'HTML, pronto per la riga di lista.
+    var plainSnippet: String? {
+        guard let contentSnippet, !contentSnippet.isEmpty else { return nil }
+        let stripped = contentSnippet.strippingHTML()
+        return stripped.isEmpty ? nil : stripped
+    }
+}
+
 struct DiscoveredFeed: Codable, Identifiable, Hashable {
     var id: String { url }
     let url: String

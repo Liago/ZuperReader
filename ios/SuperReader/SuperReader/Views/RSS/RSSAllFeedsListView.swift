@@ -42,7 +42,7 @@ struct RSSAllFeedsListView: View {
             LazyVStack(spacing: 0) {
                 ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
                     NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: index)) {
-                        row(for: article)
+                        row(for: article, at: index)
                     }
                     .buttonStyle(ScaleButtonStyle())
                     .rssArticleContextMenu(article: article) {
@@ -53,7 +53,7 @@ struct RSSAllFeedsListView: View {
                         Rectangle()
                             .fill(themeManager.colors.line)
                             .frame(height: 1)
-                            .padding(.leading, 56 + 14)
+                            .padding(.leading, Spacing.rowSeparatorInset)
                     }
                 }
             }
@@ -64,49 +64,19 @@ struct RSSAllFeedsListView: View {
         .refreshable { await loadArticles() }
     }
 
-    private func row(for article: RSSArticle) -> some View {
-        HStack(spacing: 14) {
-            Group {
-                if let imageUrl = article.imageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: CornerRadius.listThumbnail)
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    ZStack {
-                        themeManager.colors.accent200
-                        Image(systemName: "dot.radiowaves.up.forward")
-                            .foregroundColor(themeManager.colors.accent800.opacity(0.6))
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-                }
-            }
-            .frame(width: 56, height: 56)
-            .clipped()
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    if !article.isRead {
-                        Circle().fill(themeManager.colors.accent).frame(width: 6, height: 6)
-                    }
-                    Text(feedTitle(for: article).uppercased())
-                        .font(Typography.figtree(11, weight: .bold))
-                        .foregroundColor(themeManager.colors.muted)
-                        .lineLimit(1)
-                    Spacer()
-                    if let date = article.pubDate {
-                        Text(date, style: .relative)
-                            .font(Typography.meta)
-                            .foregroundColor(themeManager.colors.muted)
-                    }
-                }
-
-                Text(article.title)
-                    .font(Typography.listRowTitle)
-                    .foregroundColor(article.isRead ? themeManager.colors.muted : themeManager.colors.text)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
+    /// Stessa riga del canale singolo; qui la meta porta il nome del feed al
+    /// posto della data, perché la lista mescola sorgenti diverse.
+    private func row(for article: RSSArticle, at index: Int) -> some View {
+        FeedArticleRow(
+            imageUrl: article.imageUrl,
+            state: article.isRead ? .read : .unread,
+            metaLabel: feedTitle(for: article).uppercased(),
+            readTimeLabel: article.estimatedReadTime.map { "\($0) min" },
+            title: article.title,
+            snippet: article.plainSnippet,
+            tint: MediaTint.alternating(index),
+            trailingBadge: AnyView(RSSArticleSaveBadge(article: article))
+        )
     }
 
     private func feedTitle(for article: RSSArticle) -> String {

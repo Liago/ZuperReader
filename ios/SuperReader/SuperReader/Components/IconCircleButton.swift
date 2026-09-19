@@ -25,10 +25,10 @@ struct IconCircleButton: View {
     var style: Style = .sink
     var glyphWeight: Font.Weight = .semibold
     var glyphSize: CGFloat = 15
+    /// Circle diameter — 38pt everywhere except the feed channel header, which
+    /// the design draws at 36pt (docs/revamp-ios/feed-channel/README.md).
+    var size: CGFloat = Spacing.iconButtonSize
     let action: () -> Void
-
-    @EnvironmentObject private var themeManager: ThemeManager
-    @ScaledMetric(relativeTo: .body) private var circleSize = Spacing.iconButtonSize
 
     var body: some View {
         Button(action: action) {
@@ -36,7 +36,8 @@ struct IconCircleButton: View {
                 systemImage: systemImage,
                 style: style,
                 glyphWeight: glyphWeight,
-                glyphSize: glyphSize
+                glyphSize: glyphSize,
+                size: size
             )
         }
         .buttonStyle(ScaleButtonStyle())
@@ -52,9 +53,12 @@ struct IconCircleGlyph: View {
     var style: IconCircleButton.Style = .sink
     var glyphWeight: Font.Weight = .semibold
     var glyphSize: CGFloat = 15
+    var size: CGFloat = Spacing.iconButtonSize
 
     @EnvironmentObject private var themeManager: ThemeManager
-    @ScaledMetric(relativeTo: .body) private var circleSize = Spacing.iconButtonSize
+    /// Dynamic Type scale factor, applied to whatever diameter the call site
+    /// asks for so both the 38pt and the 36pt circle grow with the text size.
+    @ScaledMetric(relativeTo: .body) private var scaleUnit: CGFloat = 1
 
     private var foreground: Color {
         switch style {
@@ -75,7 +79,7 @@ struct IconCircleGlyph: View {
         Image(systemName: systemImage)
             .font(Typography.symbol(glyphSize, weight: glyphWeight))
             .foregroundColor(foreground)
-            .frame(width: circleSize, height: circleSize)
+            .frame(width: size * scaleUnit, height: size * scaleUnit)
             .background(background)
             .clipShape(Circle())
     }

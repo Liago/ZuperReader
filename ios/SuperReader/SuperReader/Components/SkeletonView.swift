@@ -89,25 +89,28 @@ struct ArticleRowSkeleton: View {
     @EnvironmentObject private var themeManager: ThemeManager
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
-            // Thumbnail
-            SkeletonView(width: 66, height: 66, cornerRadius: CornerRadius.listThumbnail)
+        HStack(alignment: .top, spacing: 14) {
+            // Thumbnail — 78pt radius 22, come la riga reale (design 06b)
+            SkeletonView(
+                width: Spacing.feedThumbnailSize,
+                height: Spacing.feedThumbnailSize,
+                cornerRadius: CornerRadius.feedThumbnail
+            )
 
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+            VStack(alignment: .leading, spacing: 6) {
+                // Meta info
+                HStack(spacing: 7) {
+                    SkeletonView(width: 80, height: 12)
+                    Spacer()
+                    SkeletonView(width: 36, height: 12)
+                }
+
                 // Title
                 SkeletonView(height: 16)
                 SkeletonView(width: 150, height: 16)
-
-                Spacer()
-
-                // Meta info
-                HStack(spacing: Spacing.sm) {
-                    SkeletonView(width: 60, height: 12)
-                    SkeletonView(width: 80, height: 12)
-                }
             }
         }
-        .padding(.vertical, Spacing.sm)
+        .padding(.vertical, 16)
     }
 }
 

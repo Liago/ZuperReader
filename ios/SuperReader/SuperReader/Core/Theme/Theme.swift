@@ -54,7 +54,8 @@ enum ColorTheme: String, CaseIterable, Codable {
                 accent700: Color(hex: "#8A4B22"),
                 accent800: Color(hex: "#6B3A19"),
                 accent2: Color(hex: "#7A8A5E"),
-                accent2_200: Color(hex: "#D6DDC5")
+                accent2_200: Color(hex: "#D6DDC5"),
+                accent2_800: Color(hex: "#3D472B")
             )
         case .sepia:
             // Only page / text / accent are specified for the reader-only Sepia
@@ -77,7 +78,8 @@ enum ColorTheme: String, CaseIterable, Codable {
                 accent700: Color(hex: "#8A4B22"),
                 accent800: Color(hex: "#6B3A19"),
                 accent2: Color(hex: "#7A8A5E"),
-                accent2_200: Color(hex: "#D6DDC5")
+                accent2_200: Color(hex: "#D6DDC5"),
+                accent2_800: Color(hex: "#3D472B")
             )
         case .dark:
             return ThemeColors(
@@ -96,7 +98,8 @@ enum ColorTheme: String, CaseIterable, Codable {
                 accent700: Color(hex: "#8A4B22"),
                 accent800: Color(hex: "#6B3A19"),
                 accent2: Color(hex: "#A9BD8C"),
-                accent2_200: Color(hex: "#D6DDC5")
+                accent2_200: Color(hex: "#D6DDC5"),
+                accent2_800: Color(hex: "#3D472B")
             )
         }
     }
@@ -121,6 +124,9 @@ struct ThemeColors {
     let accent800: Color
     let accent2: Color
     let accent2_200: Color
+    /// Ramp step used for text sitting on an `accent2_200` fill (channel
+    /// monograms): #3D472B, 8.6:1 on #D6DDC5 in both palettes.
+    let accent2_800: Color
 
     // MARK: Compatibility bridge
     // Pre-revamp screens still read these names; they map onto the Organic
@@ -166,7 +172,8 @@ struct ThemeColors {
             accent700: isDark ? Color(hex: "#F0B584") : accent800,
             accent800: accent800,
             accent2: isDark ? Color(hex: "#C5D6A8") : Color(hex: "#55643E"),
-            accent2_200: accent2_200
+            accent2_200: accent2_200,
+            accent2_800: accent2_800
         )
     }
 }
@@ -385,6 +392,12 @@ struct Typography {
     static let sheetTitle = caprasimo(22, relativeTo: .title2)
     /// "You" screen stat numbers.
     static let statNumber = caprasimo(24, relativeTo: .title2)
+    /// Feed channel header title (06b).
+    static let channelTitle = caprasimo(21, relativeTo: .title2)
+    /// Initial inside a 40pt channel monogram.
+    static let channelMonogram = caprasimo(17, relativeTo: .body)
+    /// Featured (hero) article title in a channel / Library list.
+    static let featuredTitle = figtree(19, weight: .heavy, relativeTo: .title3)
 
     /// List row title (Library list, Feeds, People).
     static let listRowTitle = figtree(15.5, weight: .semibold, relativeTo: .subheadline)
@@ -396,6 +409,18 @@ struct Typography {
     static let fieldLabel = figtree(11.5, weight: .heavy, relativeTo: .caption2)
     /// Meta / caption text (timestamps, read time, domain).
     static let meta = figtree(12.5, relativeTo: .caption)
+    /// Row meta line inside a channel / Library list row.
+    static let rowMeta = figtree(12, relativeTo: .caption)
+    /// Uppercase date on the featured article.
+    static let featuredMeta = figtree(12, weight: .bold, relativeTo: .caption)
+    /// One-line snippet under a list row title.
+    static let rowSnippet = figtree(13, relativeTo: .footnote)
+    /// Two-line snippet under the featured article title.
+    static let featuredSnippet = figtree(13.5, relativeTo: .footnote)
+    /// Filter pill label.
+    static func filterPill(selected: Bool) -> Font {
+        figtree(13.5, weight: selected ? .bold : .semibold, relativeTo: .footnote)
+    }
     /// Tab bar label.
     static func tabLabel(selected: Bool) -> Font {
         figtree(10.5, weight: selected ? .heavy : .bold, relativeTo: .caption2)
@@ -431,6 +456,16 @@ struct Spacing {
     static let minTapTarget: CGFloat = 44
     static let readerActionBarHeight: CGFloat = 60
     static let iconButtonSize: CGFloat = 38
+    /// Circular header button on the feed channel screen (06b).
+    static let channelIconButtonSize: CGFloat = 36
+    /// Channel monogram / favicon square in the channel header.
+    static let channelAvatarSize: CGFloat = 40
+    /// Thumbnail edge on a channel / Library list row (06b).
+    static let feedThumbnailSize: CGFloat = 78
+    /// Height of the featured article cover.
+    static let featuredCoverHeight: CGFloat = 168
+    /// Leading inset of a list-row separator: thumbnail + gap.
+    static let rowSeparatorInset: CGFloat = 92
 }
 
 // MARK: - Corner Radius
@@ -448,6 +483,12 @@ struct CornerRadius {
     static let listThumbnail: CGFloat = 18
     static let smallThumbnail: CGFloat = 14
     static let pill: CGFloat = 999
+    /// Feed channel list-row thumbnail — softer corners than `listThumbnail`.
+    static let feedThumbnail: CGFloat = 22
+    /// Channel monogram / favicon square.
+    static let channelAvatar: CGFloat = 14
+    /// Featured article cover (same radius as a Library card).
+    static let featuredCover: CGFloat = 26
 }
 
 // MARK: - Shadows

@@ -129,72 +129,34 @@ struct HomeView: View {
     private var filterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 7) {
-                FilterChip(
+                FeedFilterPill(
                     title: "All",
-                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == nil,
                     action: { viewModel.setReadingStatusFilter(nil) }
                 )
 
-                FilterChip(
+                FeedFilterPill(
                     title: "Unread",
                     dotColor: themeManager.colors.accent2,
                     isSelected: viewModel.filters.readingStatus == .unread,
                     action: { viewModel.setReadingStatusFilter(.unread) }
                 )
 
-                FilterChip(
+                FeedFilterPill(
                     title: "Reading",
                     dotColor: themeManager.colors.accent,
                     isSelected: viewModel.filters.readingStatus == .reading,
                     action: { viewModel.setReadingStatusFilter(.reading) }
                 )
 
-                FilterChip(
+                FeedFilterPill(
                     title: "Done",
-                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == .completed,
                     action: { viewModel.setReadingStatusFilter(.completed) }
                 )
             }
             .padding(.horizontal, Spacing.screenHorizontal)
         }
-    }
-}
-
-// MARK: - Filter Chip
-
-struct FilterChip: View {
-    let title: String
-    let dotColor: Color?
-    let isSelected: Bool
-    let action: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let dotColor {
-                    Circle()
-                        .fill(dotColor)
-                        .frame(width: 6, height: 6)
-                }
-                Text(title)
-                    .font(Typography.figtree(13.5, weight: .semibold, relativeTo: .footnote))
-            }
-            .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSelected ? themeManager.colors.text : Color.clear)
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .minimumTapTarget()
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 

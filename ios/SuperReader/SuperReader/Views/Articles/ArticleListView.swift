@@ -382,13 +382,29 @@ struct ArticleListView: View {
 
     // MARK: - List View
 
+    /// Articolo in evidenza in testa alla lista: il più recente non letto, e
+    /// solo se ha una copertina — un hero senza immagine sarebbe solo un
+    /// titolo più grande (design 06b, portato sulla Libreria).
+    private var featuredArticle: Article? {
+        guard let first = viewModel.filteredArticles.first,
+              first.readingStatus == .unread,
+              let imageUrl = first.imageUrl,
+              !imageUrl.isEmpty else { return nil }
+        return first
+    }
+
+    private var listArticles: [Article] {
+        guard let featuredArticle else { return viewModel.filteredArticles }
+        return Array(viewModel.filteredArticles.dropFirst())
+    }
+
     private var groupedArticles: [(label: String, articles: [Article])] {
         let calendar = Calendar.current
         var today: [Article] = []
         var thisWeek: [Article] = []
         var older: [Article] = []
 
-        for article in viewModel.filteredArticles {
+        for article in listArticles {
             guard let date = article.createdAtDate else {
                 older.append(article)
                 continue
@@ -411,16 +427,48 @@ struct ArticleListView: View {
 
     private var listView: some View {
         List {
+            if let featured = featuredArticle {
+                ZStack {
+                    NavigationLink(destination: ArticleReaderView(articleId: featured.id)) {
+                        EmptyView()
+                    }
+                    .opacity(0)
+
+                    FeaturedArticleCard(
+                        imageUrl: featured.imageUrl,
+                        state: featured.feedItemState,
+                        dateLabel: featured.domain?.replacingOccurrences(of: "www.", with: ""),
+                        readTimeLabel: featured.estimatedReadTime.map { "\($0) min" },
+                        title: featured.title,
+                        snippet: featured.excerpt
+                    )
+                    .padding(.top, 4)
+                    .padding(.bottom, 22)
+                }
+                .listRowInsets(EdgeInsets(
+                    top: 0,
+                    leading: Spacing.screenHorizontal,
+                    bottom: 0,
+                    trailing: Spacing.screenHorizontal
+                ))
+                .listRowSeparator(.hidden)
+                .listRowBackground(themeManager.colors.page)
+            }
+
             ForEach(groupedArticles, id: \.label) { group in
                 Section {
-                    ForEach(group.articles) { article in
+                    ForEach(Array(group.articles.enumerated()), id: \.element.id) { index, article in
                         ZStack {
                             NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
                                 EmptyView()
                             }
                             .opacity(0)
 
-                            ArticleRowView(article: article, queueState: queueState(for: article))
+                            ArticleRowView(
+                                article: article,
+                                queueState: queueState(for: article),
+                                tint: MediaTint.alternating(index)
+                            )
                         }
                         .listRowInsets(EdgeInsets(
                             top: 0,
@@ -428,7 +476,7 @@ struct ArticleListView: View {
                             bottom: 0,
                             trailing: Spacing.screenHorizontal
                         ))
-                        .listRowSeparatorTint(themeManager.colors.line)
+                        .feedRowSeparator(themeManager.colors.line)
                         .listRowBackground(themeManager.colors.page)
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {

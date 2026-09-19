@@ -206,7 +206,7 @@ No new state layers. Per screen: `ArticleListViewModel` (filters, search, view m
 
 ## Assets
 
-- **Fonts**: Caprasimo (display) and Figtree (UI) must be added to `Resources/Fonts/` and registered in Info.plist. Lora is already bundled. Crimson Text, Inter, Montserrat, Poppins, Roboto, Lato, Open Sans and Ubuntu can be removed with the reduced font set.
+- **Fonts**: Caprasimo (display) and Figtree (UI) are bundled in `ios/SuperReader/SuperReader/Resources/Fonts/` and registered under `UIAppFonts` in `Info.plist`; their OFL licences sit in `ios/SuperReader/FontLicenses/`. Nothing falls back to the system face any more — `Typography.caprasimo(_:relativeTo:)` resolves `Caprasimo-Regular` and `Typography.figtree(_:weight:relativeTo:)` the six Figtree cuts. Lora is already bundled. Crimson Text, Inter, Montserrat, Poppins, Roboto, Lato, Open Sans and Ubuntu can be removed with the reduced font set.
 - **Images**: no imagery is supplied. Flat tinted blocks in the prototype are placeholders for article thumbnails — render real images filling the slot, corner radius per component, and keep the existing app-icon fallback for articles with no image.
 - **Icons**: Lucide at stroke width 2.75 (the prototype draws them inline). Either bundle Lucide as SVG assets or match SF Symbols at `.semibold` weight — pick one and be consistent; the rounded Lucide set is closer to the intent.
 
@@ -220,3 +220,13 @@ No new state layers. Per screen: `ArticleListViewModel` (filters, search, view m
 - `github.md` — repo association and the screen-to-source map (which Swift file each screen was derived from).
 
 Source files this revamp replaces: `Core/Theme/Theme.swift`, `Views/Main/MainTabView.swift`, `Views/Main/HomeView.swift`, `Views/Articles/ArticleListView.swift`, `ArticleCardView.swift`, `ArticleRowView.swift`, `ArticleReaderView.swift`, `ArticlePreferencesView.swift`, `AddArticleSheet.swift`, `Views/RSS/RSSListView.swift`, `Views/Social/SharedInboxView.swift`, `FriendsView.swift`, `Views/Profile/ProfileView.swift`, `Views/Auth/LoginView.swift`.
+
+## 06b · Feed channel
+
+A second handoff, in `feed-channel/`, specifies the single-channel screen
+reached from **Feeds → tap a feed**. It replaces the four navigation arrows
+that used to sit in the header of `RSSArticleListView` and sets the list
+language the Library list now shares: featured article with a 168pt cover
+(radius 26), rows with a 78pt thumbnail at radius 22, and a single piece of
+information under each title — the snippet, or the progress bar, never both.
+See `feed-channel/README.md` for the full spec.

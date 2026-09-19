@@ -1,93 +1,48 @@
 import SwiftUI
 
 // MARK: - Article Row View (Library · list)
+//
+// Stessa riga del canale feed (design 06b): miniatura 78pt radius 22, riga
+// meta con dominio e tempo di lettura, titolo su due righe e — sotto — una
+// sola informazione, lo snippet oppure la barra di avanzamento.
 
 struct ArticleRowView: View {
     let article: Article
     /// "Up next" membership indicator (nil = not queued).
     var queueState: QueueActionState? = nil
+    /// Tinta del segnaposto, alternata lungo la lista.
+    var tint: MediaTint = .accent2
 
     @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-        HStack(spacing: 14) {
-            thumbnail
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    ReadingStateDot(
-                        status: article.readingStatus,
-                        accentColor: themeManager.colors.accent,
-                        accent2Color: themeManager.colors.accent2,
-                        mutedColor: themeManager.colors.muted
-                    )
-                    if let domain = article.domain {
-                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(Typography.figtree(12, weight: .bold))
-                            .foregroundColor(themeManager.colors.muted)
-                    }
-                    Spacer()
-                    if let queueState {
-                        QueueStateGlyph(state: queueState, size: 11)
-                    }
-                    if let readTime = article.estimatedReadTime {
-                        Text("\(readTime) min")
-                            .font(Typography.meta)
-                            .foregroundColor(themeManager.colors.muted)
-                    }
-                }
-
-                Text(article.title)
-                    .font(Typography.listRowTitle)
-                    .foregroundColor(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.text)
-                    .lineLimit(2)
-
-                progressTrack
-            }
-        }
-        .padding(.vertical, 14)
+        FeedArticleRow(
+            imageUrl: article.imageUrl,
+            state: article.feedItemState,
+            metaLabel: article.domain?.replacingOccurrences(of: "www.", with: "").uppercased(),
+            readTimeLabel: article.estimatedReadTime.map { "\($0) min" },
+            title: article.title,
+            snippet: article.excerpt,
+            tint: tint,
+            trailingBadge: queueState.map { AnyView(QueueStateGlyph(state: $0, size: 11)) }
+        )
     }
+}
 
-    private var thumbnail: some View {
-        Group {
-            if let imageUrl = article.imageUrl {
-                AsyncImageView(url: imageUrl, cornerRadius: CornerRadius.listThumbnail)
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                ZStack {
-                    themeManager.colors.accent2_200
-                    if let appIcon = Bundle.main.appIcon {
-                        Image(uiImage: appIcon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        Image(systemName: "doc.text")
-                            .foregroundColor(themeManager.colors.text.opacity(0.3))
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-            }
+// MARK: - Article → feed item state
+
+extension Article {
+    /// Mappa lo stato di lettura della Libreria sullo stato di riga condiviso
+    /// con il canale feed.
+    var feedItemState: FeedItemState {
+        switch readingStatus {
+        case .completed:
+            return .read
+        case .reading:
+            return .reading(progress: Double(readingProgress) / 100)
+        case .unread:
+            return .unread
         }
-        .frame(width: 66, height: 66)
-        .clipped()
-    }
-
-    private var progressTrack: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Rectangle().fill(themeManager.colors.line)
-                Rectangle()
-                    .fill(article.readingStatus == .completed ? themeManager.colors.muted.opacity(0.45) : themeManager.colors.accent)
-                    .frame(width: geometry.size.width * progressFraction)
-            }
-        }
-        .frame(height: 2)
-        .clipShape(Capsule())
-    }
-
-    private var progressFraction: CGFloat {
-        if article.readingStatus == .completed { return 1 }
-        return min(max(CGFloat(article.readingProgress) / 100, 0), 1)
     }
 }
 

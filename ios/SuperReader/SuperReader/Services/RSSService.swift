@@ -330,6 +330,37 @@ class RSSService {
             .execute()
     }
     
+    /// Inverso di `markArticleAsRead`, usato dall'undo del toast "mark all read"
+    /// (design 06b: l'azione è distruttiva soft e deve essere annullabile).
+    func markArticlesAsUnread(articleIds: [UUID], userId: String) async throws {
+        guard !articleIds.isEmpty else { return }
+
+        // `read_at` va riportato a NULL: la sintesi di Encodable salterebbe un
+        // Optional nil (encodeIfPresent), quindi il null va scritto a mano.
+        struct UpdatePayload: Encodable {
+            let isRead: Bool
+            let readAt: String?
+
+            enum CodingKeys: String, CodingKey {
+                case isRead = "is_read"
+                case readAt = "read_at"
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(isRead, forKey: .isRead)
+                try container.encode(readAt, forKey: .readAt)
+            }
+        }
+
+        try await SupabaseService.shared.client
+            .from("rss_articles")
+            .update(UpdatePayload(isRead: false, readAt: nil))
+            .in("id", value: articleIds.map(\.uuidString))
+            .eq("user_id", value: userId) // Security check
+            .execute()
+    }
+
     func markFeedAsRead(feedId: UUID, userId: String) async throws {
          struct UpdatePayload: Encodable {
              let is_read: Bool

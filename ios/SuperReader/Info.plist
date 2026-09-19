@@ -15,11 +15,9 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Caprasimo-Regular.ttf still needs to be added to Resources/Fonts/ and
-	     registered here once the font asset is sourced
-	     (see docs/revamp-ios/README.md · "Assets"). -->
 	<key>UIAppFonts</key>
 	<array>
+		<string>Caprasimo-Regular.ttf</string>
 		<string>Lora-Regular.ttf</string>
 		<string>Literata-Regular.ttf</string>
 		<string>Literata-Bold.ttf</string>
