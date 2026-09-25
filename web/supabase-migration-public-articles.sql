@@ -16,6 +16,12 @@
 -- - The existing `is_public` column is NOT reused: it drives activity feed
 --   visibility and comments RLS for authenticated users, which is unrelated.
 --
+-- Column types: `articles.user_id` is TEXT (not uuid) in this project, while
+-- auth.uid() and user_profiles.id are uuid. All comparisons below cast to text
+-- explicitly. The article id is accepted as text and compared as text, so the
+-- functions work whether `articles.id` is uuid or text; the `user_id = ...`
+-- predicate comes first so the lookup stays on the (user_id, ...) index.
+--
 -- Run once in the Supabase SQL Editor. Idempotent.
 
 -- ============================================
@@ -29,12 +35,17 @@ create unique index if not exists articles_public_share_token_key
     on public.articles (public_share_token)
     where public_share_token is not null;
 
+-- Drop the first (uuid-parameter) version if a previous run created it:
+-- CREATE OR REPLACE cannot change a parameter type.
+drop function if exists public.enable_article_public_link(uuid);
+drop function if exists public.disable_article_public_link(uuid);
+
 -- ============================================
 -- 2. Enable (owner only) — returns the token
 -- ============================================
 -- Reuses the current token if the link is already active, so calling it
 -- twice never invalidates a link that was already sent to someone.
-create or replace function public.enable_article_public_link(p_article_id uuid)
+create or replace function public.enable_article_public_link(p_article_id text)
 returns text
 language plpgsql
 security definer
@@ -54,8 +65,8 @@ begin
             replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
         ),
         public_shared_at = coalesce(public_shared_at, now())
-    where id = p_article_id
-      and user_id = auth.uid()
+    where user_id = auth.uid()::text
+      and id::text = p_article_id
     returning public_share_token into v_token;
 
     if v_token is null then
@@ -69,7 +80,7 @@ $$;
 -- ============================================
 -- 3. Disable (owner only)
 -- ============================================
-create or replace function public.disable_article_public_link(p_article_id uuid)
+create or replace function public.disable_article_public_link(p_article_id text)
 returns void
 language plpgsql
 security definer
@@ -83,8 +94,8 @@ begin
     update public.articles
     set public_share_token = null,
         public_shared_at = null
-    where id = p_article_id
-      and user_id = auth.uid();
+    where user_id = auth.uid()::text
+      and id::text = p_article_id;
 
     if not found then
         raise exception 'Article not found' using errcode = 'P0002';
@@ -95,6 +106,7 @@ $$;
 -- ============================================
 -- 4. Public read (anon + authenticated)
 -- ============================================
+-- `p.id::text = a.user_id`: user_profiles.id is uuid, articles.user_id is text.
 -- Returns zero rows for unknown/revoked tokens. Never exposes article id,
 -- user_id, tags, reading state, email or AI summary.
 create or replace function public.get_public_article(p_token text)
@@ -133,7 +145,7 @@ as $$
         a.public_shared_at,
         p.display_name::text as shared_by_name
     from public.articles a
-    left join public.user_profiles p on p.id = a.user_id
+    left join public.user_profiles p on p.id::text = a.user_id
     where p_token is not null
       and length(p_token) >= 32
       and a.public_share_token = p_token
@@ -143,12 +155,12 @@ $$;
 -- ============================================
 -- 5. Grants
 -- ============================================
-revoke all on function public.enable_article_public_link(uuid) from public, anon;
-revoke all on function public.disable_article_public_link(uuid) from public, anon;
+revoke all on function public.enable_article_public_link(text) from public, anon;
+revoke all on function public.disable_article_public_link(text) from public, anon;
 revoke all on function public.get_public_article(text) from public;
 
-grant execute on function public.enable_article_public_link(uuid) to authenticated, service_role;
-grant execute on function public.disable_article_public_link(uuid) to authenticated, service_role;
+grant execute on function public.enable_article_public_link(text) to authenticated, service_role;
+grant execute on function public.disable_article_public_link(text) to authenticated, service_role;
 -- Intentional anon exception (see CLAUDE.md): public share tokens.
 grant execute on function public.get_public_article(text) to anon, authenticated, service_role;
 
