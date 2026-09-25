@@ -25,11 +25,29 @@ export type Article = {
 	reading_progress: number; // 0-100 percentage of article read
 	estimated_read_time: number | null;
 	is_public: boolean;
+	public_share_token: string | null; // Non-null = readable by anyone via /p/<token>
+	public_shared_at: string | null;
 	ai_summary: string | null; // AI-generated summary using Cohere
 	ai_summary_generated_at: string | null; // When the summary was generated
 	scraped_at: string;
 	created_at: string;
 	updated_at: string;
+};
+
+// Subset of an article returned by the anonymous get_public_article RPC
+export type PublicArticle = {
+	title: string;
+	url: string;
+	content: string | null;
+	excerpt: string | null;
+	image_url: string | null;
+	favicon_url: string | null;
+	author: string | null;
+	published_date: string | null;
+	domain: string | null;
+	estimated_read_time: number | null;
+	public_shared_at: string | null;
+	shared_by_name: string | null;
 };
 
 export type Like = {
