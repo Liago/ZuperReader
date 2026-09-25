@@ -571,6 +571,29 @@ export async function getSharesCount(articleId: string): Promise<number> {
 	return count || 0;
 }
 
+// ==================== PUBLIC LINK FUNCTIONS ====================
+
+/** Build the public URL for a share token (works for anyone, no login). */
+export function buildPublicArticleUrl(token: string, origin?: string): string {
+	const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
+	return `${base.replace(/\/$/, '')}/p/${token}`;
+}
+
+/** Enable the public link for an article (owner only). Returns the token; reuses the existing one if already public. */
+export async function enablePublicLink(articleId: string): Promise<string> {
+	const { data, error } = await supabase.rpc('enable_article_public_link', { p_article_id: articleId });
+
+	if (error) throw new Error(error.message);
+	return data as string;
+}
+
+/** Revoke the public link: the old URL stops working immediately. */
+export async function disablePublicLink(articleId: string): Promise<void> {
+	const { error } = await supabase.rpc('disable_article_public_link', { p_article_id: articleId });
+
+	if (error) throw new Error(error.message);
+}
+
 // ==================== USER PROFILE FUNCTIONS ====================
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {

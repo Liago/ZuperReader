@@ -59,6 +59,9 @@ struct Article: Identifiable, Codable, Equatable {
     let aiSummaryGeneratedAt: String?
     let createdAt: String
     let updatedAt: String
+    /// Non-nil = readable by anyone via the public web link (/p/<token>).
+    var publicShareToken: String? = nil
+    var publicSharedAt: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -85,6 +88,14 @@ struct Article: Identifiable, Codable, Equatable {
         case aiSummaryGeneratedAt = "ai_summary_generated_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case publicShareToken = "public_share_token"
+        case publicSharedAt = "public_shared_at"
+    }
+    
+    /// Public web URL when the article has an active public link.
+    var publicURL: URL? {
+        guard let token = publicShareToken else { return nil }
+        return SupabaseConfig.publicArticleURL(token: token)
     }
     
     // Formatted read time

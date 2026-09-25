@@ -81,8 +81,10 @@ runs two SQL scripts (idempotent) to standardize the project:
 
 - `web/supabase-grants.sql` — grants for `authenticated` + `service_role` on all
   current and future objects in `public` (via `ALTER DEFAULT PRIVILEGES`).
-- `web/supabase-anon-hardening.sql` — REVOKE ALL from `anon` on `public.*`. SuperReader
-  has no public anonymous flow; anon is granted by exception only.
+- `web/supabase-anon-hardening.sql` — REVOKE ALL from `anon` on `public.*`. anon is
+  granted by exception only. The one exception today is public article links
+  (`web/supabase-migration-public-articles.sql`): anon may only `execute`
+  `get_public_article(token)` (SECURITY DEFINER, safe column subset), never read tables.
 
 Template for every new table migration:
 
@@ -103,6 +105,21 @@ grant all on public.your_table to service_role;
 -- For RPC functions:
 grant execute on function public.your_function(...) to authenticated, service_role;
 ```
+
+## Public article links
+
+The owner of an article can publish it via an unguessable link `/p/<token>` readable
+without an account (web: `PublicLinkButton` in the reader top bar; iOS: "Public Link" in
+the reader's More menu → `PublicLinkSheet`).
+
+- DB: `articles.public_share_token` (NULL = private) + RPCs `enable_article_public_link`,
+  `disable_article_public_link` (owner only) and `get_public_article` (anon).
+- Web page: `web/src/app/p/[token]/page.tsx`, server-rendered, `force-dynamic` so
+  revocation is immediate, `noindex`. Content is always passed through
+  `sanitizeArticleHtml` (sanitize-html) because it is shown on our origin to anonymous
+  and logged-in visitors.
+- iOS always builds public links on `SupabaseConfig.publicWebUrl` (production), never
+  on the Debug LAN URL.
 
 ## iOS App
 

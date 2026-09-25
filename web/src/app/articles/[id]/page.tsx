@@ -16,6 +16,7 @@ import VideoPlaceholder, { VideoInfo, extractVideoInfo } from '../../../componen
 import CommentsSection from '../../../components/CommentsSection';
 import ShareButton from '../../../components/ShareButton';
 import InternalShareButton from '../../../components/InternalShareButton';
+import PublicLinkButton from '../../../components/PublicLinkButton';
 import { TagList } from '../../../components/TagBadge';
 import TagManagementModal from '../../../components/TagManagementModal';
 import ImageGalleryModal from '../../../components/ImageGalleryModal';
@@ -521,6 +522,17 @@ export default function ArticleReaderPage() {
 
 						<InternalShareButton articleId={article.id} articleTitle={article.title} />
 						<ShareButton articleId={article.id} userId={user!.id} articleUrl={article.url} articleTitle={article.title} />
+						{article.user_id === user!.id && (
+							<PublicLinkButton
+								articleId={article.id}
+								publicShareToken={article.public_share_token ?? null}
+								onChange={(token) =>
+									setArticle((prev) =>
+										prev ? { ...prev, public_share_token: token, public_shared_at: token ? prev.public_shared_at ?? new Date().toISOString() : null } : prev
+									)
+								}
+							/>
+						)}
 
 						<button
 							type="button"

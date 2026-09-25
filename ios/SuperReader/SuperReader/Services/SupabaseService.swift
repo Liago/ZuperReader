@@ -18,6 +18,13 @@ enum SupabaseConfig {
         return "https://zuper-reader.vercel.app"     // Production web app (Vercel)
         #endif
     }()
+    // Public article links are sent to people outside the app, so they must
+    // always point at production (never the Debug LAN dev server).
+    static let publicWebUrl = "https://zuper-reader.vercel.app"
+
+    static func publicArticleURL(token: String) -> URL? {
+        URL(string: "\(publicWebUrl)/p/\(token)")
+    }
 }
 
 // MARK: - Supabase Service
@@ -318,6 +325,25 @@ actor SupabaseService {
             .from("articles")
             .delete()
             .eq("id", value: articleId)
+            .execute()
+    }
+    
+    // MARK: - Public Link
+
+    /// Enables the public link (owner only) and returns its token.
+    /// Reuses the existing token if the article is already public.
+    func enablePublicLink(articleId: String) async throws -> String {
+        let token: String = try await client
+            .rpc("enable_article_public_link", params: ["p_article_id": articleId])
+            .execute()
+            .value
+        return token
+    }
+
+    /// Revokes the public link: the old URL stops working immediately.
+    func disablePublicLink(articleId: String) async throws {
+        try await client
+            .rpc("disable_article_public_link", params: ["p_article_id": articleId])
             .execute()
     }
     

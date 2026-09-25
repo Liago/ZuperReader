@@ -18,6 +18,7 @@ struct ArticleReaderView: View {
     @State private var showPreferences = false
     @State private var showDeleteConfirm = false
     @State private var showShareSheet = false
+    @State private var showPublicLinkSheet = false
     @State private var showSummarySheet = false
     @State private var showComments = false
     @State private var showTagEditor = false
@@ -155,6 +156,21 @@ struct ArticleReaderView: View {
                     userId: userId
                 )
                 .environmentObject(themeManager)
+            }
+        }
+        .sheet(isPresented: $showPublicLinkSheet) {
+            if let article = article {
+                PublicLinkSheet(
+                    articleId: article.id,
+                    articleTitle: article.title,
+                    initialToken: article.publicShareToken
+                ) { token in
+                    self.article?.publicShareToken = token
+                    self.article?.publicSharedAt = token == nil ? nil : (self.article?.publicSharedAt ?? ISO8601DateFormatter().string(from: Date()))
+                }
+                .environmentObject(themeManager)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
         }
         .sheet(item: $selectedLink) { item in
@@ -334,6 +350,14 @@ struct ArticleReaderView: View {
                     Button(action: { showTagEditor = true }) {
                         Label("Manage Tags", systemImage: "tag")
                     }
+                    if isOwner(article) {
+                        Button(action: { showPublicLinkSheet = true }) {
+                            Label(
+                                article.publicShareToken == nil ? "Public Link" : "Public Link (On)",
+                                systemImage: "globe"
+                            )
+                        }
+                    }
                     Menu("Reading Status") {
                         ForEach(ReadingStatus.allCases, id: \.self) { status in
                             Button(action: { Task { await updateReadingStatus(status) } }) {
@@ -385,6 +409,13 @@ struct ArticleReaderView: View {
             .accessibilityValue("\(Int(readingProgress * 100)) percent")
         }
         .background(themeManager.colors.page)
+    }
+
+    /// Only the owner can make an article public (enforced server-side too).
+    /// `uuidString` is uppercase while Postgres returns lowercase UUIDs.
+    private func isOwner(_ article: Article) -> Bool {
+        guard let userId = authManager.user?.id.uuidString else { return false }
+        return article.userId.lowercased() == userId.lowercased()
     }
 
     private func topBarSubtitle(_ article: Article) -> String {

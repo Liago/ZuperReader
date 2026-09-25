@@ -143,7 +143,9 @@ class ArticleListViewModel: ObservableObject {
                 aiSummary: updatedArticle.aiSummary,
                 aiSummaryGeneratedAt: updatedArticle.aiSummaryGeneratedAt,
                 createdAt: updatedArticle.createdAt,
-                updatedAt: updatedArticle.updatedAt
+                updatedAt: updatedArticle.updatedAt,
+                publicShareToken: updatedArticle.publicShareToken,
+                publicSharedAt: updatedArticle.publicSharedAt
             )
             articles[index] = updatedArticle
         }
@@ -177,7 +179,9 @@ class ArticleListViewModel: ObservableObject {
                     aiSummary: updatedArticle.aiSummary,
                     aiSummaryGeneratedAt: updatedArticle.aiSummaryGeneratedAt,
                     createdAt: updatedArticle.createdAt,
-                    updatedAt: updatedArticle.updatedAt
+                    updatedAt: updatedArticle.updatedAt,
+                    publicShareToken: updatedArticle.publicShareToken,
+                    publicSharedAt: updatedArticle.publicSharedAt
                 )
                 articles[index] = updatedArticle
             }
