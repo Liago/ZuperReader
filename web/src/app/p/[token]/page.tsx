@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ExternalLink } from 'lucide-react';
 import type { PublicArticle } from '@/lib/supabase';
 import { sanitizeArticleHtml } from '@/lib/sanitizeArticleHtml';
+import PublicFontSizeControl, { DEFAULT_PUBLIC_FONT_SIZE } from '@/components/PublicFontSizeControl';
 
 // Revoking a link must take effect immediately: never cache this page.
 export const dynamic = 'force-dynamic';
@@ -89,7 +90,8 @@ export default async function PublicArticlePage({ params }: PageProps) {
 	const byline = article.author || article.domain;
 
 	const proseStyle: React.CSSProperties & Record<string, string> = {
-		fontSize: '18px',
+		// Set by PublicFontSizeControl (A− / A+); children of .prose scale in em
+		fontSize: `var(--public-font-size, ${DEFAULT_PUBLIC_FONT_SIZE}px)`,
 		fontFamily: 'var(--font-body)',
 		'--tw-prose-body': 'var(--app-ink)',
 		'--tw-prose-headings': 'var(--app-ink)',
@@ -112,15 +114,19 @@ export default async function PublicArticlePage({ params }: PageProps) {
 					<Link href="/" className="font-heading text-[20px] text-ink">
 						SuperReader
 					</Link>
-					<a
-						href={article.url}
-						target="_blank"
-						rel="noopener noreferrer nofollow"
-						className="flex items-center gap-1.5 rounded-full border border-app-line px-3 py-1.5 text-[12.5px] font-bold text-ink transition-colors hover:bg-app-hover"
-					>
-						<ExternalLink size={14} strokeWidth={2.75} />
-						Original
-					</a>
+					<div className="flex items-center gap-2">
+						<PublicFontSizeControl />
+						<a
+							href={article.url}
+							target="_blank"
+							rel="noopener noreferrer nofollow"
+							title="Read the original"
+							className="flex h-[34px] items-center gap-1.5 rounded-full border border-app-line px-3 text-[12.5px] font-bold text-ink transition-colors hover:bg-app-hover"
+						>
+							<ExternalLink size={14} strokeWidth={2.75} />
+							<span className="hidden sm:inline">Original</span>
+						</a>
+					</div>
 				</div>
 			</header>
 
@@ -154,7 +160,7 @@ export default async function PublicArticlePage({ params }: PageProps) {
 
 					{content ? (
 						<div
-							className="prose prose-lg leading-relaxed mt-8 max-w-none break-words prose-headings:font-heading prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-[3px] prose-blockquote:not-italic prose-blockquote:pl-5 prose-blockquote:font-normal [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-2xl [&_img]:h-auto [&_img]:max-w-full"
+							className="prose leading-relaxed mt-8 max-w-none break-words prose-headings:font-heading prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-[3px] prose-blockquote:not-italic prose-blockquote:pl-5 prose-blockquote:font-normal [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-2xl [&_img]:h-auto [&_img]:max-w-full"
 							style={proseStyle}
 							dangerouslySetInnerHTML={{ __html: content }}
 						/>
