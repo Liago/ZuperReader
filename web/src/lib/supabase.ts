@@ -27,6 +27,7 @@ export type Article = {
 	is_public: boolean;
 	public_share_token: string | null; // Non-null = readable by anyone via /p/<token>
 	public_shared_at: string | null;
+	public_link_expires_at: string | null; // NULL = the public link never expires
 	ai_summary: string | null; // AI-generated summary using Cohere
 	ai_summary_generated_at: string | null; // When the summary was generated
 	scraped_at: string;
@@ -47,8 +48,12 @@ export type PublicArticle = {
 	domain: string | null;
 	estimated_read_time: number | null;
 	public_shared_at: string | null;
+	expires_at: string | null;
 	shared_by_name: string | null;
 };
+
+// Validity of a public link, in days (null = never expires)
+export type PublicLinkValidity = 1 | 7 | null;
 
 export type Like = {
 	id: string;

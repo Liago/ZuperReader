@@ -112,8 +112,14 @@ The owner of an article can publish it via an unguessable link `/p/<token>` read
 without an account (web: `PublicLinkButton` in the reader top bar; iOS: "Public Link" in
 the reader's More menu → `PublicLinkSheet`).
 
-- DB: `articles.public_share_token` (NULL = private) + RPCs `enable_article_public_link`,
-  `disable_article_public_link` (owner only) and `get_public_article` (anon).
+- DB: `articles.public_share_token` (NULL = private) + `public_link_expires_at`
+  (NULL = never) + RPCs `enable_article_public_link(p_article_id, p_expires_in_days)`
+  (owner only; validity 1, 7 or NULL days; keeps the token while the link is active and
+  returns `{ token, expires_at }`), `disable_article_public_link` and
+  `get_public_article` (anon; expired links return no rows).
+  Migrations: `web/supabase-migration-public-articles.sql`, then
+  `web/supabase-migration-public-articles-expiry.sql`.
+- `articles.user_id` is TEXT in this project: compare with `auth.uid()::text`.
 - Web page: `web/src/app/p/[token]/page.tsx`, server-rendered, `force-dynamic` so
   revocation is immediate, `noindex`. Content is always passed through
   `sanitizeArticleHtml` (sanitize-html) because it is shown on our origin to anonymous

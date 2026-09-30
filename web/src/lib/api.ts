@@ -1,5 +1,5 @@
 import { createClient } from './supabase/client';
-import type { Article, Comment, Share, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences, RSSArticle, RSSFeed } from './supabase';
+import type { Article, Comment, Share, PublicLinkValidity, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences, RSSArticle, RSSFeed } from './supabase';
 
 // Create a singleton supabase client for this module
 const supabase = createClient();
@@ -579,12 +579,22 @@ export function buildPublicArticleUrl(token: string, origin?: string): string {
 	return `${base.replace(/\/$/, '')}/p/${token}`;
 }
 
-/** Enable the public link for an article (owner only). Returns the token; reuses the existing one if already public. */
-export async function enablePublicLink(articleId: string): Promise<string> {
-	const { data, error } = await supabase.rpc('enable_article_public_link', { p_article_id: articleId });
+/**
+ * Enable the public link for an article (owner only) with a validity of 1 day, 7 days or never (null).
+ * If the link is already active the token is kept and only the expiry changes.
+ */
+export async function enablePublicLink(
+	articleId: string,
+	validityDays: PublicLinkValidity
+): Promise<{ token: string; expiresAt: string | null }> {
+	const { data, error } = await supabase.rpc('enable_article_public_link', {
+		p_article_id: articleId,
+		p_expires_in_days: validityDays,
+	});
 
 	if (error) throw new Error(error.message);
-	return data as string;
+	const result = data as { token: string; expires_at: string | null };
+	return { token: result.token, expiresAt: result.expires_at };
 }
 
 /** Revoke the public link: the old URL stops working immediately. */

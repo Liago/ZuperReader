@@ -330,14 +330,42 @@ actor SupabaseService {
     
     // MARK: - Public Link
 
-    /// Enables the public link (owner only) and returns its token.
-    /// Reuses the existing token if the article is already public.
-    func enablePublicLink(articleId: String) async throws -> String {
-        let token: String = try await client
-            .rpc("enable_article_public_link", params: ["p_article_id": articleId])
+    private struct EnablePublicLinkParams: Encodable {
+        let p_article_id: String
+        let p_expires_in_days: Int?
+
+        // Always send the key, also when nil (= never expires)
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(p_article_id, forKey: .p_article_id)
+            try container.encode(p_expires_in_days, forKey: .p_expires_in_days)
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case p_article_id, p_expires_in_days
+        }
+    }
+
+    struct PublicLinkResult: Decodable {
+        let token: String
+        let expiresAt: String?
+
+        enum CodingKeys: String, CodingKey {
+            case token
+            case expiresAt = "expires_at"
+        }
+    }
+
+    /// Enables the public link (owner only) with a validity of 1 day, 1 week or never.
+    /// If the link is already active the token is kept and only the expiry changes.
+    func enablePublicLink(articleId: String, validity: PublicLinkValidity) async throws -> PublicLinkResult {
+        try await client
+            .rpc(
+                "enable_article_public_link",
+                params: EnablePublicLinkParams(p_article_id: articleId, p_expires_in_days: validity.days)
+            )
             .execute()
             .value
-        return token
     }
 
     /// Revokes the public link: the old URL stops working immediately.
