@@ -427,3 +427,22 @@ input[type="range"].slider::-moz-range-thumb:hover {
 .public-article figcaption {
   font-size: 0.8em !important;
 }
+
+/* ============================================
+   MOBILE (touch) TWEAKS
+   ============================================ */
+
+/* iOS Safari zooms into inputs smaller than 16px on focus: keep them at 16px
+   on touch screens. Unlayered, so it wins over Tailwind utility sizes. */
+@media (hover: none) and (pointer: coarse) {
+  input[type="text"],
+  input[type="email"],
+  input[type="url"],
+  input[type="search"],
+  input[type="password"],
+  input:not([type]),
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+}

@@ -36,13 +36,67 @@ export default function ArticleRow({
 		? new Date(article.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
 		: '';
 
+	const actions = (
+		<>
+			<button
+				type="button"
+				onClick={(e) => onEditTags(e, article)}
+				title="Edit tags"
+				className="opacity-45 transition-opacity hover:text-accent hover:opacity-100"
+			>
+				<svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.75}>
+					<path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+				</svg>
+			</button>
+			{onAddToQueue && (
+				<button
+					type="button"
+					onClick={(e) => onAddToQueue(e, article)}
+					disabled={queueState === 'saving' || queueState === 'done'}
+					title={queueState === 'done' ? 'Added to Up next' : 'Add to Up next'}
+					className={`transition-opacity ${
+						queueState === 'done'
+							? 'text-accent opacity-100'
+							: 'opacity-45 hover:text-accent hover:opacity-100'
+					}`}
+				>
+					{queueState === 'saving' ? (
+						<span className="block h-[18px] w-[18px] animate-spin rounded-full border-2 border-app-line border-t-accent" />
+					) : queueState === 'done' ? (
+						<Check size={18} strokeWidth={2.75} />
+					) : (
+						<ListPlus size={18} strokeWidth={2.75} />
+					)}
+				</button>
+			)}
+			<button
+				type="button"
+				onClick={(e) => onDelete(e, article)}
+				title="Delete article"
+				className="opacity-45 transition-opacity hover:text-accent hover:opacity-100"
+			>
+				<Trash2 size={18} strokeWidth={2.75} />
+			</button>
+			<button
+				type="button"
+				onClick={(e) => onToggleFavorite(e, article)}
+				title={article.is_favorite ? 'Remove from favourites' : 'Add to favourites'}
+				className={`transition-colors ${
+					article.is_favorite ? 'text-accent' : 'opacity-45 hover:opacity-100'
+				}`}
+			>
+				<Bookmark size={18} strokeWidth={2.75} fill={article.is_favorite ? 'currentColor' : 'none'} />
+			</button>
+		</>
+	);
+
 	return (
 		<article
 			onClick={() => onClick(article.id)}
-			className="flex cursor-pointer items-center gap-5 px-[22px] py-[18px] transition-colors hover:bg-app-hover"
+			className="flex cursor-pointer items-start gap-3.5 px-4 py-4 transition-colors hover:bg-app-hover sm:items-center sm:gap-5 sm:px-[22px] sm:py-[18px]"
 		>
 			{/* Cover thumb */}
-			<div className="relative h-[76px] w-28 flex-none overflow-hidden rounded-2xl bg-app-surface">
+			<div className="relative h-[64px] w-[64px] flex-none overflow-hidden rounded-2xl bg-app-surface sm:h-[76px] sm:w-28">
 				{article.image_url ? (
 					<OptimizedImage
 						src={article.image_url}
@@ -59,7 +113,7 @@ export default function ArticleRow({
 
 			{/* Content */}
 			<div className="min-w-0 flex-1">
-				<div className="mb-1 flex items-center gap-2 text-[12px] text-app-muted">
+				<div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 whitespace-nowrap text-[12px] text-app-muted">
 					<StateMark variant={markFor(article.reading_status)} />
 					{article.domain && <span className="font-semibold text-ink">{article.domain}</span>}
 					{date && <span>·</span>}
@@ -73,7 +127,7 @@ export default function ArticleRow({
 				</div>
 
 				<h3
-					className={`text-pretty text-[18px] font-bold leading-[1.3] ${
+					className={`text-pretty line-clamp-3 text-[16px] font-bold leading-[1.3] sm:line-clamp-none sm:text-[18px] ${
 						finished ? 'text-app-muted' : 'text-ink'
 					}`}
 				>
@@ -89,60 +143,13 @@ export default function ArticleRow({
 						<TagList tags={article.tags} maxVisible={4} size="sm" />
 					</div>
 				)}
+
+				{/* Actions on phones: own row under the text, larger tap targets */}
+				<div className="mt-2 flex items-center justify-end gap-5 text-app-muted sm:hidden">{actions}</div>
 			</div>
 
-			{/* Trailing actions */}
-			<div className="flex flex-none items-center gap-3 text-app-muted">
-				<button
-					type="button"
-					onClick={(e) => onEditTags(e, article)}
-					title="Edit tags"
-					className="opacity-45 transition-opacity hover:text-accent hover:opacity-100"
-				>
-					<svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.75}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-					</svg>
-				</button>
-				{onAddToQueue && (
-					<button
-						type="button"
-						onClick={(e) => onAddToQueue(e, article)}
-						disabled={queueState === 'saving' || queueState === 'done'}
-						title={queueState === 'done' ? 'Added to Up next' : 'Add to Up next'}
-						className={`transition-opacity ${
-							queueState === 'done'
-								? 'text-accent opacity-100'
-								: 'opacity-45 hover:text-accent hover:opacity-100'
-						}`}
-					>
-						{queueState === 'saving' ? (
-							<span className="block h-[18px] w-[18px] animate-spin rounded-full border-2 border-app-line border-t-accent" />
-						) : queueState === 'done' ? (
-							<Check size={18} strokeWidth={2.75} />
-						) : (
-							<ListPlus size={18} strokeWidth={2.75} />
-						)}
-					</button>
-				)}
-				<button
-					type="button"
-					onClick={(e) => onDelete(e, article)}
-					title="Delete article"
-					className="opacity-45 transition-opacity hover:text-accent hover:opacity-100"
-				>
-					<Trash2 size={18} strokeWidth={2.75} />
-				</button>
-				<button
-					type="button"
-					onClick={(e) => onToggleFavorite(e, article)}
-					title={article.is_favorite ? 'Remove from favourites' : 'Add to favourites'}
-					className={`transition-colors ${
-						article.is_favorite ? 'text-accent' : 'opacity-45 hover:opacity-100'
-					}`}
-				>
-					<Bookmark size={18} strokeWidth={2.75} fill={article.is_favorite ? 'currentColor' : 'none'} />
-				</button>
-			</div>
+			{/* Trailing actions (tablet / desktop) */}
+			<div className="hidden flex-none items-center gap-3 text-app-muted sm:flex">{actions}</div>
 		</article>
 	);
 }

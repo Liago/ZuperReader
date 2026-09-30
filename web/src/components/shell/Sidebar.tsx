@@ -14,6 +14,8 @@ import StateMark, { StateMarkVariant } from './StateMark';
 
 interface SidebarProps {
 	onSaveLink: () => void;
+	/** Called after any navigation choice (the mobile drawer uses it to close itself). */
+	onNavigate?: () => void;
 }
 
 type Destination = {
@@ -24,7 +26,7 @@ type Destination = {
 	badgeTone?: 'accent' | 'sage';
 };
 
-export default function Sidebar({ onSaveLink }: SidebarProps) {
+export default function Sidebar({ onSaveLink, onNavigate }: SidebarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { user, signOut } = useAuth();
@@ -89,12 +91,14 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 		setIsFavorite(undefined);
 		setReadingStatus(status);
 		if (!onLibrary) router.push('/');
+		onNavigate?.();
 	};
 
 	const applyFavourites = () => {
 		setReadingStatus('all');
 		setIsFavorite(true);
 		if (!onLibrary) router.push('/');
+		onNavigate?.();
 	};
 
 	const toggleTag = (tag: string) => {
@@ -103,6 +107,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 			: [...filters.selectedTags, tag];
 		setSelectedTags(next);
 		if (!onLibrary) router.push('/');
+		onNavigate?.();
 	};
 
 	type ReadingItem = {
@@ -161,7 +166,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 	const displayName = user?.email ? user.email.split('@')[0] : 'Reader';
 
 	return (
-		<aside className="flex h-full w-[264px] flex-none flex-col border-r border-app-line bg-app-rail px-[14px] pb-[14px] pt-5">
+		<aside className="flex h-full w-[264px] max-w-full flex-none flex-col overflow-y-auto overscroll-contain border-r border-app-line bg-app-rail px-[14px] pb-[max(14px,env(safe-area-inset-bottom))] pt-[max(20px,env(safe-area-inset-top))]">
 			{/* Brand */}
 			<div className="flex items-center gap-2.5 px-1 pb-[18px]">
 				<span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-accent font-heading text-[17px] text-app-page">
@@ -189,6 +194,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 						<Link
 							key={d.href}
 							href={d.href}
+							onClick={onNavigate}
 							className={`flex items-center gap-3 rounded-xl px-3 py-[9px] text-[14.5px] font-semibold transition-colors ${
 								active
 									? 'bg-accent text-app-page hover:bg-accent-600'
@@ -272,6 +278,7 @@ export default function Sidebar({ onSaveLink }: SidebarProps) {
 				<div className="flex items-center gap-2.5">
 					<Link
 						href="/profile"
+						onClick={onNavigate}
 						className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 transition-colors hover:bg-app-hover"
 						title="View profile"
 					>
