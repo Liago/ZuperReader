@@ -163,9 +163,11 @@ struct ArticleReaderView: View {
                 PublicLinkSheet(
                     articleId: article.id,
                     articleTitle: article.title,
-                    initialToken: article.publicShareToken
-                ) { token in
+                    initialToken: article.publicShareToken,
+                    initialExpiresAt: article.publicLinkExpiresAt
+                ) { token, expiresAt in
                     self.article?.publicShareToken = token
+                    self.article?.publicLinkExpiresAt = expiresAt
                     self.article?.publicSharedAt = token == nil ? nil : (self.article?.publicSharedAt ?? ISO8601DateFormatter().string(from: Date()))
                 }
                 .environmentObject(themeManager)
@@ -353,7 +355,7 @@ struct ArticleReaderView: View {
                     if isOwner(article) {
                         Button(action: { showPublicLinkSheet = true }) {
                             Label(
-                                article.publicShareToken == nil ? "Public Link" : "Public Link (On)",
+                                article.isPublicLinkActive ? "Public Link (On)" : "Public Link",
                                 systemImage: "globe"
                             )
                         }

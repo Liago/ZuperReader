@@ -38,6 +38,8 @@ export function sanitizeArticleHtml(html: string, baseUrl?: string): string {
 			// no `id`: avoids DOM clobbering of globals on our own origin
 			'*': ['lang', 'dir'],
 		},
+		// Only the CMS caption classes used by the .html-chunk image-card styles
+		allowedClasses: { '*': ['wp-caption', 'wp-caption-text'] },
 		allowedSchemes: ['http', 'https', 'mailto'],
 		allowedSchemesByTag: { img: ['http', 'https', 'data'] },
 		allowedIframeHostnames: ALLOWED_IFRAME_HOSTS,

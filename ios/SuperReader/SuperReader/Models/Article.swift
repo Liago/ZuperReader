@@ -62,6 +62,8 @@ struct Article: Identifiable, Codable, Equatable {
     /// Non-nil = readable by anyone via the public web link (/p/<token>).
     var publicShareToken: String? = nil
     var publicSharedAt: String? = nil
+    /// nil = the public link never expires.
+    var publicLinkExpiresAt: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -90,11 +92,17 @@ struct Article: Identifiable, Codable, Equatable {
         case updatedAt = "updated_at"
         case publicShareToken = "public_share_token"
         case publicSharedAt = "public_shared_at"
+        case publicLinkExpiresAt = "public_link_expires_at"
     }
     
+    /// True when the article has a public link that has not expired yet.
+    var isPublicLinkActive: Bool {
+        PublicLinkValidity.isActive(token: publicShareToken, expiresAt: publicLinkExpiresAt)
+    }
+
     /// Public web URL when the article has an active public link.
     var publicURL: URL? {
-        guard let token = publicShareToken else { return nil }
+        guard isPublicLinkActive, let token = publicShareToken else { return nil }
         return SupabaseConfig.publicArticleURL(token: token)
     }
     
@@ -214,4 +222,51 @@ enum SortOrder: String, CaseIterable {
 struct ArticleSortOptions {
     var field: ArticleSortField = .createdAt
     var order: SortOrder = .descending
+}
+
+// MARK: - Public Link Validity
+
+/// Validity of a public article link: 1 day, 1 week or never.
+enum PublicLinkValidity: Int, CaseIterable, Identifiable {
+    case oneDay = 1
+    case oneWeek = 7
+    case never = 0
+
+    var id: Int { rawValue }
+
+    /// Value sent to `enable_article_public_link` (nil = never expires).
+    var days: Int? { self == .never ? nil : rawValue }
+
+    var label: String {
+        switch self {
+        case .oneDay: return "1 day"
+        case .oneWeek: return "1 week"
+        case .never: return "Never"
+        }
+    }
+
+    /// Closest option for a saved expiry (used to preselect the picker).
+    static func from(expiresAt: String?) -> PublicLinkValidity {
+        guard let date = parseDate(expiresAt) else { return .never }
+        return date.timeIntervalSinceNow > 24 * 3600 ? .oneWeek : .oneDay
+    }
+
+    static func isActive(token: String?, expiresAt: String?) -> Bool {
+        guard token != nil else { return false }
+        guard let expiresAt else { return true }
+        // An unparseable date should not hide an active link
+        guard let date = parseDate(expiresAt) else { return true }
+        return date > Date()
+    }
+
+    /// Parses Postgres timestamptz strings, with or without fractional seconds.
+    static func parseDate(_ string: String?) -> Date? {
+        guard let string else { return nil }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        if let date = plain.date(from: string) { return date }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: string)
+    }
 }

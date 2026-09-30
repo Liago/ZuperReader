@@ -160,7 +160,7 @@ export default async function PublicArticlePage({ params }: PageProps) {
 
 					{content ? (
 						<div
-							className="prose leading-relaxed mt-8 max-w-none break-words prose-headings:font-heading prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-[3px] prose-blockquote:not-italic prose-blockquote:pl-5 prose-blockquote:font-normal [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-2xl [&_img]:h-auto [&_img]:max-w-full"
+							className="public-article html-chunk prose leading-relaxed mt-8 max-w-none break-words prose-headings:font-heading prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-[3px] prose-blockquote:not-italic prose-blockquote:pl-5 prose-blockquote:font-normal [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-2xl [&_img]:h-auto [&_img]:max-w-full"
 							style={proseStyle}
 							dangerouslySetInnerHTML={{ __html: content }}
 						/>
@@ -177,6 +177,20 @@ export default async function PublicArticlePage({ params }: PageProps) {
 					<p className="mt-1.5 text-[13.5px] text-app-muted">
 						This article was shared with you via SuperReader, the clean reader for the web.
 					</p>
+					{article.expires_at && (
+						<p className="mt-1 text-[12.5px] text-app-muted">
+							This link is available until{' '}
+							{new Date(article.expires_at).toLocaleString('en-US', {
+								month: 'long',
+								day: 'numeric',
+								hour: 'numeric',
+								minute: '2-digit',
+								timeZone: 'Europe/Rome',
+								timeZoneName: 'short',
+							})}
+							.
+						</p>
+					)}
 					<div className="mt-4 flex flex-wrap justify-center gap-2.5">
 						<Link
 							href="/login"
@@ -193,6 +207,13 @@ export default async function PublicArticlePage({ params }: PageProps) {
 							Read the original
 						</a>
 					</div>
+					<p className="mt-6 border-t border-app-line pt-4 text-[12px] text-app-muted">
+						© {new Date().getFullYear()} ZuperReader — made with{' '}
+						<span role="img" aria-label="love" className="text-accent">
+							♥
+						</span>{' '}
+						by Liago
+					</p>
 				</footer>
 			</main>
 		</div>

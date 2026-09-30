@@ -402,3 +402,28 @@ input[type="range"].slider::-moz-range-thumb:hover {
     width: auto !important;
     height: auto !important;
 }
+/* ============================================
+   PUBLIC ARTICLE PAGE (/p/[token])
+   ============================================ */
+
+/* Stand-alone images (not in a figure card): centered, never wider than the text */
+.public-article > img,
+.public-article > p > img,
+.public-article > p > a > img,
+.public-article > a > img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Figure cards: centered and sized to the image, caption readable */
+.public-article figure {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.public-article figcaption {
+  font-size: 0.8em !important;
+}

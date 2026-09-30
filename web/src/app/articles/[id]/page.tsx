@@ -526,9 +526,17 @@ export default function ArticleReaderPage() {
 							<PublicLinkButton
 								articleId={article.id}
 								publicShareToken={article.public_share_token ?? null}
-								onChange={(token) =>
+								publicLinkExpiresAt={article.public_link_expires_at ?? null}
+								onChange={(token, expiresAt) =>
 									setArticle((prev) =>
-										prev ? { ...prev, public_share_token: token, public_shared_at: token ? prev.public_shared_at ?? new Date().toISOString() : null } : prev
+										prev
+											? {
+													...prev,
+													public_share_token: token,
+													public_link_expires_at: expiresAt,
+													public_shared_at: token ? prev.public_shared_at ?? new Date().toISOString() : null,
+												}
+											: prev
 									)
 								}
 							/>
