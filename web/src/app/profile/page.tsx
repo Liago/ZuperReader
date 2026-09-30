@@ -89,20 +89,20 @@ export default function ProfilePage() {
 
 	return (
 		<AppShell>
-			<div className="mx-auto max-w-[840px] px-9 py-8">
+			<div className="mx-auto max-w-[840px] px-4 py-6 sm:px-9 sm:py-8">
 				{/* Header */}
 				<div className="flex flex-wrap items-center gap-5">
 					<span className="flex h-[76px] w-[76px] flex-none items-center justify-center rounded-full bg-accent font-heading text-[32px] text-app-page">
 						{name.charAt(0).toUpperCase()}
 					</span>
 					<div className="min-w-0 flex-1">
-						<h1 className="font-heading text-[34px] leading-none text-ink">{name}</h1>
+						<h1 className="break-words font-heading text-[28px] leading-none text-ink sm:text-[34px]">{name}</h1>
 						<p className="mt-1.5 text-[13px] text-app-muted">
 							{user.email}
 							{memberSince && <> · member since {memberSince}</>}
 						</p>
 					</div>
-					<div className="flex gap-2.5">
+					<div className="flex w-full gap-2.5 sm:w-auto">
 						<button
 							type="button"
 							onClick={() => setIsEditing((v) => !v)}

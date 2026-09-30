@@ -242,22 +242,22 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	};
 
 	const header = (
-		<div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-app-line pb-[18px]">
+		<div className="mb-5 flex flex-col gap-4 border-b border-app-line pb-[18px] sm:mb-6 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
 			<div>
 				<div className="text-[11px] font-bold uppercase tracking-[0.12em] text-app-muted">Saved by you</div>
-				<h1 className="mt-1 font-heading text-[34px] leading-none text-ink">Library</h1>
+				<h1 className="mt-1 font-heading text-[30px] leading-none text-ink sm:text-[34px]">Library</h1>
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2.5">
-				{/* Search */}
-				<div className="flex w-[264px] items-center gap-2 rounded-full border border-app-line bg-app-card px-3.5 py-2">
+				{/* Search: full width on phones, its own row */}
+				<div className="flex w-full items-center gap-2 rounded-full border border-app-line bg-app-card px-3.5 py-2.5 sm:w-auto sm:min-w-0 sm:flex-1 sm:py-2 lg:w-[264px] lg:flex-none">
 					<Search size={16} strokeWidth={2.75} className="flex-none text-app-muted" />
 					<input
 						type="text"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder="Search titles, tags, notes"
-						className="w-full bg-transparent text-[13.5px] text-ink placeholder:text-app-muted focus:outline-none"
+						className="w-full bg-transparent text-[16px] text-ink placeholder:text-app-muted focus:outline-none sm:text-[13.5px]"
 					/>
 					{searchQuery && (
 						<button type="button" onClick={() => setSearchQuery('')} className="flex-none text-app-muted hover:text-ink">
@@ -279,7 +279,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 					{sortOpen && (
 						<>
 							<div className="fixed inset-0 z-40" onClick={() => setSortOpen(false)} />
-							<div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-app-line bg-app-card py-1 [box-shadow:var(--shadow-modal)]">
+							<div className="absolute left-0 z-50 mt-2 w-44 sm:left-auto sm:right-0 overflow-hidden rounded-2xl border border-app-line bg-app-card py-1 [box-shadow:var(--shadow-modal)]">
 								{SORT_CHOICES.map((choice) => {
 									const active = choice.field === sortField && choice.order === sortOrder;
 									return (
@@ -315,7 +315,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 				</button>
 
 				{/* View toggle */}
-				<div className="flex items-center gap-1 rounded-full border border-app-line p-1">
+				<div className="ml-auto flex items-center gap-1 rounded-full border border-app-line p-1 sm:ml-0">
 					<button
 						type="button"
 						onClick={() => updatePreferences({ viewMode: 'grid' })}
@@ -342,13 +342,13 @@ export default function ArticleList({ userId }: ArticleListProps) {
 	);
 
 	return (
-		<div className="mx-auto max-w-[1200px] px-9 py-7">
+		<div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6 sm:py-7 lg:px-9">
 			{header}
 
 			{/* Loading (initial) */}
 			{loading && (
 				viewMode === 'grid' ? (
-					<div className="grid grid-cols-1 gap-[22px] md:grid-cols-2 lg:grid-cols-3">
+					<div className="grid grid-cols-1 gap-4 sm:gap-[22px] md:grid-cols-2 lg:grid-cols-3">
 						{[...Array(6)].map((_, i) => <GridSkeleton key={i} />)}
 					</div>
 				) : (
@@ -380,7 +380,7 @@ export default function ArticleList({ userId }: ArticleListProps) {
 
 			{/* Grid */}
 			{!loading && !error && articles.length > 0 && viewMode === 'grid' && (
-				<div className="grid grid-cols-1 gap-[22px] md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-4 sm:gap-[22px] md:grid-cols-2 lg:grid-cols-3">
 					{articles.map((article, index) => (
 						<ArticleCard
 							key={article.id}

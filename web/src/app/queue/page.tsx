@@ -69,7 +69,7 @@ export default function QueuePage() {
 
 	return (
 		<AppShell>
-			<div className="mx-auto max-w-[760px] px-9 py-8">
+			<div className="mx-auto max-w-[760px] px-4 py-6 sm:px-9 sm:py-8">
 				<div className="text-[11px] font-bold uppercase tracking-[0.12em] text-app-muted">
 					{queue.length} {queue.length === 1 ? 'article' : 'articles'}
 					{totalMinutes > 0 && ` · ${totalMinutes} minutes`}

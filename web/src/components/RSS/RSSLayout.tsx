@@ -29,6 +29,8 @@ interface RSSLayoutProps {
 
 export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeedUpdated }: RSSLayoutProps) {
 	const [selectedFeed, setSelectedFeed] = useState<Feed | null>(null);
+	// Phones show one pane at a time: the feed list or the articles of a feed.
+	const [showListOnMobile, setShowListOnMobile] = useState(true);
 	const [showImportModal, setShowImportModal] = useState(false);
 	const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
 
@@ -58,19 +60,26 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 		}
 	}, [userId, onFeedUpdated]);
 
+	const handleSelectFeed = (feed: Feed | null) => {
+		setSelectedFeed(feed);
+		// "All articles" (null) has no article pane of its own: stay on the list
+		setShowListOnMobile(feed === null);
+	};
+
 	// Handle back to feeds on mobile
 	const handleBackToFeeds = () => {
-		setSelectedFeed(null);
+		setShowListOnMobile(true);
 	};
 
 	return (
 		<>
-			<div className="flex h-full overflow-hidden">
+			{/* 61px = AppShell mobile top bar (hidden from md up) */}
+			<div className="flex h-[calc(100%-61px)] overflow-hidden md:h-full">
 				{/* Sidebar - Hidden on mobile if feed is selected */}
 				<div
 					className={`
 						h-full
-						${selectedFeed ? 'hidden md:block' : 'w-full md:w-auto'}
+						${showListOnMobile ? 'w-full md:w-auto' : 'hidden md:block'}
 						md:flex-shrink-0
 					`}
 				>
@@ -78,7 +87,7 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 						folders={initialFolders}
 						feeds={initialFeeds}
 						selectedFeedId={selectedFeed?.id}
-						onSelectFeed={setSelectedFeed}
+						onSelectFeed={handleSelectFeed}
 						onOpenImportModal={() => setShowImportModal(true)}
 						onOpenDiscoveryModal={() => setShowDiscoveryModal(true)}
 						onMarkFeedAsRead={handleMarkFeedAsRead}
@@ -89,7 +98,7 @@ export default function RSSLayout({ initialFolders, initialFeeds, userId, onFeed
 				<div 
 					className={`
 						flex-1 flex flex-col h-full overflow-hidden
-						${selectedFeed ? 'w-full' : 'hidden md:flex'}
+						${showListOnMobile ? 'hidden md:flex' : 'w-full'}
 					`}
 				>
 					<FeedList

@@ -114,7 +114,7 @@ export default function AddArticleModal({ isOpen, onClose, userId, onArticleAdde
 			onClick={handleClose}
 		>
 			<div
-				className="w-full max-w-[520px] rounded-[28px] border border-app-line bg-app-card p-7 [box-shadow:var(--shadow-modal)]"
+				className="w-full max-w-[520px] rounded-[28px] border border-app-line bg-app-card p-5 [box-shadow:var(--shadow-modal)] sm:p-7"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}

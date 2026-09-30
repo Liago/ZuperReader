@@ -476,20 +476,20 @@ export default function ArticleReaderPage() {
 					<div className="h-full bg-accent transition-[width] duration-150" style={{ width: `${scrollPct}%` }} />
 				</div>
 
-				<div className="flex items-center gap-3 border-b border-app-line px-7 py-3">
+				<div className="flex items-center gap-2 border-b border-app-line px-3 py-2.5 sm:gap-3 sm:px-7 sm:py-3">
 					<Link href="/" className={circleBtn} title="Back to Library">
 						<ArrowLeft size={16} strokeWidth={2.75} />
 					</Link>
 
-					<div className="min-w-0 flex-1">
+					<div className="hidden min-w-0 flex-1 truncate sm:block">
 						{article.domain && (
 							<span className="text-[12.5px] font-bold text-accent">{article.domain}</span>
 						)}
 						<span className="ml-2 truncate text-[13.5px] text-app-muted">{article.title}</span>
 					</div>
 
-					<div className="flex flex-none items-center gap-2">
-						<span className="rounded-full bg-accent-200 px-3 py-1.5 text-[12.5px] font-bold text-accent-800">
+					<div className="ml-auto flex flex-none items-center gap-1.5 sm:gap-2">
+						<span className="hidden rounded-full bg-accent-200 px-3 py-1.5 text-[12.5px] font-bold text-accent-800 lg:inline">
 							{scrollPct}%{minLeft !== null && ` · ${minLeft} min left`}
 						</span>
 
@@ -546,7 +546,7 @@ export default function ArticleReaderPage() {
 							type="button"
 							onClick={() => setFocus((v) => !v)}
 							title="Focus mode"
-							className={`flex items-center gap-1.5 rounded-full border border-app-line px-3 py-1.5 text-[12.5px] font-bold transition-colors ${
+							className={`hidden items-center gap-1.5 rounded-full border border-app-line px-3 py-1.5 text-[12.5px] font-bold transition-colors md:flex ${
 								focus ? 'bg-ink text-app-page' : 'text-ink hover:bg-app-hover'
 							}`}
 						>
@@ -558,7 +558,7 @@ export default function ArticleReaderPage() {
 			</div>
 
 			{/* Body */}
-			<div className={`mx-auto flex gap-9 px-8 py-11 ${focus ? 'max-w-[664px]' : 'max-w-[980px]'}`}>
+			<div className={`mx-auto flex gap-9 px-5 py-7 sm:px-8 sm:py-11 ${focus ? 'max-w-[664px]' : 'max-w-[980px]'}`}>
 				<article className="min-w-0 flex-1">
 					{/* Kicker */}
 					{kickerParts.length > 0 && (
@@ -568,12 +568,12 @@ export default function ArticleReaderPage() {
 					)}
 
 					{/* Title */}
-					<h1 className="text-pretty mt-3 font-heading text-[44px] leading-[1.06] tracking-[-0.02em] text-ink">
+					<h1 className="text-pretty mt-3 font-heading text-[30px] leading-[1.1] tracking-[-0.02em] text-ink sm:text-[44px] sm:leading-[1.06]">
 						{article.title}
 					</h1>
 
 					{/* Byline */}
-					<div className="mt-5 flex items-center justify-between gap-4 border-b border-app-line pb-6">
+					<div className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-app-line pb-6">
 						<div className="flex items-center gap-2.5">
 							<span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-sage text-[13px] font-semibold text-app-page">
 								{(article.author || article.domain || '?').charAt(0).toUpperCase()}

@@ -213,7 +213,7 @@ export default function FeedList({ feedUrl, feedId, userId, onFeedUpdated, onBac
 	const unreadCount = feedId ? Math.max(0, items.length - readCount) : items.length;
 
 	return (
-		<div className="mx-auto h-full w-full max-w-[820px] overflow-y-auto px-8 py-7">
+		<div className="mx-auto h-full w-full max-w-[820px] overflow-y-auto px-4 py-5 sm:px-8 sm:py-7">
 			{/* Header */}
 			<div className="mb-6 border-b border-app-line pb-5">
 				<div className="flex items-center gap-2">

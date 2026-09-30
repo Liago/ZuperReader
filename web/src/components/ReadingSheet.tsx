@@ -48,7 +48,7 @@ export default function ReadingSheet({ isOpen, onClose }: ReadingSheetProps) {
 	return (
 		<div className="fixed inset-0 z-50" onClick={onClose} style={{ background: 'rgba(32,30,29,.42)' }}>
 			<div
-				className="absolute right-10 top-[70px] w-[360px] rounded-[28px] border border-app-line bg-app-card p-[22px] [box-shadow:var(--shadow-modal)]"
+				className="absolute inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] max-h-[85dvh] overflow-y-auto rounded-[28px] border border-app-line bg-app-card p-[22px] [box-shadow:var(--shadow-modal)] sm:inset-x-auto sm:bottom-auto sm:right-10 sm:top-[70px] sm:w-[360px]"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="flex items-center justify-between">
