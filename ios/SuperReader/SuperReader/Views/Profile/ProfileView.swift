@@ -18,6 +18,7 @@ struct ProfileView: View {
     @State private var showEditProfile = false
     @State private var showReadingDefaults = false
     @State private var showFeedSync = false
+    @State private var showPublicLinks = false
 
     private var refreshInterval: RSSRefreshInterval {
         RSSRefreshInterval(rawValue: rawRefreshInterval) ?? .fifteenMinutes
@@ -67,6 +68,10 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showFeedSync) {
                 RSSSettingsView()
+                    .environmentObject(themeManager)
+            }
+            .sheet(isPresented: $showPublicLinks) {
+                PublicLinksView()
                     .environmentObject(themeManager)
             }
             .alert("Sign Out", isPresented: $isSigningOut) {
@@ -214,6 +219,10 @@ struct ProfileView: View {
         VStack(spacing: 0) {
             settingsRow(icon: "textformat.size", title: "Reading defaults") {
                 showReadingDefaults = true
+            }
+            hairline
+            settingsRow(icon: "globe", title: "Public links") {
+                showPublicLinks = true
             }
             hairline
             settingsRow(icon: "arrow.triangle.2.circlepath", title: "Feed sync", value: refreshInterval.displayName) {

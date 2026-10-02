@@ -117,8 +117,12 @@ the reader's More menu → `PublicLinkSheet`).
   (owner only; validity 1, 7 or NULL days; keeps the token while the link is active and
   returns `{ token, expires_at }`), `disable_article_public_link` and
   `get_public_article` (anon; expired links return no rows).
-  Migrations: `web/supabase-migration-public-articles.sql`, then
-  `web/supabase-migration-public-articles-expiry.sql`.
+  `public_link_validity_days` stores the validity picked (NULL = never, or legacy link).
+  Migrations, in order: `web/supabase-migration-public-articles.sql`,
+  `web/supabase-migration-public-articles-expiry.sql`,
+  `web/supabase-migration-public-articles-validity.sql`.
+- "Public links" view listing active/expired links: web `/public-links` (sidebar),
+  iOS `PublicLinksView` (You tab → Public links).
 - `articles.user_id` is TEXT in this project: compare with `auth.uid()::text`.
 - Web page: `web/src/app/p/[token]/page.tsx`, server-rendered, `force-dynamic` so
   revocation is immediate, `noindex`. Content is always passed through

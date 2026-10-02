@@ -9,9 +9,9 @@ import UIKit
 struct PublicLinkSheet: View {
     let articleId: String
     let articleTitle: String
-    /// Called after every successful change with the new token and expiry
-    /// (token nil = revoked, expiresAt nil = never expires).
-    let onChange: (_ token: String?, _ expiresAt: String?) -> Void
+    /// Called after every successful change with the new token, expiry and validity
+    /// (token nil = revoked, expiresAt nil = never expires, validityDays nil = never).
+    let onChange: (_ token: String?, _ expiresAt: String?, _ validityDays: Int?) -> Void
 
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
@@ -28,7 +28,8 @@ struct PublicLinkSheet: View {
         articleTitle: String,
         initialToken: String?,
         initialExpiresAt: String?,
-        onChange: @escaping (_ token: String?, _ expiresAt: String?) -> Void
+        initialValidityDays: Int? = nil,
+        onChange: @escaping (_ token: String?, _ expiresAt: String?, _ validityDays: Int?) -> Void
     ) {
         self.articleId = articleId
         self.articleTitle = articleTitle
@@ -38,7 +39,7 @@ struct PublicLinkSheet: View {
         _token = State(initialValue: active ? initialToken : nil)
         _expiresAt = State(initialValue: active ? initialExpiresAt : nil)
         // Default for a new link: 1 week
-        _validity = State(initialValue: active ? PublicLinkValidity.from(expiresAt: initialExpiresAt) : .oneWeek)
+        _validity = State(initialValue: active ? PublicLinkValidity.from(expiresAt: initialExpiresAt, storedDays: initialValidityDays) : .oneWeek)
     }
 
     private var isPublic: Bool { token != nil }
@@ -211,7 +212,7 @@ struct PublicLinkSheet: View {
             let result = try await SupabaseService.shared.enablePublicLink(articleId: articleId, validity: validity)
             token = result.token
             expiresAt = result.expiresAt
-            onChange(result.token, result.expiresAt)
+            onChange(result.token, result.expiresAt, validity.days)
             if copyAfter, let url = SupabaseConfig.publicArticleURL(token: result.token) {
                 copy(url)
             }
@@ -231,7 +232,7 @@ struct PublicLinkSheet: View {
             try await SupabaseService.shared.disablePublicLink(articleId: articleId)
             token = nil
             expiresAt = nil
-            onChange(nil, nil)
+            onChange(nil, nil, nil)
         } catch {
             errorMessage = "Could not disable the public link."
             print("❌ Public link error: \(error)")

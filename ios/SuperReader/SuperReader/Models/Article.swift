@@ -64,6 +64,8 @@ struct Article: Identifiable, Codable, Equatable {
     var publicSharedAt: String? = nil
     /// nil = the public link never expires.
     var publicLinkExpiresAt: String? = nil
+    /// Validity picked by the owner: 1, 7 or nil (never / created before it was stored).
+    var publicLinkValidityDays: Int? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -93,6 +95,7 @@ struct Article: Identifiable, Codable, Equatable {
         case publicShareToken = "public_share_token"
         case publicSharedAt = "public_shared_at"
         case publicLinkExpiresAt = "public_link_expires_at"
+        case publicLinkValidityDays = "public_link_validity_days"
     }
     
     /// True when the article has a public link that has not expired yet.
@@ -245,10 +248,21 @@ enum PublicLinkValidity: Int, CaseIterable, Identifiable {
         }
     }
 
-    /// Closest option for a saved expiry (used to preselect the picker).
-    static func from(expiresAt: String?) -> PublicLinkValidity {
+    /// The stored validity when available, otherwise the closest option for the
+    /// saved expiry (links created before the validity was stored).
+    static func from(expiresAt: String?, storedDays: Int? = nil) -> PublicLinkValidity {
+        if let storedDays, let stored = PublicLinkValidity(rawValue: storedDays), stored != .never { return stored }
         guard let date = parseDate(expiresAt) else { return .never }
         return date.timeIntervalSinceNow > 24 * 3600 ? .oneWeek : .oneDay
+    }
+
+    /// Label of the validity picked by the owner ("Custom" for legacy links).
+    static func label(storedDays: Int?, expiresAt: String?) -> String {
+        switch storedDays {
+        case 1: return PublicLinkValidity.oneDay.label
+        case 7: return PublicLinkValidity.oneWeek.label
+        default: return expiresAt == nil ? "Never expires" : "Custom"
+        }
     }
 
     static func isActive(token: String?, expiresAt: String?) -> Bool {
@@ -268,5 +282,36 @@ enum PublicLinkValidity: Int, CaseIterable, Identifiable {
         let fractional = ISO8601DateFormatter()
         fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return fractional.date(from: string)
+    }
+}
+
+// MARK: - Public Link Item ("Public links" view)
+
+/// An article with a public link, as listed in the "Public links" view.
+struct PublicLinkItem: Identifiable, Decodable, Equatable {
+    let id: String
+    let title: String
+    let domain: String?
+    let imageUrl: String?
+    var publicShareToken: String?
+    var publicSharedAt: String?
+    var publicLinkExpiresAt: String?
+    var publicLinkValidityDays: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, domain
+        case imageUrl = "image_url"
+        case publicShareToken = "public_share_token"
+        case publicSharedAt = "public_shared_at"
+        case publicLinkExpiresAt = "public_link_expires_at"
+        case publicLinkValidityDays = "public_link_validity_days"
+    }
+
+    var isActive: Bool {
+        PublicLinkValidity.isActive(token: publicShareToken, expiresAt: publicLinkExpiresAt)
+    }
+
+    var url: URL? {
+        publicShareToken.flatMap { SupabaseConfig.publicArticleURL(token: $0) }
     }
 }

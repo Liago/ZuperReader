@@ -527,13 +527,15 @@ export default function ArticleReaderPage() {
 								articleId={article.id}
 								publicShareToken={article.public_share_token ?? null}
 								publicLinkExpiresAt={article.public_link_expires_at ?? null}
-								onChange={(token, expiresAt) =>
+								publicLinkValidityDays={article.public_link_validity_days ?? null}
+								onChange={(token, expiresAt, validityDays) =>
 									setArticle((prev) =>
 										prev
 											? {
 													...prev,
 													public_share_token: token,
 													public_link_expires_at: expiresAt,
+													public_link_validity_days: validityDays,
 													public_shared_at: token ? prev.public_shared_at ?? new Date().toISOString() : null,
 												}
 											: prev

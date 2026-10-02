@@ -368,6 +368,18 @@ actor SupabaseService {
             .value
     }
 
+    /// All the user's articles with a public link (active or expired), newest first.
+    func getPublicLinks(userId: String) async throws -> [PublicLinkItem] {
+        try await client
+            .from("articles")
+            .select("id, title, domain, image_url, public_share_token, public_shared_at, public_link_expires_at, public_link_validity_days")
+            .eq("user_id", value: userId.lowercased())
+            .not("public_share_token", operator: .is, value: "null")
+            .order("public_shared_at", ascending: false)
+            .execute()
+            .value
+    }
+
     /// Revokes the public link: the old URL stops working immediately.
     func disablePublicLink(articleId: String) async throws {
         try await client
