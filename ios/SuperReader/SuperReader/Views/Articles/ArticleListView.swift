@@ -146,7 +146,8 @@ class ArticleListViewModel: ObservableObject {
                 updatedAt: updatedArticle.updatedAt,
                 publicShareToken: updatedArticle.publicShareToken,
                 publicSharedAt: updatedArticle.publicSharedAt,
-                publicLinkExpiresAt: updatedArticle.publicLinkExpiresAt
+                publicLinkExpiresAt: updatedArticle.publicLinkExpiresAt,
+                publicLinkValidityDays: updatedArticle.publicLinkValidityDays
             )
             articles[index] = updatedArticle
         }
@@ -183,7 +184,8 @@ class ArticleListViewModel: ObservableObject {
                     updatedAt: updatedArticle.updatedAt,
                     publicShareToken: updatedArticle.publicShareToken,
                     publicSharedAt: updatedArticle.publicSharedAt,
-                    publicLinkExpiresAt: updatedArticle.publicLinkExpiresAt
+                    publicLinkExpiresAt: updatedArticle.publicLinkExpiresAt,
+                    publicLinkValidityDays: updatedArticle.publicLinkValidityDays
                 )
                 articles[index] = updatedArticle
             }

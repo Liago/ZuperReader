@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, ListOrdered, Rss, Share2, Plus } from 'lucide-react';
+import { BookOpen, ListOrdered, Rss, Share2, Plus, Globe } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFriends } from '../../contexts/FriendsContext';
 import { useArticles } from '../../contexts/ArticlesContext';
@@ -81,6 +81,7 @@ export default function Sidebar({ onSaveLink, onNavigate }: SidebarProps) {
 			badge: unreadSharesCount || undefined,
 			badgeTone: 'accent',
 		},
+		{ href: '/public-links', label: 'Public links', icon: Globe },
 	];
 
 	const onLibrary = pathname === '/';

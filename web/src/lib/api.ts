@@ -1,5 +1,5 @@
 import { createClient } from './supabase/client';
-import type { Article, Comment, Share, PublicLinkValidity, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences, RSSArticle, RSSFeed } from './supabase';
+import type { Article, Comment, Share, PublicLinkValidity, PublicLinkArticle, UserProfile, Friendship, FriendshipStatus, ArticleShare, Friend, UserPreferences, RSSArticle, RSSFeed } from './supabase';
 
 // Create a singleton supabase client for this module
 const supabase = createClient();
@@ -595,6 +595,19 @@ export async function enablePublicLink(
 	if (error) throw new Error(error.message);
 	const result = data as { token: string; expires_at: string | null };
 	return { token: result.token, expiresAt: result.expires_at };
+}
+
+/** All the user's articles that have a public link (active or expired), newest first. */
+export async function getPublicLinks(userId: string): Promise<PublicLinkArticle[]> {
+	const { data, error } = await supabase
+		.from('articles')
+		.select('id, title, domain, image_url, public_share_token, public_shared_at, public_link_expires_at, public_link_validity_days')
+		.eq('user_id', userId)
+		.not('public_share_token', 'is', null)
+		.order('public_shared_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return (data ?? []) as PublicLinkArticle[];
 }
 
 /** Revoke the public link: the old URL stops working immediately. */

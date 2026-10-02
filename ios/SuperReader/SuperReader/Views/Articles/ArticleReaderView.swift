@@ -126,6 +126,7 @@ struct ArticleReaderView: View {
                     isGenerating: isGeneratingSummary,
                     error: summaryError
                 )
+                .environmentObject(themeManager)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
@@ -164,10 +165,12 @@ struct ArticleReaderView: View {
                     articleId: article.id,
                     articleTitle: article.title,
                     initialToken: article.publicShareToken,
-                    initialExpiresAt: article.publicLinkExpiresAt
-                ) { token, expiresAt in
+                    initialExpiresAt: article.publicLinkExpiresAt,
+                    initialValidityDays: article.publicLinkValidityDays
+                ) { token, expiresAt, validityDays in
                     self.article?.publicShareToken = token
                     self.article?.publicLinkExpiresAt = expiresAt
+                    self.article?.publicLinkValidityDays = validityDays
                     self.article?.publicSharedAt = token == nil ? nil : (self.article?.publicSharedAt ?? ISO8601DateFormatter().string(from: Date()))
                 }
                 .environmentObject(themeManager)

@@ -15,10 +15,17 @@ interface PublicLinkButtonProps {
 	articleId: string;
 	publicShareToken: string | null;
 	publicLinkExpiresAt: string | null;
-	onChange: (token: string | null, expiresAt: string | null) => void;
+	publicLinkValidityDays?: number | null;
+	onChange: (token: string | null, expiresAt: string | null, validityDays: PublicLinkValidity) => void;
 }
 
-export default function PublicLinkButton({ articleId, publicShareToken, publicLinkExpiresAt, onChange }: PublicLinkButtonProps) {
+export default function PublicLinkButton({
+	articleId,
+	publicShareToken,
+	publicLinkExpiresAt,
+	publicLinkValidityDays,
+	onChange,
+}: PublicLinkButtonProps) {
 	const [open, setOpen] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [copied, setCopied] = useState(false);
@@ -30,7 +37,9 @@ export default function PublicLinkButton({ articleId, publicShareToken, publicLi
 	// Validity picked before turning the link on (default: 1 week).
 	// While the link is active the selection mirrors the saved expiry.
 	const [pendingValidity, setPendingValidity] = useState<PublicLinkValidity>(7);
-	const selectedValidity: PublicLinkValidity = isPublic ? validityFromExpiry(publicLinkExpiresAt) : pendingValidity;
+	const selectedValidity: PublicLinkValidity = isPublic
+		? validityFromExpiry(publicLinkExpiresAt, publicLinkValidityDays)
+		: pendingValidity;
 
 	const copy = async (url: string) => {
 		try {
@@ -47,7 +56,7 @@ export default function PublicLinkButton({ articleId, publicShareToken, publicLi
 		setError(null);
 		try {
 			const { token, expiresAt } = await enablePublicLink(articleId, validity);
-			onChange(token, expiresAt);
+			onChange(token, expiresAt, validity);
 			if (copyAfter) await copy(buildPublicArticleUrl(token));
 		} catch (err) {
 			console.error('Error enabling public link:', err);
@@ -66,7 +75,7 @@ export default function PublicLinkButton({ articleId, publicShareToken, publicLi
 		setError(null);
 		try {
 			await disablePublicLink(articleId);
-			onChange(null, null);
+			onChange(null, null, null);
 		} catch (err) {
 			console.error('Error disabling public link:', err);
 			setError('Could not disable the public link');
