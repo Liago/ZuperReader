@@ -106,6 +106,22 @@ grant all on public.your_table to service_role;
 grant execute on function public.your_function(...) to authenticated, service_role;
 ```
 
+## DB retention (Free plan: 500 MB)
+
+`rss_articles` holds the full feed HTML per user and is the largest table, so it is
+pruned nightly inside Supabase (pg_cron job `superreader-db-retention`, 03:30 UTC),
+defined in `web/supabase-migration-db-retention.sql`:
+
+- `cleanup_rss_articles()`: read > 14 days, unread > 30 days, max 100 per (user, feed).
+- Trigger `rss_articles_skip_expired`: the sync never re-inserts items with
+  `pub_date` older than 30 days (keep it aligned with the unread retention).
+- `cleanup_logs()`: `query_performance_log` > 7 days, `activity_feed` > 90 days.
+- `articles` (the user's library) is never pruned.
+
+There is no app-side cleanup (the old Vercel cron was removed). DELETE does not shrink
+the database: after a big cleanup run `vacuum full analyze <table>;` manually from the
+SQL Editor. Check sizes with `web/supabase-db-size-diagnostics.sql`.
+
 ## Public article links
 
 The owner of an article can publish it via an unguessable link `/p/<token>` readable

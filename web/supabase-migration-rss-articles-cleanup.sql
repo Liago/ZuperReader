@@ -1,6 +1,9 @@
 -- ============================================
 -- MIGRATION: Cleanup function for old RSS articles
 -- ============================================
+-- SUPERSEDED by supabase-migration-db-retention.sql, which drops this
+-- function and schedules public.cleanup_rss_articles() with pg_cron.
+-- Kept for history only: do not run.
 -- rss_articles grows unbounded as feeds are refreshed. Once an article
 -- has been read and is older than `retention_days`, there is no
 -- reason to keep it: re-fetching the feed will skip it (composite

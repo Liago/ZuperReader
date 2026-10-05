@@ -1322,28 +1322,6 @@ export async function getRSSFeedsWithUnreadCounts(userId: string, supabaseClient
 	return feedsWithCounts;
 }
 
-/**
- * Delete old RSS articles (cleanup function)
- */
-export async function deleteOldRSSArticles(
-	userId: string,
-	daysToKeep: number = 30
-): Promise<number> {
-	const cutoffDate = new Date();
-	cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
-	const { data, error } = await supabase
-		.from('rss_articles')
-		.delete()
-		.eq('user_id', userId)
-		.eq('is_read', true)
-		.lt('pub_date', cutoffDate.toISOString())
-		.select('id');
-
-	if (error) throw new Error(error.message);
-	return data?.length || 0;
-}
-
 // ==================== AI SUMMARY FUNCTIONS ====================
 
 // Derive the summary function URL from the parse function URL to avoid configuration duplication
