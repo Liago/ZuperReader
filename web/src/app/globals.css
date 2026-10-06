@@ -418,14 +418,48 @@ input[type="range"].slider::-moz-range-thumb:hover {
   height: auto;
 }
 
-/* Figure cards: centered and sized to the image, caption readable */
+/* Figure cards: centered, sized to the image, with the caption set apart
+   from the body text in its own footer. Theme tokens override the generic
+   .html-chunk card colors. */
 .public-article figure {
   width: fit-content;
   max-width: 100%;
+  margin: 2.25em auto !important;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  background: var(--app-card);
+  box-shadow: 0 1px 2px rgba(32, 30, 29, 0.06), 0 8px 24px -12px rgba(32, 30, 29, 0.18);
+}
+
+/* Keep the shadow steady: .html-chunk cards grow it on hover */
+.public-article figure:hover {
+  box-shadow: 0 1px 2px rgba(32, 30, 29, 0.06), 0 8px 24px -12px rgba(32, 30, 29, 0.18);
+}
+
+.public-article figure img {
+  display: block;
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 .public-article figcaption {
-  font-size: 0.8em !important;
+  margin: 0 !important;
+  padding: 0.85em 1.1em 0.95em 1.1em !important;
+  border-top: 1px solid var(--app-line) !important;
+  background: var(--app-card) !important;
+  color: var(--app-muted) !important;
+  font-family: var(--font-body);
+  font-size: 0.72em !important;
+  font-weight: 500 !important;
+  font-style: normal;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+
+.public-article figcaption p {
+  margin: 0 !important;
 }
 
 /* ============================================
