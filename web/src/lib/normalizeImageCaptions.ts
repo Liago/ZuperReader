@@ -32,13 +32,19 @@ export function normalizeImageCaptions(html: string): string {
 	return $.html();
 }
 
-/** A single element holding only an image and its caption (e.g. div#attachment_123.wp-caption). */
+/**
+ * A single element holding only an image and its caption (e.g. div#attachment_123.wp-caption,
+ * or a bare <div><img><p>caption</p></div> as published by Il Post).
+ */
 function wrapCaptionContainers($: CheerioAPI): void {
 	$('div, p, span').each((_, node) => {
 		const el = node as Element;
 		if ($(el).closest('figure').length > 0) return;
-		if (!IMAGE_WRAPPER_HINT.test(hintOf(el))) return;
+		// A bare div with just an image and a short text block is a caption card;
+		// p/span need a class/id hint since they also wrap inline images in body text.
+		if (el.name !== 'div' && !IMAGE_WRAPPER_HINT.test(hintOf(el))) return;
 		if ($(el).find('img').length !== 1) return;
+		if ($(el).contents().toArray().some((child) => child.type === 'text' && (child as unknown as { data: string }).data.trim() !== '')) return;
 
 		const children = $(el).children().toArray() as Element[];
 		const others = children.filter((child) => child.name !== 'img' && $(child).find('img').length === 0);
