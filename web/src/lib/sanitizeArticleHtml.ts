@@ -1,4 +1,5 @@
 import sanitizeHtml from 'sanitize-html';
+import { normalizeImageCaptions } from './normalizeImageCaptions';
 
 // Video providers whose iframes are allowed in public articles.
 const ALLOWED_IFRAME_HOSTS = [
@@ -17,9 +18,12 @@ const ALLOWED_IFRAME_HOSTS = [
  * Article content is third-party HTML and can also be edited by its owner
  * through the API, so on a public page it must be treated as untrusted:
  * the session of a logged-in visitor lives in localStorage on the same origin.
+ *
+ * Image + caption pairs are first turned into <figure>/<figcaption> (the
+ * classes that mark captions are dropped by the sanitizer).
  */
 export function sanitizeArticleHtml(html: string, baseUrl?: string): string {
-	return sanitizeHtml(html, {
+	return sanitizeHtml(normalizeImageCaptions(html), {
 		allowedTags: [
 			...sanitizeHtml.defaults.allowedTags,
 			'img', 'figure', 'figcaption', 'picture', 'source', 'iframe',
