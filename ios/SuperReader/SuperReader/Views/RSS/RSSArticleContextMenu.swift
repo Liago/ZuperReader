@@ -5,7 +5,8 @@ import SwiftUI
 // Action menu (long press) su una riga di articolo del feed. L'azione
 // principale è la stessa del bookmark nel reader: parse dell'URL originale e
 // salvataggio in Libreria (RSSLibrarySaveStore → SupabaseService
-// .saveRSSArticleWithParsing), senza aprire il dettaglio.
+// .saveRSSArticleWithParsing), senza aprire il dettaglio. "Add to Up next"
+// fa lo stesso salvataggio (se serve) e accoda l'articolo nella coda di lettura.
 
 struct RSSArticleContextMenuModifier: ViewModifier {
     let article: RSSArticle
@@ -13,6 +14,7 @@ struct RSSArticleContextMenuModifier: ViewModifier {
     let onMarkAsRead: (() -> Void)?
 
     @ObservedObject private var saveStore = RSSLibrarySaveStore.shared
+    @ObservedObject private var queueStore = ReadingQueueStore.shared
     @Environment(\.openURL) private var openURL
 
     func body(content: Content) -> some View {
@@ -26,6 +28,16 @@ struct RSSArticleContextMenuModifier: ViewModifier {
                     }
                 } label: {
                     Label(saveTitle, systemImage: saveIcon)
+                }
+            }
+
+            if saveStore.queueState(for: article) == nil {
+                Button {
+                    Task {
+                        await saveStore.addToUpNext(article)
+                    }
+                } label: {
+                    Label("Add to Up next", systemImage: "text.badge.plus")
                 }
             }
 

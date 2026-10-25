@@ -143,6 +143,85 @@ actor SupabaseService {
         return (articles, hasMore)
     }
     
+    // MARK: - Library Overview (home · smart grouping)
+
+    /// Every column the home needs — not the heavy `content` / `ai_summary`.
+    private static let overviewColumns = "id, user_id, url, title, excerpt, image_url, favicon_url, author, published_date, domain, tags, is_favorite, like_count, comment_count, reading_status, reading_progress, estimated_read_time, is_public, scraped_at, created_at, updated_at, public_share_token, public_shared_at, public_link_expires_at, public_link_validity_days"
+    private static let categoryColumns = ", category, category_source"
+
+    /// False once the DB answered that `articles.category` does not exist
+    /// (web/supabase-migration-article-category.sql not applied yet): the home
+    /// keeps working with on-device categories only.
+    private(set) var supportsArticleCategories = true
+
+    /// The whole Library, newest first, fetched in pages.
+    func getLibraryOverview(userId: String) async throws -> [Article] {
+        let pageSize = 500
+        var all: [Article] = []
+        var offset = 0
+
+        while true {
+            let page = try await fetchLibraryOverviewPage(userId: userId, from: offset, to: offset + pageSize - 1)
+            all.append(contentsOf: page)
+            if page.count < pageSize { break }
+            offset += pageSize
+        }
+        return all
+    }
+
+    private func fetchLibraryOverviewPage(userId: String, from: Int, to: Int) async throws -> [Article] {
+        let columns = Self.overviewColumns + (supportsArticleCategories ? Self.categoryColumns : "")
+        do {
+            return try await client
+                .from("articles")
+                .select(columns)
+                .eq("user_id", value: userId.lowercased())
+                .order("created_at", ascending: false)
+                .range(from: from, to: to)
+                .execute()
+                .value
+        } catch let error where supportsArticleCategories && Self.isMissingColumnError(error) {
+            print("⚠️ articles.category missing — run web/supabase-migration-article-category.sql")
+            supportsArticleCategories = false
+            return try await fetchLibraryOverviewPage(userId: userId, from: from, to: to)
+        }
+    }
+
+    func updateArticleCategory(articleId: String, category: ArticleCategory, source: ArticleCategorySource) async throws {
+        guard supportsArticleCategories else { throw SupabaseError.updateFailed }
+        do {
+            try await client
+                .from("articles")
+                .update(["category": category.rawValue, "category_source": source.rawValue])
+                .eq("id", value: articleId)
+                .execute()
+        } catch let error where Self.isMissingColumnError(error) {
+            supportsArticleCategories = false
+            throw error
+        }
+    }
+
+    /// Postgres "undefined column" (select) or PostgREST "column not in schema cache" (write).
+    nonisolated static func isMissingColumnError(_ error: Error) -> Bool {
+        guard let postgrestError = error as? PostgrestError else { return false }
+        return postgrestError.code == "42703" || postgrestError.code == "PGRST204"
+    }
+
+    /// The user's Library article saved from `url`, if any (avoids duplicates
+    /// when a feed item is queued after being saved).
+    func findArticle(userId: String, url: String) async throws -> Article? {
+        let articles: [Article] = try await client
+            .from("articles")
+            .select()
+            .eq("user_id", value: userId.lowercased())
+            .eq("url", value: url)
+            .limit(1)
+            .execute()
+            .value
+
+        return articles.first
+    }
+
     func getArticleById(_ id: String) async throws -> Article? {
         let articles: [Article] = try await client
             .from("articles")

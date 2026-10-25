@@ -9,6 +9,9 @@ struct ArticleCardView: View {
     let onFavorite: () -> Void
     var onAddToQueue: () -> Void = {}
     let onDelete: () -> Void
+    /// Smart-grouping shelf of the article; with `onMoveToCategory` it enables "Move to…".
+    var currentCategory: ArticleCategory? = nil
+    var onMoveToCategory: ((ArticleCategory) -> Void)? = nil
 
     @EnvironmentObject var themeManager: ThemeManager
 
@@ -40,6 +43,9 @@ struct ArticleCardView: View {
                 Button(action: onAddToQueue) {
                     Label("Add to Up next", systemImage: "text.badge.plus")
                 }
+            }
+            if let onMoveToCategory {
+                CategoryMoveMenu(currentCategory: currentCategory, onSelect: onMoveToCategory)
             }
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")

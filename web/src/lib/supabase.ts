@@ -31,6 +31,9 @@ export type Article = {
 	public_link_validity_days: number | null; // 1, 7 or NULL (never / created before validity was stored)
 	ai_summary: string | null; // AI-generated summary using Cohere
 	ai_summary_generated_at: string | null; // When the summary was generated
+	// Smart Library grouping (computed by the iOS app, see supabase-migration-article-category.sql)
+	category?: 'news' | 'politics' | 'business' | 'technology' | 'science' | 'health' | 'sports' | 'culture' | 'lifestyle' | 'environment' | 'other' | null;
+	category_source?: 'user' | 'model' | 'heuristic' | null;
 	scraped_at: string;
 	created_at: string;
 	updated_at: string;

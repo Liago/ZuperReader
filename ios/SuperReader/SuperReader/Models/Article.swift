@@ -47,7 +47,7 @@ struct Article: Identifiable, Codable, Equatable {
     let publishedDate: String?
     let domain: String?
     let tags: [String]
-    let isFavorite: Bool
+    var isFavorite: Bool
     let likeCount: Int
     let commentCount: Int
     let readingStatus: ReadingStatus
@@ -66,6 +66,10 @@ struct Article: Identifiable, Codable, Equatable {
     var publicLinkExpiresAt: String? = nil
     /// Validity picked by the owner: 1, 7 or nil (never / created before it was stored).
     var publicLinkValidityDays: Int? = nil
+    /// Topic used to group the Library (`ArticleCategory` raw value; nil = not categorized yet).
+    var category: String? = nil
+    /// Who picked `category` (`ArticleCategorySource` raw value).
+    var categorySource: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -96,6 +100,8 @@ struct Article: Identifiable, Codable, Equatable {
         case publicSharedAt = "public_shared_at"
         case publicLinkExpiresAt = "public_link_expires_at"
         case publicLinkValidityDays = "public_link_validity_days"
+        case category
+        case categorySource = "category_source"
     }
     
     /// True when the article has a public link that has not expired yet.
