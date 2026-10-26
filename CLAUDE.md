@@ -147,6 +147,27 @@ the reader's More menu → `PublicLinkSheet`).
 - iOS always builds public links on `SupabaseConfig.publicWebUrl` (production), never
   on the Debug LAN URL.
 
+## Smart Library grouping (iOS home)
+
+The iOS Library tab (`Views/Main/HomeView.swift`) opens with the "Up next" queue
+(`UpNextSectionView`), followed by every other Library article grouped into topic
+shelves (`CategoryShelfView`, "See all" → `CategoryArticlesView`).
+
+- Categories: `Models/ArticleCategory.swift` (news, politics, business, technology,
+  science, health, sports, culture, lifestyle, environment, other). Stored in
+  `articles.category` + `articles.category_source` (`user` > `model` > `heuristic`,
+  a lower rank never overwrites a higher one). Migration:
+  `web/supabase-migration-article-category.sql` (keep its CHECK list aligned with the enum).
+- Pipeline (`Services/ArticleCategoryStore.swift`): instant on-device heuristic
+  (`HeuristicCategoryClassifier`: publisher domain, URL section, tags, IT/EN keywords in
+  `CategoryLexicon`, NLEmbedding semantic similarity) → refinement with Apple Foundation
+  Models when available (`ModelCategoryClassifier`, iOS 26+) → saved to Supabase. Results
+  are also cached on disk, so the app works (on-device only) before the migration is run.
+- Manual "Move to…" in the long-press menu stores source `user`.
+- Feed items can be added to Up next from their long-press menu
+  (`RSSLibrarySaveStore.addToUpNext`): the item is saved to the Library first (or the
+  existing copy is reused), since `reading_queue` only references `articles`.
+
 ## iOS App
 
 Located in `ios/SuperReader/SuperReader/` with MVVM architecture:

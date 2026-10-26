@@ -226,7 +226,7 @@ struct QueueView: View {
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
 
-            Text("Add articles to Up next from the Library or when you save a link.")
+            Text("Add articles to Up next from the Library, from your Feeds (long-press an article) or when you save a link.")
                 .font(Typography.figtree(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
