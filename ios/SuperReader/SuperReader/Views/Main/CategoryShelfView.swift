@@ -2,8 +2,10 @@ import SwiftUI
 
 // MARK: - Category Shelf (home · Library grouped by topic)
 //
-// One horizontal row per category, biggest first. "See all" opens the full
-// category page; long-press a card for Up next / favorite / "Move to…".
+// One block per category, biggest first: a horizontal row of cards in grid
+// mode, the first rows of the category in list mode (header toggle).
+// "See all" opens the full category page; long-press an article for
+// Up next / favorite / "Move to…".
 
 struct CategoryShelfView: View {
     let section: LibraryCategorySection
@@ -13,43 +15,84 @@ struct CategoryShelfView: View {
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @ObservedObject private var categoryStore = ArticleCategoryStore.shared
 
-    /// Cards on the shelf before "See all".
+    /// Cards on the shelf before "See all" (grid mode).
     private let shelfLimit = 10
+    /// Rows under the header before "See all" (list mode).
+    private let listLimit = 5
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
                 .padding(.horizontal, Spacing.screenHorizontal)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(alignment: .top, spacing: 14) {
-                    ForEach(section.articles.prefix(shelfLimit)) { article in
-                        NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
-                            ShelfArticleCard(
-                                article: article,
-                                category: section.category,
-                                queueState: queueState(for: article)
-                            )
-                        }
-                        .buttonStyle(ScaleButtonStyle())
-                        .contextMenu {
-                            LibraryArticleMenuItems(
-                                article: article,
-                                currentCategory: categoryStore.category(for: article),
-                                queueState: queueState(for: article),
-                                onFavorite: { Task { await viewModel.toggleFavorite(article) } },
-                                onAddToQueue: { Task { await viewModel.addToQueue(article) } },
-                                onMove: { viewModel.move(article, to: $0) },
-                                onDelete: { Task { await viewModel.delete(article) } }
-                            )
-                        }
-                    }
-                }
-                .padding(.horizontal, Spacing.screenHorizontal)
-                .padding(.bottom, 8)
+            if themeManager.viewMode == .grid {
+                cardsRow
+            } else {
+                listRows
+                    .padding(.horizontal, Spacing.screenHorizontal)
             }
         }
     }
+
+    // MARK: - Grid mode (horizontal cards)
+
+    private var cardsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(alignment: .top, spacing: 14) {
+                ForEach(section.articles.prefix(shelfLimit)) { article in
+                    NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                        ShelfArticleCard(
+                            article: article,
+                            category: section.category,
+                            queueState: queueState(for: article)
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                    .contextMenu { menuItems(for: article) }
+                }
+            }
+            .padding(.horizontal, Spacing.screenHorizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    // MARK: - List mode (compact rows)
+
+    private var listRows: some View {
+        let articles = Array(section.articles.prefix(listLimit))
+
+        return VStack(spacing: 0) {
+            ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
+                NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                    ArticleRowView(article: article, queueState: queueState(for: article))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .contextMenu { menuItems(for: article) }
+
+                if index < articles.count - 1 {
+                    Rectangle()
+                        .fill(themeManager.colors.line)
+                        .frame(height: 1)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func menuItems(for article: Article) -> some View {
+        LibraryArticleMenuItems(
+            article: article,
+            currentCategory: categoryStore.category(for: article),
+            queueState: queueState(for: article),
+            onFavorite: { Task { await viewModel.toggleFavorite(article) } },
+            onAddToQueue: { Task { await viewModel.addToQueue(article) } },
+            onMove: { viewModel.move(article, to: $0) },
+            onDelete: { Task { await viewModel.delete(article) } }
+        )
+    }
+
+    // MARK: - Header
 
     private var header: some View {
         HStack(spacing: 10) {
