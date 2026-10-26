@@ -107,11 +107,11 @@ struct HomeView: View {
                 Spacer()
 
                 HStack(spacing: Spacing.sm) {
-                    // View Mode Toggle (search results and category pages)
+                    // View Mode Toggle (shelves, search results and category pages):
+                    // the glyph shows the mode a tap switches to.
                     IconCircleButton(
-                        systemImage: "square.grid.2x2.fill",
-                        label: themeManager.viewMode == .list ? "Switch to grid view" : "Switch to list view",
-                        style: themeManager.viewMode == .list ? .filled : .sink
+                        systemImage: themeManager.viewMode == .list ? "square.grid.2x2.fill" : "list.bullet",
+                        label: themeManager.viewMode == .list ? "Switch to grid view" : "Switch to list view"
                     ) {
                         themeManager.toggleViewMode()
                     }
