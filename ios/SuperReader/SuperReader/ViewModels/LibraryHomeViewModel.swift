@@ -89,6 +89,12 @@ final class LibraryHomeViewModel: ObservableObject {
             .filter { (categories.category(for: $0) ?? .other) == category }
     }
 
+    /// "All articles": the whole Library, Up next included, newest save first
+    /// (the overview is already fetched ordered by `created_at` desc).
+    func allArticles(readingStatus: ReadingStatus?) -> [Article] {
+        articles.filter { readingStatus == nil || $0.readingStatus == readingStatus }
+    }
+
     /// Library articles outside "Up next" matching the reading-status filter.
     func visibleArticles(readingStatus: ReadingStatus?, excluding queuedIds: Set<String>) -> [Article] {
         articles.filter { article in

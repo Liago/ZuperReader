@@ -163,6 +163,9 @@ shelves (`CategoryShelfView`, "See all" → `CategoryArticlesView`).
   `CategoryLexicon`, NLEmbedding semantic similarity) → refinement with Apple Foundation
   Models when available (`ModelCategoryClassifier`, iOS 26+) → saved to Supabase. Results
   are also cached on disk, so the app works (on-device only) before the migration is run.
+- Between Up next and the shelves, an "All articles" row opens `CategoryArticlesView`
+  with scope `.all`: the whole Library (Up next included) newest save first, grouped
+  by save date (Today / Yesterday / This week / This month / month name).
 - Manual "Move to…" in the long-press menu stores source `user`.
 - Feed items can be added to Up next from their long-press menu
   (`RSSLibrarySaveStore.addToUpNext`): the item is saved to the Library first (or the

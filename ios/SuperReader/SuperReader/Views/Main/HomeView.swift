@@ -8,7 +8,9 @@ import Auth
 //
 // The Library tab, top to bottom:
 //  1. "Up next" — the reading queue, the first thing on screen;
-//  2. "Your library" — every other article, grouped into topic shelves by
+//  2. "All articles" — shortcut to the whole Library as one list, newest
+//     save first (`CategoryArticlesView`, scope `.all`);
+//  3. "Your library" — every other article, grouped into topic shelves by
 //     the smart categorization (`ArticleCategoryStore`).
 // Typing in the search bar swaps the shelves for the flat, paginated results.
 
@@ -167,6 +169,10 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 30) {
                 UpNextSectionView()
 
+                if !homeViewModel.articles.isEmpty {
+                    allArticlesShortcut
+                }
+
                 librarySection
             }
             .padding(.top, Spacing.xs)
@@ -175,6 +181,50 @@ struct HomeView: View {
         .refreshable {
             await refreshHome()
         }
+    }
+
+    /// Shortcut to the whole Library as one list, newest save first.
+    private var allArticlesShortcut: some View {
+        NavigationLink(destination: CategoryArticlesView(scope: .all, viewModel: homeViewModel)) {
+            HStack(spacing: 12) {
+                Image(systemName: "tray.full")
+                    .font(Typography.symbol(15, weight: .bold))
+                    .foregroundColor(themeManager.colors.accent800)
+                    .frame(width: 36, height: 36)
+                    .background(themeManager.colors.accent200)
+                    .clipShape(Circle())
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("All articles")
+                        .font(Typography.figtree(16, weight: .bold, relativeTo: .headline))
+                        .foregroundColor(themeManager.colors.text)
+                    Text("\(homeViewModel.articles.count) saved · newest first")
+                        .font(Typography.meta)
+                        .foregroundColor(themeManager.colors.muted)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(Typography.symbol(13, weight: .bold))
+                    .foregroundColor(themeManager.colors.muted)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(themeManager.colors.card)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.listThumbnail)
+                    .stroke(themeManager.colors.line, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Shows every saved article, newest first")
     }
 
     private var sections: [LibraryCategorySection] {
