@@ -110,6 +110,14 @@ struct CategoryArticlesView: View {
                     dismiss()
                 }
                 Spacer()
+
+                // Same toggle as the home header: the glyph shows the mode a tap switches to.
+                IconCircleButton(
+                    systemImage: themeManager.viewMode == .list ? "square.grid.2x2.fill" : "list.bullet",
+                    label: themeManager.viewMode == .list ? "Switch to grid view" : "Switch to list view"
+                ) {
+                    themeManager.toggleViewMode()
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
