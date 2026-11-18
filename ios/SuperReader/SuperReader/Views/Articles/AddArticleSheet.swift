@@ -2,7 +2,11 @@ import SwiftUI
 import Supabase
 import Auth
 
-// MARK: - Save a Link Sheet (09)
+// MARK: - Save a Link Sheet
+//
+// Editorial Teal (design canvas · "11 · Salva link"): Cancel / title header,
+// a "Link" field, the parsed article as a bordered preview, tags, an
+// "Add to Up next" switch and the "Save to library" pill.
 
 struct AddArticleSheet: View {
     let onArticleAdded: () -> Void
@@ -24,15 +28,16 @@ struct AddArticleSheet: View {
     @State private var suggestedTags: [String] = []
     @State private var addToQueue = false
 
-    private var errorColor: Color { Color(hex: "#C0392B") }
+    private var errorColor: Color { Color(hex: "#B42318") }
 
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
                 .fill(themeManager.colors.line)
-                .frame(width: 42, height: 5)
+                .frame(width: 36, height: 5)
                 .padding(.top, 10)
                 .padding(.bottom, 6)
+                .accessibilityHidden(true)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.md) {
@@ -48,17 +53,16 @@ struct AddArticleSheet: View {
                         previewSkeleton
                     }
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
                 .padding(.top, 4)
                 .padding(.bottom, 20)
             }
 
             saveButton
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
                 .padding(.bottom, 30)
         }
-        .background(themeManager.colors.card)
-        .cornerRadius(CornerRadius.sheet, corners: [.topLeft, .topRight])
+        .background(themeManager.colors.page)
         .onAppear { pasteFromClipboardIfPossible() }
         .onChange(of: url) { _, newValue in handleUrlChange(newValue) }
         .onDisappear { parseTask?.cancel() }
@@ -67,33 +71,35 @@ struct AddArticleSheet: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack {
+        ZStack {
             Text("Save a link")
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
+                .accessibilityAddTraits(.isHeader)
 
-            Spacer()
-
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark")
-                    .font(Typography.symbol(14, weight: .semibold))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: 34, height: 34)
-                    .background(themeManager.colors.sink)
-                    .clipShape(Circle())
+            HStack {
+                Button("Cancel") { dismiss() }
+                    .font(Typography.ui(15))
+                    .foregroundColor(themeManager.colors.muted)
+                    .buttonStyle(.plain)
                     .minimumTapTarget()
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close")
         }
     }
 
     // MARK: - URL Field
 
     private var urlField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Link")
+                .font(Typography.fieldLabel)
+                .foregroundColor(themeManager.colors.accent2)
+
         HStack(spacing: 10) {
             Image(systemName: "link")
                 .foregroundColor(errorMessage != nil ? errorColor : themeManager.colors.accent)
+                .accessibilityHidden(true)
 
             TextField(
                 "",
@@ -105,14 +111,17 @@ struct AddArticleSheet: View {
             .autocorrectionDisabled()
             .textContentType(.URL)
             .foregroundColor(themeManager.colors.text)
+            .accessibilityLabel("Link to save")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(themeManager.colors.card)
-        .clipShape(Capsule())
+        .padding(.horizontal, 14)
+        .frame(minHeight: 50)
+        .background(themeManager.colors.page)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            Capsule().stroke(errorMessage != nil ? errorColor : themeManager.colors.accent, lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(errorMessage != nil ? errorColor : themeManager.colors.accent, lineWidth: 1.5)
         )
+        }
     }
 
     @ViewBuilder
@@ -139,48 +148,55 @@ struct AddArticleSheet: View {
     // MARK: - Preview Card
 
     private func previewCard(_ result: ParseResult) -> some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .top, spacing: 12) {
             Group {
                 if let imageUrl = result.leadImageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: 14)
+                    AsyncImageView(url: imageUrl, cornerRadius: 12)
                         .aspectRatio(contentMode: .fill)
                 } else {
                     ZStack {
-                        themeManager.colors.accent200
+                        themeManager.colors.surface
                         Image(systemName: "doc.text.image")
-                            .foregroundColor(themeManager.colors.accent800.opacity(0.6))
+                            .foregroundColor(themeManager.colors.muted)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
-            .frame(width: 56, height: 56)
+            .frame(width: 72, height: 72)
             .clipped()
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
+                if let domain = result.domain {
+                    Text(domain.replacingOccurrences(of: "www.", with: ""))
+                        .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
+                        .foregroundColor(themeManager.colors.accent)
+                        .lineLimit(1)
+                }
                 Text(result.title ?? "Untitled")
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(2)
                 Text(previewMeta(result))
-                    .font(Typography.meta)
+                    .font(Typography.ui(12.5, relativeTo: .caption))
                     .foregroundColor(themeManager.colors.muted)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(16)
-        .background(themeManager.colors.sink)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.card)
+                .stroke(themeManager.colors.line, lineWidth: 1)
+        )
     }
 
     private func previewMeta(_ result: ParseResult) -> String {
         var parts: [String] = []
-        if let domain = result.domain {
-            parts.append(domain.replacingOccurrences(of: "www.", with: ""))
-        }
         if let wordCount = result.wordCount {
             parts.append("\(Int(ceil(Double(wordCount) / 200.0))) min read")
         }
+        parts.append("readable version ready")
         return parts.joined(separator: " · ")
     }
 
@@ -192,9 +208,11 @@ struct AddArticleSheet: View {
                 SkeletonView(width: 140, height: 14)
             }
         }
-        .padding(16)
-        .background(themeManager.colors.sink)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.card)
+                .stroke(themeManager.colors.line, lineWidth: 1)
+        )
     }
 
     // MARK: - Tags
@@ -202,9 +220,8 @@ struct AddArticleSheet: View {
     private var tagsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Tags")
-                .font(Typography.sectionLabel)
-                .textCase(.uppercase)
-                .foregroundColor(themeManager.colors.muted)
+                .font(Typography.fieldLabel)
+                .foregroundColor(themeManager.colors.accent2)
 
             FlowLayout(spacing: 8) {
                 ForEach(acceptedTags, id: \.self) { tag in
@@ -262,30 +279,20 @@ struct AddArticleSheet: View {
 
     // MARK: - Add to Up next
 
-    /// "Add to Up next" row with a 50×30 switch (docs/revamp-ios/README.md · "09 Save a link").
+    /// "Add to Up next" switch row in a bordered group.
     private var upNextRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "list.number")
-                .font(Typography.symbol(15, weight: .semibold))
-                .foregroundColor(themeManager.colors.text.opacity(0.65))
-
+        Toggle(isOn: $addToQueue) {
             Text("Add to Up next")
-                .font(Typography.ui(14.5, weight: .semibold))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.text)
-
-            Spacer()
-
-            Toggle("", isOn: $addToQueue)
-                .labelsHidden()
-                .tint(themeManager.colors.accent)
-                .scaleEffect(0.98)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(themeManager.colors.sink)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .contentShape(RoundedRectangle(cornerRadius: 20))
-        .onTapGesture { addToQueue.toggle() }
+        .tint(themeManager.colors.accent)
+        .padding(.horizontal, 14)
+        .frame(minHeight: 54)
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.card)
+                .stroke(themeManager.colors.line, lineWidth: 1)
+        )
     }
 
     // MARK: - Save Button
@@ -297,17 +304,16 @@ struct AddArticleSheet: View {
                     ProgressView()
                         .tint(themeManager.colors.page)
                 } else {
-                    Text("Save article")
-                        .font(Typography.display(16))
+                    Text("Save to library")
+                        .font(Typography.ui(16, weight: .semibold))
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .foregroundColor(themeManager.colors.page)
-            .padding(.vertical, 16)
-            .background(themeManager.colors.accent)
-            .clipShape(Capsule())
+            .background(Capsule().fill(themeManager.colors.accent))
             .opacity(parseResult == nil ? 0.5 : 1)
         }
+        .buttonStyle(.plain)
         .disabled(parseResult == nil || isSaving)
     }
 
