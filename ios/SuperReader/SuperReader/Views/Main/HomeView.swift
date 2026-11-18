@@ -298,6 +298,7 @@ struct HomeView: View {
                 ForEach(sourceFeeds) { feed in
                     NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: feedsViewModel)) {
                         FeedSourceBubble(
+                            feed: feed,
                             title: feed.title,
                             monogram: FeedSourceBubble.monogram(for: feed.title),
                             unreadCount: feedsViewModel.unreadCounts[feed.id] ?? 0
@@ -572,6 +573,8 @@ struct HomeView: View {
 /// One feed in the home sources row: a round monogram with an accent dot
 /// when the feed has unread items, and its name underneath.
 struct FeedSourceBubble: View {
+    /// When set, the feed image fills the bubble as a cover.
+    var feed: RSSFeed? = nil
     let title: String
     let monogram: String
     let unreadCount: Int
@@ -581,12 +584,7 @@ struct FeedSourceBubble: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Text(monogram)
-                .font(Typography.ui(13, weight: .bold))
-                .foregroundColor(themeManager.colors.text)
-                .frame(width: size, height: size)
-                .background(Circle().fill(themeManager.colors.page))
-                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+            bubble
                 .overlay(alignment: .topTrailing) {
                     if unreadCount > 0 {
                         Circle()
@@ -607,6 +605,20 @@ struct FeedSourceBubble: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(unreadCount > 0 ? "\(title), \(unreadCount) unread" : title)
         .accessibilityAddTraits(.isButton)
+    }
+
+    @ViewBuilder
+    private var bubble: some View {
+        if let feed {
+            FeedAvatar(feed: feed, size: size, monogramFont: Typography.ui(13, weight: .bold))
+        } else {
+            Text(monogram)
+                .font(Typography.ui(13, weight: .bold))
+                .foregroundColor(themeManager.colors.text)
+                .frame(width: size, height: size)
+                .background(Circle().fill(themeManager.colors.page))
+                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+        }
     }
 
     /// "Il Post" → "IP", "The Verge" → "TV", "Nautilus" → "Na".

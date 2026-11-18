@@ -185,13 +185,7 @@ struct RSSArticleListView: View {
     private var profileHeader: some View {
         VStack(spacing: 18) {
             VStack(spacing: 10) {
-                Text(FeedSourceBubble.monogram(for: currentFeed.title))
-                    .font(Typography.display(26, weight: .heavy, relativeTo: .title))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: 92, height: 92)
-                    .background(Circle().fill(themeManager.colors.page))
-                    .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
-                    .accessibilityHidden(true)
+                FeedAvatar(feed: currentFeed, size: 92, monogramFont: Typography.display(26, weight: .heavy, relativeTo: .title))
 
                 Text(currentFeed.title)
                     .font(Typography.display(24, weight: .bold, relativeTo: .title2))
