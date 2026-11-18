@@ -136,7 +136,7 @@ struct HomeView: View {
                     text: $viewModel.searchQuery,
                     prompt: Text("Search articles").foregroundColor(themeManager.colors.muted)
                 )
-                .font(Typography.figtree(15, relativeTo: .subheadline))
+                .font(Typography.ui(15, relativeTo: .subheadline))
                 .foregroundColor(themeManager.colors.text)
                 .submitLabel(.search)
                 .accessibilityLabel("Search articles")
@@ -197,7 +197,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("All articles")
-                        .font(Typography.figtree(16, weight: .bold, relativeTo: .headline))
+                        .font(Typography.ui(16, weight: .bold, relativeTo: .headline))
                         .foregroundColor(themeManager.colors.text)
                     Text("\(homeViewModel.articles.count) saved · newest first")
                         .font(Typography.meta)
@@ -337,14 +337,14 @@ struct HomeView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text(message)
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
 
             if let actionTitle {
                 Button(action: action) {
                     Text(actionTitle)
-                        .font(Typography.figtree(15, weight: .bold))
+                        .font(Typography.ui(15, weight: .bold))
                         .foregroundColor(themeManager.colors.page)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
@@ -414,7 +414,7 @@ struct FilterChip: View {
                         .frame(width: 6, height: 6)
                 }
                 Text(title)
-                    .font(Typography.figtree(13.5, weight: .semibold, relativeTo: .footnote))
+                    .font(Typography.ui(13.5, weight: .semibold, relativeTo: .footnote))
             }
             .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
             .padding(.horizontal, 14)

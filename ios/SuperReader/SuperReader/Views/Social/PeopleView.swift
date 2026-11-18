@@ -79,7 +79,7 @@ struct PeopleView: View {
             withAnimation(.easeInOut(duration: 0.15)) { viewModel.segment = segment }
         }) {
             Text(title)
-                .font(Typography.figtree(13.5, weight: .semibold))
+                .font(Typography.ui(13.5, weight: .semibold))
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -235,7 +235,7 @@ struct PeopleView: View {
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
             Text(message)
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
         }
@@ -269,7 +269,7 @@ private struct PendingRequestRow: View {
             AvatarView(imageUrl: request.user.avatarUrl, initials: request.user.initials, size: 40)
 
             (Text(request.user.displayName ?? "Someone").fontWeight(.bold) + Text(" wants to connect"))
-                .font(Typography.figtree(14))
+                .font(Typography.ui(14))
                 .foregroundColor(themeManager.colors.text)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -286,7 +286,7 @@ private struct PendingRequestRow: View {
 
             Button(action: onAccept) {
                 Text("Accept")
-                    .font(Typography.figtree(13, weight: .bold))
+                    .font(Typography.ui(13, weight: .bold))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
@@ -314,7 +314,7 @@ private struct SentRequestRow: View {
         HStack(spacing: 12) {
             AvatarView(imageUrl: request.user.avatarUrl, initials: request.user.initials, size: 32)
             Text(request.user.displayName ?? "Unknown")
-                .font(Typography.figtree(14, weight: .semibold))
+                .font(Typography.ui(14, weight: .semibold))
                 .foregroundColor(themeManager.colors.text)
             Spacer()
             Text("Pending")
@@ -338,11 +338,11 @@ private struct FriendRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.user.displayName ?? "Unknown")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                 if let bio = friend.user.bio, !bio.isEmpty {
                     Text(bio)
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(1)
                 }
@@ -368,7 +368,7 @@ private struct ShareCard: View {
                 AvatarView(imageUrl: share.sharer?.avatarUrl, initials: share.sharer?.initials ?? "??", size: 32)
 
                 (Text(share.sharer?.displayName ?? "Someone").fontWeight(.bold) + Text(" shared this"))
-                    .font(Typography.figtree(14))
+                    .font(Typography.ui(14))
                     .foregroundColor(themeManager.colors.text)
 
                 Spacer()
@@ -380,7 +380,7 @@ private struct ShareCard: View {
 
             if let message = share.message, !message.isEmpty {
                 Text(message)
-                    .font(Typography.figtree(14.5))
+                    .font(Typography.ui(14.5))
                     .lineSpacing(8)
                     .foregroundColor(themeManager.colors.text)
                     .padding(.horizontal, 12)
@@ -408,7 +408,7 @@ private struct ShareCard: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(article.title)
-                        .font(Typography.figtree(14.5, weight: .bold))
+                        .font(Typography.ui(14.5, weight: .bold))
                         .foregroundColor(themeManager.colors.text)
                         .lineLimit(2)
                     Text(articleMeta)
@@ -473,7 +473,7 @@ struct UserSearchSheet: View {
                     Spacer()
                 } else if searchResults.isEmpty && !searchQuery.isEmpty {
                     Text("No users found")
-                        .font(Typography.figtree(14))
+                        .font(Typography.ui(14))
                         .foregroundColor(themeManager.colors.muted)
                     Spacer()
                 } else {
@@ -511,11 +511,11 @@ struct UserSearchSheet: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(user.displayName ?? "Unknown")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                 if let bio = user.bio, !bio.isEmpty {
                     Text(bio)
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(1)
                 }
@@ -526,7 +526,7 @@ struct UserSearchSheet: View {
             Button(action: { Task { await sendRequest(to: user) } }) {
                 if sentTo.contains(user.id) {
                     Text("Sent")
-                        .font(Typography.figtree(12.5, weight: .bold))
+                        .font(Typography.ui(12.5, weight: .bold))
                         .foregroundColor(themeManager.colors.accent)
                 } else {
                     Image(systemName: "person.badge.plus")

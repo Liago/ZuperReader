@@ -22,7 +22,7 @@ struct RSSAllFeedsListView: View {
                     .tint(themeManager.colors.accent)
             } else if let errorMessage {
                 Text(errorMessage)
-                    .font(Typography.figtree(13))
+                    .font(Typography.ui(13))
                     .foregroundColor(themeManager.colors.muted)
                     .padding()
             } else if articles.isEmpty {
@@ -88,7 +88,7 @@ struct RSSAllFeedsListView: View {
                         Circle().fill(themeManager.colors.accent).frame(width: 6, height: 6)
                     }
                     Text(feedTitle(for: article).uppercased())
-                        .font(Typography.figtree(11, weight: .bold))
+                        .font(Typography.ui(11, weight: .bold))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(1)
                     Spacer()
@@ -129,7 +129,7 @@ struct RSSAllFeedsListView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text("No unread articles across your feeds.")
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
         }

@@ -50,7 +50,7 @@ struct AISummaryView: View {
                         HStack(spacing: 10) {
                             ProgressView()
                             Text("Generating summary…")
-                                .font(Typography.figtree(14, weight: .semibold, relativeTo: .subheadline))
+                                .font(Typography.ui(14, weight: .semibold, relativeTo: .subheadline))
                                 .foregroundColor(themeManager.colors.muted)
                         }
                         .frame(maxWidth: .infinity)
@@ -59,7 +59,7 @@ struct AISummaryView: View {
 
                     if let error {
                         Label(error, systemImage: "exclamationmark.triangle")
-                            .font(Typography.figtree(13, relativeTo: .footnote))
+                            .font(Typography.ui(13, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.accent800)
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -73,7 +73,7 @@ struct AISummaryView: View {
                         Image(systemName: "bolt.fill")
                         Text("Powered by Cohere AI")
                     }
-                    .font(Typography.figtree(11.5, relativeTo: .caption2))
+                    .font(Typography.ui(11.5, relativeTo: .caption2))
                     .foregroundColor(themeManager.colors.muted)
                     .frame(maxWidth: .infinity)
                 }
@@ -106,12 +106,12 @@ struct AISummaryView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(article.title)
-                        .font(Typography.figtree(13.5, weight: .bold, relativeTo: .footnote))
+                        .font(Typography.ui(13.5, weight: .bold, relativeTo: .footnote))
                         .foregroundColor(themeManager.colors.text)
                         .lineLimit(1)
                     if let generated = generatedLabel {
                         Text(generated)
-                            .font(Typography.figtree(12, relativeTo: .caption))
+                            .font(Typography.ui(12, relativeTo: .caption))
                             .foregroundColor(themeManager.colors.muted)
                     }
                 }
@@ -129,7 +129,7 @@ struct AISummaryView: View {
         HStack(spacing: 0) {
             Button(action: { fontSize = max(minFontSize, fontSize - 1.5) }) {
                 Text("A−")
-                    .font(Typography.figtree(13, weight: .bold))
+                    .font(Typography.ui(13, weight: .bold))
                     .frame(width: 40, height: 34)
                     .contentShape(Rectangle())
             }
@@ -140,7 +140,7 @@ struct AISummaryView: View {
 
             Button(action: { fontSize = min(maxFontSize, fontSize + 1.5) }) {
                 Text("A+")
-                    .font(Typography.figtree(17, weight: .bold))
+                    .font(Typography.ui(17, weight: .bold))
                     .frame(width: 40, height: 34)
                     .contentShape(Rectangle())
             }
@@ -163,10 +163,10 @@ struct AISummaryView: View {
                 .background(themeManager.colors.surface)
                 .clipShape(Circle())
             Text("No summary yet")
-                .font(Typography.caprasimo(21, relativeTo: .title3))
+                .font(Typography.display(21, relativeTo: .title3))
                 .foregroundColor(themeManager.colors.text)
             Text("Choose length and format, then tap Generate. The summary is kept with the article.")
-                .font(Typography.figtree(13.5, relativeTo: .footnote))
+                .font(Typography.ui(13.5, relativeTo: .footnote))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -212,7 +212,7 @@ struct AISummaryView: View {
                     }
                     Text(article.aiSummary == nil ? "Generate" : "Regenerate")
                 }
-                .font(Typography.caprasimo(16, relativeTo: .headline))
+                .font(Typography.display(16, relativeTo: .headline))
                 .foregroundColor(themeManager.colors.page)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -236,7 +236,7 @@ struct AISummaryView: View {
 
     private func optionLabel(_ text: String) -> some View {
         Text(text)
-            .font(Typography.figtree(11, weight: .bold, relativeTo: .caption2))
+            .font(Typography.ui(11, weight: .bold, relativeTo: .caption2))
             .tracking(1.2)
             .foregroundColor(themeManager.colors.muted)
     }

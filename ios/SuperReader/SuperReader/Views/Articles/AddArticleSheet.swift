@@ -119,7 +119,7 @@ struct AddArticleSheet: View {
     private var helperLine: some View {
         if let errorMessage {
             Text(errorMessage)
-                .font(Typography.figtree(12.5))
+                .font(Typography.ui(12.5))
                 .foregroundColor(errorColor)
         } else if isLoading {
             HStack(spacing: 6) {
@@ -127,11 +127,11 @@ struct AddArticleSheet: View {
                     .tint(themeManager.colors.accent)
                 Text("Fetching article…")
             }
-            .font(Typography.figtree(12.5))
+            .font(Typography.ui(12.5))
             .foregroundColor(themeManager.colors.muted)
         } else if pastedFromClipboard {
             Text("Pasted from clipboard")
-                .font(Typography.figtree(12.5))
+                .font(Typography.ui(12.5))
                 .foregroundColor(themeManager.colors.muted)
         }
     }
@@ -158,7 +158,7 @@ struct AddArticleSheet: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(result.title ?? "Untitled")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(2)
                 Text(previewMeta(result))
@@ -233,7 +233,7 @@ struct AddArticleSheet: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Remove tag \(tag)")
         }
-        .font(Typography.figtree(13.5, weight: .semibold))
+        .font(Typography.ui(13.5, weight: .semibold))
         .foregroundColor(themeManager.colors.page)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
@@ -249,7 +249,7 @@ struct AddArticleSheet: View {
             }
         }) {
             Text("+ \(tag)")
-                .font(Typography.figtree(13.5, weight: .semibold))
+                .font(Typography.ui(13.5, weight: .semibold))
                 .foregroundColor(themeManager.colors.muted)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
@@ -270,7 +270,7 @@ struct AddArticleSheet: View {
                 .foregroundColor(themeManager.colors.text.opacity(0.65))
 
             Text("Add to Up next")
-                .font(Typography.figtree(14.5, weight: .semibold))
+                .font(Typography.ui(14.5, weight: .semibold))
                 .foregroundColor(themeManager.colors.text)
 
             Spacer()
@@ -298,7 +298,7 @@ struct AddArticleSheet: View {
                         .tint(themeManager.colors.page)
                 } else {
                     Text("Save article")
-                        .font(Typography.caprasimo(16))
+                        .font(Typography.display(16))
                 }
             }
             .frame(maxWidth: .infinity)

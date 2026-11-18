@@ -17,12 +17,12 @@ struct LoadingView: View {
             
             Text(message)
                 .font(Typography.symbol(16, weight: .medium))
-                .foregroundColor(.purple)
-            
+                .foregroundColor(Color(hex: "#33666C"))
+
             HStack(spacing: 4) {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()
-                        .fill(Color.purple.opacity(0.8))
+                        .fill(Color(hex: "#33666C").opacity(0.8))
                         .frame(width: 8, height: 8)
                         .offset(y: bounceAnimation(index: index))
                 }
@@ -65,7 +65,8 @@ struct AnimatedLoadingDots: View {
     }
     
     private var gradientColors: [Color] {
-        [Color(hex: "#9333EA"), Color(hex: "#EC4899"), Color(hex: "#3B82F6")]
+        // Editorial Teal: three steps of the single accent hue.
+        [Color(hex: "#33666C"), Color(hex: "#7FB3B9"), Color(hex: "#C9D9DA")]
     }
     
     private func startAnimation() {
@@ -93,7 +94,7 @@ struct FullScreenLoadingView: View {
                 ZStack {
                     Circle()
                         .stroke(
-                            Color.purple.opacity(0.2),
+                            themeManager.colors.accent200,
                             lineWidth: 4
                         )
                         .frame(width: 60, height: 60)

@@ -2,6 +2,13 @@ import SwiftUI
 
 // MARK: - Color Theme
 
+/// App and reader color themes (Editorial Teal).
+///
+/// Raw values are persisted locally (`app_theme`) and in Supabase
+/// (`user_preferences.color_theme`, shared with the web app), so the case
+/// names stay as they were: `.cream` is now the white "Light" palette.
+/// `.sepia` is offered only inside the reader (Reading preferences); the
+/// app-wide appearance picker shows Light / Dark / System.
 enum ColorTheme: String, CaseIterable, Codable {
     case cream
     case sepia
@@ -10,7 +17,7 @@ enum ColorTheme: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .cream: return "Cream"
+        case .cream: return "Light"
         case .sepia: return "Sepia"
         case .dark: return "Dark"
         case .system: return "System"
@@ -38,65 +45,66 @@ enum ColorTheme: String, CaseIterable, Codable {
         case .system:
             return ColorTheme.cream.colors
         case .cream:
+            // "Light" — Editorial Teal (design canvas · 05 Design system).
+            // Solid muted grey: #5F6668 is 5.9:1 on white (WCAG AA).
             return ThemeColors(
-                page: Color(hex: "#F5EAD8"),
-                rail: Color(hex: "#EFE2CA"),
-                card: Color(hex: "#FFFAF1"),
-                surface: Color(hex: "#FFFAF1"),
-                text: Color(hex: "#201E1D"),
-                // 64% (not the spec's 58%) — the lowest opacity at which muted
-                // meta text clears WCAG AA 4.5:1 on `page` (HIG · Accessibility).
-                muted: Color(hex: "#201E1D").opacity(0.64),
-                line: Color(hex: "#201E1D").opacity(0.12),
-                sink: Color(hex: "#201E1D").opacity(0.045),
-                accent: Color(hex: "#C67139"),
-                accent200: Color(hex: "#F0CBA9"),
-                accent700: Color(hex: "#8A4B22"),
-                accent800: Color(hex: "#6B3A19"),
-                accent2: Color(hex: "#7A8A5E"),
-                accent2_200: Color(hex: "#D6DDC5")
+                page: Color(hex: "#FFFFFF"),
+                rail: Color(hex: "#F7F8F8"),
+                card: Color(hex: "#FFFFFF"),
+                surface: Color(hex: "#F1F3F3"),
+                text: Color(hex: "#16191A"),
+                muted: Color(hex: "#5F6668"),
+                line: Color(hex: "#E3E6E7"),
+                sink: Color(hex: "#16191A").opacity(0.04),
+                // 6.4:1 on white; white text on it passes AA too.
+                accent: Color(hex: "#33666C"),
+                accent200: Color(hex: "#DCE7E8"),
+                accent700: Color(hex: "#2F5F65"),
+                accent800: Color(hex: "#234A4F"),
+                // The new system has a single hue: the old sage "accent-2"
+                // becomes a neutral slate so secondary marks stay distinct
+                // without introducing a second color.
+                accent2: Color(hex: "#3E4447"),
+                accent2_200: Color(hex: "#F1F3F3")
             )
         case .sepia:
-            // Only page / text / accent are specified for the reader-only Sepia
-            // palette (docs/revamp-ios/README.md); the surrounding surfaces are
-            // interpolated to match Cream's structure since Sepia is also a
-            // selectable app-wide ColorTheme case, not just a reader overlay.
+            // Reader-only palette (Reading preferences → Theme). Kept as a
+            // full token set because the reader chrome is drawn with it.
             return ThemeColors(
-                page: Color(hex: "#EFE0C4"),
-                rail: Color(hex: "#E6D3AC"),
-                card: Color(hex: "#F7ECD3"),
-                surface: Color(hex: "#F7ECD3"),
-                text: Color(hex: "#3A2F1F"),
+                page: Color(hex: "#F4ECDD"),
+                rail: Color(hex: "#EDE2CC"),
+                card: Color(hex: "#F8F2E6"),
+                surface: Color(hex: "#EDE2CC"),
+                text: Color(hex: "#3B3226"),
                 // 72% — Sepia's page is darker, so muted needs more ink to
                 // reach 4.5:1.
-                muted: Color(hex: "#3A2F1F").opacity(0.72),
-                line: Color(hex: "#3A2F1F").opacity(0.12),
-                sink: Color(hex: "#3A2F1F").opacity(0.045),
-                accent: Color(hex: "#C67139"),
-                accent200: Color(hex: "#F0CBA9"),
-                accent700: Color(hex: "#8A4B22"),
-                accent800: Color(hex: "#6B3A19"),
-                accent2: Color(hex: "#7A8A5E"),
-                accent2_200: Color(hex: "#D6DDC5")
+                muted: Color(hex: "#3B3226").opacity(0.72),
+                line: Color(hex: "#3B3226").opacity(0.14),
+                sink: Color(hex: "#3B3226").opacity(0.05),
+                // Deeper teal: 6.1:1 on the sepia page.
+                accent: Color(hex: "#2F5F65"),
+                accent200: Color(hex: "#D9E0D5"),
+                accent700: Color(hex: "#234A4F"),
+                accent800: Color(hex: "#1A383C"),
+                accent2: Color(hex: "#4F4536"),
+                accent2_200: Color(hex: "#EDE2CC")
             )
         case .dark:
             return ThemeColors(
-                page: Color(hex: "#23201C"),
-                rail: Color(hex: "#1C1A17"),
-                card: Color(hex: "#2B2823"),
-                surface: Color(hex: "#332F28"),
-                text: Color(hex: "#F3EBDF"),
-                muted: Color(hex: "#F3EBDF").opacity(0.60),
-                line: Color(hex: "#F3EBDF").opacity(0.14),
-                sink: Color(hex: "#F3EBDF").opacity(0.05),
-                accent: Color(hex: "#E2975F"),
-                // Ramp steps beyond accent/accent-2 aren't specified for Dark;
-                // Cream's steps are reused as the closest approximation.
-                accent200: Color(hex: "#F0CBA9"),
-                accent700: Color(hex: "#8A4B22"),
-                accent800: Color(hex: "#6B3A19"),
-                accent2: Color(hex: "#A9BD8C"),
-                accent2_200: Color(hex: "#D6DDC5")
+                page: Color(hex: "#0F1213"),
+                rail: Color(hex: "#151A1B"),
+                card: Color(hex: "#1B2022"),
+                surface: Color(hex: "#1B2022"),
+                text: Color(hex: "#EEF1F1"),
+                muted: Color(hex: "#9AA3A5"),
+                line: Color(hex: "#2A3133"),
+                sink: Color(hex: "#EEF1F1").opacity(0.05),
+                accent: Color(hex: "#7FB3B9"),
+                accent200: Color(hex: "#1E3436"),
+                accent700: Color(hex: "#9CC6CB"),
+                accent800: Color(hex: "#B9D8DB"),
+                accent2: Color(hex: "#C5CCCE"),
+                accent2_200: Color(hex: "#232A2C")
             )
         }
     }
@@ -104,8 +112,10 @@ enum ColorTheme: String, CaseIterable, Codable {
 
 // MARK: - Theme Colors
 
-/// Semantic color tokens for the Organic design system
-/// (docs/revamp-ios/README.md · "Design tokens").
+/// Semantic color tokens for the Editorial Teal design system
+/// (design canvas "ZuperReader iOS Redesign" · Design system).
+/// SwiftUI names → design names: page, surface, text, muted, line,
+/// accent, accent200 = accentSoft.
 struct ThemeColors {
     let page: Color
     let rail: Color
@@ -147,10 +157,8 @@ struct ThemeColors {
 
     /// Variant served when the system "Increase Contrast" setting is on
     /// (HIG · Color: custom colors need "an increased contrast option for each
-    /// variant"). Muted text and hairlines get more ink, and the terracotta
-    /// accent — 3:1 against `page` in the light palettes — steps down the ramp
-    /// to accent-700 (5.7:1) so accent-filled buttons and accent text clear
-    /// WCAG AA. The dark palette lifts the accent instead.
+    /// variant"). Muted text and hairlines get more ink and the teal accent
+    /// steps one shade darker (lighter in Dark) for extra margin over AA.
     func increasedContrast(isDark: Bool) -> ThemeColors {
         ThemeColors(
             page: page,
@@ -161,11 +169,11 @@ struct ThemeColors {
             muted: text.opacity(0.82),
             line: text.opacity(0.32),
             sink: text.opacity(0.08),
-            accent: isDark ? Color(hex: "#F0B584") : accent700,
+            accent: isDark ? Color(hex: "#A9D0D5") : accent800,
             accent200: accent200,
-            accent700: isDark ? Color(hex: "#F0B584") : accent800,
+            accent700: isDark ? Color(hex: "#C8E1E4") : Color(hex: "#1A383C"),
             accent800: accent800,
-            accent2: isDark ? Color(hex: "#C5D6A8") : Color(hex: "#55643E"),
+            accent2: isDark ? Color(hex: "#DDE2E3") : text,
             accent2_200: accent2_200
         )
     }
@@ -173,31 +181,32 @@ struct ThemeColors {
 
 // MARK: - Premium Gradients
 
-// Colors only — the purple/pink/blue gradient language is gone, replaced by
-// the single warm Organic palette. Names are kept so existing call sites
-// don't need to change yet; they'll be renamed to solid Organic fills as
-// each screen is migrated.
+// Editorial Teal has no gradient washes: each "gradient" is now two
+// near-identical stops, so it reads as a flat fill. Names are kept so
+// existing call sites (avatars, buttons, badges) don't change yet; they
+// will become plain Color fills as each screen is migrated. Every fill
+// carries white text, so all stops stay dark enough for AA.
 struct PremiumGradients {
     static let primary = LinearGradient(
-        colors: [Color(hex: "#C67139"), Color(hex: "#8A4B22")],
+        colors: [Color(hex: "#33666C"), Color(hex: "#2F5F65")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let purple = LinearGradient(
-        colors: [Color(hex: "#7A8A5E"), Color(hex: "#5F6E47")],
+        colors: [Color(hex: "#5F6668"), Color(hex: "#3E4447")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let pink = LinearGradient(
-        colors: [Color(hex: "#F0CBA9"), Color(hex: "#C67139")],
+        colors: [Color(hex: "#2F5F65"), Color(hex: "#234A4F")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let indigo = LinearGradient(
-        colors: [Color(hex: "#D6DDC5"), Color(hex: "#7A8A5E")],
+        colors: [Color(hex: "#2B3A3C"), Color(hex: "#16191A")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -325,83 +334,86 @@ struct Typography {
         }
     }
 
-    // MARK: Display (Caprasimo) / UI (Figtree) type ramp
+    // MARK: UI type ramp (SF Pro)
     //
-    // Figtree-* (Regular…Black) are bundled in Resources/Fonts. Caprasimo
-    // falls back to the system font automatically until Caprasimo-Regular is
-    // bundled too (see docs/revamp-ios/README.md · "Assets").
+    // Editorial Teal sets every UI string in the system face, SF Pro (the
+    // iOS counterpart of Inter in the design canvas). Each design size maps
+    // onto the nearest Dynamic Type text style, so the whole ramp follows the
+    // user's text-size setting live and needs no bundled font files.
+    // Bundled Figtree / Lora / … are now used only by the reader body.
 
-    /// Display face. `relativeTo` ties the size to a Dynamic Type text style so
-    /// the ramp follows the user's text-size setting (HIG · Designing for iOS:
-    /// "adapt seamlessly to … Dynamic Type").
-    static func caprasimo(_ size: CGFloat, relativeTo style: Font.TextStyle = .body) -> Font {
-        .custom("Caprasimo-Regular", size: size, relativeTo: style)
+    /// Nearest Dynamic Type text style for a design point size.
+    static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case ..<11.5: return .caption2
+        case ..<12.5: return .caption
+        case ..<14: return .footnote
+        case ..<15.5: return .subheadline
+        case ..<16.5: return .callout
+        case ..<19: return .body
+        case ..<21: return .title3
+        case ..<25: return .title2
+        case ..<31: return .title
+        default: return .largeTitle
+        }
     }
 
-    static func figtree(
+    /// Title face: screen titles, article titles, card titles, stats.
+    /// Pass `relativeTo` when the role matters more than the exact size.
+    static func display(
+        _ size: CGFloat,
+        weight: Font.Weight = .bold,
+        relativeTo style: Font.TextStyle? = nil
+    ) -> Font {
+        .system(style ?? textStyle(for: size), design: .default, weight: weight)
+    }
+
+    /// Interface face: rows, labels, buttons, meta. Black / heavy weights
+    /// from the previous ramp are capped at bold — SF Pro Heavy reads much
+    /// darker than Figtree ExtraBold did.
+    static func ui(
         _ size: CGFloat,
         weight: Font.Weight = .regular,
-        relativeTo style: Font.TextStyle = .body
+        relativeTo style: Font.TextStyle? = nil
     ) -> Font {
-        let name: String
-        switch weight {
-        case .black: name = "Figtree-Black"
-        case .heavy: name = "Figtree-ExtraBold"
-        case .bold: name = "Figtree-Bold"
-        case .semibold: name = "Figtree-SemiBold"
-        case .medium: name = "Figtree-Medium"
-        default: name = "Figtree-Regular"
-        }
-        return .custom(name, size: size, relativeTo: style)
+        let capped: Font.Weight = (weight == .heavy || weight == .black) ? .bold : weight
+        return .system(style ?? textStyle(for: size), design: .default, weight: capped)
     }
 
     /// Dynamic Type–aware replacement for `.system(size:weight:)` on SF Symbols
     /// and system text. Fixed point sizes never scale; this maps the design
     /// size onto the closest system text style, which does.
     static func symbol(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> Font {
-        let style: Font.TextStyle
-        switch size {
-        case ..<11.5: style = .caption2
-        case ..<12.5: style = .caption
-        case ..<14: style = .footnote
-        case ..<15.5: style = .subheadline
-        case ..<16.5: style = .callout
-        case ..<19: style = .body
-        case ..<21: style = .title3
-        case ..<25: style = .title2
-        case ..<31: style = .title
-        default: style = .largeTitle
-        }
-        return .system(style, design: design, weight: weight)
+        .system(textStyle(for: size), design: design, weight: weight)
     }
 
-    /// Screen title — Library / Feeds / People / You headers.
-    static let largeTitle = caprasimo(34, relativeTo: .largeTitle)
-    /// Reader article title.
-    static let articleTitle = caprasimo(31, relativeTo: .largeTitle)
-    /// Library grid card title.
-    static let cardTitle = caprasimo(20, relativeTo: .title3)
-    /// Reading preferences / Save-a-link sheet titles.
-    static let sheetTitle = caprasimo(22, relativeTo: .title2)
-    /// "You" screen stat numbers.
-    static let statNumber = caprasimo(24, relativeTo: .title2)
+    /// Screen title — Library / Feeds / People / You headers (28/800).
+    static let largeTitle = display(28, weight: .heavy, relativeTo: .title)
+    /// Reader article title (26/700).
+    static let articleTitle = display(26, weight: .bold, relativeTo: .title)
+    /// Library card / section title (20/700).
+    static let cardTitle = display(20, weight: .bold, relativeTo: .title3)
+    /// Sheet titles — Reading preferences, Save a link (17/600).
+    static let sheetTitle = display(17, weight: .semibold, relativeTo: .headline)
+    /// "You" screen stat numbers (20/700).
+    static let statNumber = display(20, weight: .bold, relativeTo: .title3)
 
-    /// List row title (Library list, Feeds, People).
-    static let listRowTitle = figtree(15.5, weight: .semibold, relativeTo: .subheadline)
-    /// Card excerpt / general body copy.
-    static let bodyExcerpt = figtree(14, relativeTo: .footnote)
-    /// Uppercase section label.
-    static let sectionLabel = figtree(12, weight: .heavy, relativeTo: .caption)
-    /// Uppercase field label (Save a link, Login).
-    static let fieldLabel = figtree(11.5, weight: .heavy, relativeTo: .caption2)
-    /// Meta / caption text (timestamps, read time, domain).
-    static let meta = figtree(12.5, relativeTo: .caption)
-    /// Tab bar label.
+    /// List row title (Library list, Feeds, People) — 15/600.
+    static let listRowTitle = ui(15, weight: .semibold, relativeTo: .subheadline)
+    /// Card excerpt / general body copy — 14/400.
+    static let bodyExcerpt = ui(14, relativeTo: .subheadline)
+    /// Uppercase section label — 12/700, tracked.
+    static let sectionLabel = ui(12, weight: .bold, relativeTo: .caption)
+    /// Field label (Save a link, Login) — 13/600.
+    static let fieldLabel = ui(13, weight: .semibold, relativeTo: .footnote)
+    /// Meta / caption text (timestamps, read time, domain) — 13/400.
+    static let meta = ui(13, relativeTo: .footnote)
+    /// Tab bar label — 11, semibold when selected.
     static func tabLabel(selected: Bool) -> Font {
-        figtree(10.5, weight: selected ? .heavy : .bold, relativeTo: .caption2)
+        ui(11, weight: selected ? .semibold : .medium, relativeTo: .caption2)
     }
-    /// Status / sync banner copy.
-    static let statusBar = figtree(14.5, weight: .heavy, relativeTo: .subheadline)
+    /// Status / sync banner copy — 14/600.
+    static let statusBar = ui(14, weight: .semibold, relativeTo: .subheadline)
 
     /// Reader body default (Lora, "Comfortable" line height).
     static let readerBody = Font.custom("Lora-Regular", size: 18.5, relativeTo: .body)
@@ -442,11 +454,11 @@ struct CornerRadius {
     static let xl: CGFloat = 24
     static let full: CGFloat = 9999
 
-    // Organic design system radii (docs/revamp-ios/README.md).
-    static let card: CGFloat = 26
-    static let sheet: CGFloat = 32
-    static let listThumbnail: CGFloat = 18
-    static let smallThumbnail: CGFloat = 14
+    // Editorial Teal radii: card 16, thumbnail 14, pill / button 999.
+    static let card: CGFloat = 16
+    static let sheet: CGFloat = 22
+    static let listThumbnail: CGFloat = 14
+    static let smallThumbnail: CGFloat = 12
     static let pill: CGFloat = 999
 }
 
@@ -457,10 +469,11 @@ struct AppShadows {
     static let medium = Shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     static let large = Shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
 
-    // Organic design system shadows — warm near-black (docs/revamp-ios/README.md).
-    static let card = Shadow(color: Color(hex: "#2E2B25").opacity(0.08), radius: 22, x: 0, y: 6)
-    static let floatingBar = Shadow(color: Color(hex: "#2E2B25").opacity(0.16), radius: 30, x: 0, y: 10)
-    static let sheet = Shadow(color: Color(hex: "#2E2B25").opacity(0.22), radius: 40, x: 0, y: -12)
+    // Editorial Teal shadows — neutral ink, used sparingly: cards rely on a
+    // 1pt `line` border, only floating chrome and sheets cast a shadow.
+    static let card = Shadow(color: Color(hex: "#16191A").opacity(0.06), radius: 12, x: 0, y: 2)
+    static let floatingBar = Shadow(color: Color(hex: "#16191A").opacity(0.12), radius: 24, x: 0, y: 8)
+    static let sheet = Shadow(color: Color(hex: "#16191A").opacity(0.18), radius: 32, x: 0, y: -8)
 }
 
 struct Shadow {

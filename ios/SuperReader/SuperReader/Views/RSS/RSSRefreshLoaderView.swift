@@ -34,7 +34,7 @@ struct RSSRefreshLoaderView: View {
                     }
 
                     Text(viewModel.refreshProgress ?? "Retrieving latest articles...")
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
@@ -80,7 +80,7 @@ struct RSSRefreshLoaderView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Updating feeds")
-                    .font(Typography.figtree(15, weight: .semibold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
 
                 Text(countLabel)
@@ -171,7 +171,7 @@ struct RSSRefreshLoaderView: View {
                 .frame(width: 16, height: 16)
 
             Text(item.title)
-                .font(Typography.figtree(13, weight: item.state == .scanning ? .semibold : .regular))
+                .font(Typography.ui(13, weight: item.state == .scanning ? .semibold : .regular))
                 .foregroundColor(titleColor(for: item.state))
                 .lineLimit(1)
                 .truncationMode(.tail)

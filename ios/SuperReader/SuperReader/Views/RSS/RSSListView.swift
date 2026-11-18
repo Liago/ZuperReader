@@ -81,7 +81,7 @@ struct RSSListView: View {
             }
 
             Text(subtitle)
-                .font(Typography.figtree(13.5))
+                .font(Typography.ui(13.5))
                 .foregroundColor(themeManager.colors.muted)
         }
         .padding(.horizontal, Spacing.screenHorizontal)
@@ -106,9 +106,9 @@ struct RSSListView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("All feeds")
-                        .font(Typography.caprasimo(16))
+                        .font(Typography.display(16))
                     Text("Everything, newest first")
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .opacity(0.85)
                 }
 
@@ -116,7 +116,7 @@ struct RSSListView: View {
 
                 if viewModel.totalUnreadCount > 0 {
                     Text("\(viewModel.totalUnreadCount)")
-                        .font(Typography.figtree(14, weight: .heavy))
+                        .font(Typography.ui(14, weight: .heavy))
                 }
             }
             .foregroundColor(themeManager.colors.page)
@@ -186,13 +186,13 @@ struct RSSListView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text("Follow your favorite websites\nto see their latest articles here.")
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
 
             Button(action: { showingDiscovery = true }) {
                 Text("Discover feeds")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -229,20 +229,20 @@ struct RSSFeedRow: View {
                 Circle()
                     .fill(monogramIndex % 2 == 0 ? themeManager.colors.accent200 : themeManager.colors.accent2_200)
                 Text(monogramLetter)
-                    .font(Typography.figtree(15, weight: .heavy))
+                    .font(Typography.ui(15, weight: .heavy))
                     .foregroundColor(monogramIndex % 2 == 0 ? themeManager.colors.accent800 : themeManager.colors.accent2)
             }
             .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(feed.title)
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(1)
 
                 if !domain.isEmpty {
                     Text(domain)
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .foregroundColor(themeManager.colors.muted)
                 }
             }
@@ -255,7 +255,7 @@ struct RSSFeedRow: View {
                     .foregroundColor(themeManager.colors.muted)
             } else {
                 Text("\(unreadCount)")
-                    .font(Typography.figtree(14, weight: .heavy))
+                    .font(Typography.ui(14, weight: .heavy))
                     .foregroundColor(themeManager.colors.accent)
             }
         }

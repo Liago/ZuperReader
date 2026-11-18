@@ -30,7 +30,7 @@ struct SummaryMarkdownView: View {
         switch block {
         case .heading(let text, let level):
             Text(Self.inline(text))
-                .font(Typography.figtree(fontSize * (level <= 2 ? 1.25 : 1.1), weight: .bold, relativeTo: .headline))
+                .font(Typography.ui(fontSize * (level <= 2 ? 1.25 : 1.1), weight: .bold, relativeTo: .headline))
                 .foregroundColor(colors.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, fontSize * 0.35)
@@ -73,7 +73,7 @@ struct SummaryMarkdownView: View {
     private func listItem(marker: String, text: String, indent: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text(marker)
-                .font(Typography.figtree(fontSize, weight: .bold))
+                .font(Typography.ui(fontSize, weight: .bold))
                 .foregroundColor(colors.accent)
                 .frame(minWidth: fontSize * 0.9, alignment: .leading)
             Text(Self.inline(text))

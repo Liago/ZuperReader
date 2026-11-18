@@ -43,7 +43,7 @@ struct RSSLibrarySaveBannerModifier: ViewModifier {
             }
 
             Text(banner.message)
-                .font(Typography.figtree(14, weight: .semibold))
+                .font(Typography.ui(14, weight: .semibold))
                 .foregroundColor(themeManager.colors.text)
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)

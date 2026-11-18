@@ -43,7 +43,9 @@ class ThemeManager: ObservableObject {
         // Load saved theme
         if let savedTheme = UserDefaults.standard.string(forKey: "app_theme"),
            let theme = ColorTheme(rawValue: savedTheme) {
-            self.currentTheme = theme
+            // Sepia is reader-only in Editorial Teal: an app-wide Sepia
+            // saved by an older build falls back to Light.
+            self.currentTheme = theme == .sepia ? .cream : theme
         } else {
             self.currentTheme = .system
         }

@@ -297,13 +297,13 @@ struct ArticleListView: View {
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
             Text(message)
-                .font(Typography.figtree(13))
+                .font(Typography.ui(13))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
             Button("Retry") {
                 Task { await viewModel.refresh() }
             }
-            .font(Typography.figtree(15, weight: .bold))
+            .font(Typography.ui(15, weight: .bold))
             .foregroundColor(themeManager.colors.page)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -332,13 +332,13 @@ struct ArticleListView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text("Add your first article by tapping the + button above")
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
 
             Button(action: onAddArticle) {
                 Text("Add article")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -496,7 +496,7 @@ struct ArticleListView: View {
                     }
                 } header: {
                     Text(group.label.uppercased())
-                        .font(Typography.figtree(12.5, weight: .bold))
+                        .font(Typography.ui(12.5, weight: .bold))
                         .foregroundColor(themeManager.colors.muted)
                         .textCase(nil)
                 }

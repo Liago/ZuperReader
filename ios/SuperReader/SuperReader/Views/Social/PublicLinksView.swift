@@ -28,13 +28,13 @@ struct PublicLinksView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("Articles anyone can read through a link, without an account. Changing the validity keeps the same link; revoking it stops the link immediately.")
-                        .font(Typography.figtree(13.5, relativeTo: .footnote))
+                        .font(Typography.ui(13.5, relativeTo: .footnote))
                         .foregroundColor(themeManager.colors.muted)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let errorMessage {
                         Text(errorMessage)
-                            .font(Typography.figtree(13, weight: .semibold, relativeTo: .footnote))
+                            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.accent)
                     }
 
@@ -87,7 +87,7 @@ struct PublicLinksView: View {
     private func section(title: String, items: [PublicLinkItem]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(Typography.figtree(11, weight: .bold, relativeTo: .caption2))
+                .font(Typography.ui(11, weight: .bold, relativeTo: .caption2))
                 .tracking(1.2)
                 .foregroundColor(themeManager.colors.muted)
                 .padding(.leading, 4)
@@ -118,10 +118,10 @@ struct PublicLinksView: View {
                 .background(themeManager.colors.surface)
                 .clipShape(Circle())
             Text("No public links")
-                .font(Typography.caprasimo(21, relativeTo: .title3))
+                .font(Typography.display(21, relativeTo: .title3))
                 .foregroundColor(themeManager.colors.text)
             Text("Open an article and choose “Public Link” from the ••• menu to share it with anyone.")
-                .font(Typography.figtree(13.5, relativeTo: .footnote))
+                .font(Typography.ui(13.5, relativeTo: .footnote))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
         }
@@ -151,11 +151,11 @@ struct PublicLinksView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     if let domain = item.domain {
                         Text(domain)
-                            .font(Typography.figtree(12, weight: .semibold, relativeTo: .caption))
+                            .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
                             .foregroundColor(themeManager.colors.muted)
                     }
                     Text(item.title)
-                        .font(Typography.figtree(15.5, weight: .bold, relativeTo: .subheadline))
+                        .font(Typography.ui(15.5, weight: .bold, relativeTo: .subheadline))
                         .foregroundColor(themeManager.colors.text)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -170,7 +170,7 @@ struct PublicLinksView: View {
                 if item.isActive, let url = item.url {
                     Button(action: { copy(item, url: url) }) {
                         Label(copiedId == item.id ? "Copied" : "Copy", systemImage: copiedId == item.id ? "checkmark" : "link")
-                            .font(Typography.figtree(13, weight: .semibold, relativeTo: .footnote))
+                            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.page)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -181,7 +181,7 @@ struct PublicLinksView: View {
 
                     ShareLink(item: url, subject: Text(item.title), message: Text(item.title)) {
                         Label("Share", systemImage: "square.and.arrow.up")
-                            .font(Typography.figtree(13, weight: .semibold, relativeTo: .footnote))
+                            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.text)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -190,7 +190,7 @@ struct PublicLinksView: View {
                 } else {
                     Button(action: { Task { await setValidity(item, selected) } }) {
                         Label("Renew", systemImage: "arrow.counterclockwise")
-                            .font(Typography.figtree(13, weight: .semibold, relativeTo: .footnote))
+                            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.page)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -242,7 +242,7 @@ struct PublicLinksView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(item.isActive ? "Active" : "Expired")
-                    .font(Typography.figtree(11.5, weight: .bold, relativeTo: .caption2))
+                    .font(Typography.ui(11.5, weight: .bold, relativeTo: .caption2))
                     .foregroundColor(item.isActive ? themeManager.colors.text : themeManager.colors.muted)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -253,19 +253,19 @@ struct PublicLinksView: View {
                     PublicLinkValidity.label(storedDays: item.publicLinkValidityDays, expiresAt: item.publicLinkExpiresAt),
                     systemImage: item.publicLinkExpiresAt == nil ? "infinity" : "clock"
                 )
-                .font(Typography.figtree(12.5, weight: .semibold, relativeTo: .caption))
+                .font(Typography.ui(12.5, weight: .semibold, relativeTo: .caption))
                 .foregroundColor(themeManager.colors.text)
             }
             .padding(.top, 4)
 
             if let expiry = PublicLinkValidity.parseDate(item.publicLinkExpiresAt) {
                 Text("\(item.isActive ? "Expires" : "Expired") \(expiry.formatted(.relative(presentation: .named))) · \(expiry.formatted(date: .abbreviated, time: .shortened))")
-                    .font(Typography.figtree(12, relativeTo: .caption))
+                    .font(Typography.ui(12, relativeTo: .caption))
                     .foregroundColor(themeManager.colors.muted)
             }
             if let shared = PublicLinkValidity.parseDate(item.publicSharedAt) {
                 Text("Shared \(shared.formatted(.relative(presentation: .named)))")
-                    .font(Typography.figtree(12, relativeTo: .caption))
+                    .font(Typography.ui(12, relativeTo: .caption))
                     .foregroundColor(themeManager.colors.muted)
             }
         }

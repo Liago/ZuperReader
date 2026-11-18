@@ -80,10 +80,10 @@ struct PublicLinkSheet: View {
                         Toggle(isOn: isPublicBinding) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Public link")
-                                    .font(Typography.figtree(16, weight: .semibold, relativeTo: .headline))
+                                    .font(Typography.ui(16, weight: .semibold, relativeTo: .headline))
                                     .foregroundColor(themeManager.colors.text)
                                 Text("Anyone with the link can read the clean version of this article, without an account.")
-                                    .font(Typography.figtree(13, relativeTo: .footnote))
+                                    .font(Typography.ui(13, relativeTo: .footnote))
                                     .foregroundColor(themeManager.colors.muted)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -93,7 +93,7 @@ struct PublicLinkSheet: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("VALID FOR")
-                                .font(Typography.figtree(11, weight: .bold, relativeTo: .caption2))
+                                .font(Typography.ui(11, weight: .bold, relativeTo: .caption2))
                                 .tracking(1.2)
                                 .foregroundColor(themeManager.colors.muted)
 
@@ -110,7 +110,7 @@ struct PublicLinkSheet: View {
                             HStack(spacing: 8) {
                                 ProgressView()
                                 Text("Updating…")
-                                    .font(Typography.figtree(13, relativeTo: .footnote))
+                                    .font(Typography.ui(13, relativeTo: .footnote))
                                     .foregroundColor(themeManager.colors.muted)
                             }
                         }
@@ -127,7 +127,7 @@ struct PublicLinkSheet: View {
                     if let url = publicURL, !isBusy {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(url.absoluteString)
-                                .font(Typography.figtree(13, relativeTo: .footnote))
+                                .font(Typography.ui(13, relativeTo: .footnote))
                                 .foregroundColor(themeManager.colors.text)
                                 .lineLimit(2)
                                 .truncationMode(.middle)
@@ -140,13 +140,13 @@ struct PublicLinkSheet: View {
                                 .overlay(Capsule().stroke(themeManager.colors.line, lineWidth: 1))
 
                             Label(expiryText, systemImage: expiresAt == nil ? "infinity" : "clock")
-                                .font(Typography.figtree(13, weight: .semibold, relativeTo: .footnote))
+                                .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
                                 .foregroundColor(themeManager.colors.text)
 
                             HStack(spacing: 10) {
                                 Button(action: { copy(url) }) {
                                     Label(copied ? "Copied" : "Copy link", systemImage: copied ? "checkmark" : "link")
-                                        .font(Typography.figtree(14, weight: .semibold, relativeTo: .subheadline))
+                                        .font(Typography.ui(14, weight: .semibold, relativeTo: .subheadline))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
                                         .foregroundColor(themeManager.colors.text)
@@ -156,7 +156,7 @@ struct PublicLinkSheet: View {
 
                                 ShareLink(item: url, subject: Text(articleTitle), message: Text(articleTitle)) {
                                     Label("Share", systemImage: "square.and.arrow.up")
-                                        .font(Typography.figtree(14, weight: .semibold, relativeTo: .subheadline))
+                                        .font(Typography.ui(14, weight: .semibold, relativeTo: .subheadline))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
                                         .foregroundColor(themeManager.colors.page)
@@ -166,7 +166,7 @@ struct PublicLinkSheet: View {
                             }
 
                             Text("Changing the validity keeps the same link. Turning it off revokes it immediately.")
-                                .font(Typography.figtree(12, relativeTo: .caption))
+                                .font(Typography.ui(12, relativeTo: .caption))
                                 .foregroundColor(themeManager.colors.muted)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -174,7 +174,7 @@ struct PublicLinkSheet: View {
 
                     if let errorMessage {
                         Text(errorMessage)
-                            .font(Typography.figtree(13, relativeTo: .footnote))
+                            .font(Typography.ui(13, relativeTo: .footnote))
                             .foregroundColor(themeManager.colors.accent)
                     }
                 }
