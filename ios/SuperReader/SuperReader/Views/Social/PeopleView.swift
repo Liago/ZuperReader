@@ -2,7 +2,12 @@ import SwiftUI
 import Supabase
 import Auth
 
-// MARK: - People View (07) — merged Shared Inbox + Friends
+// MARK: - People View — merged Shared Inbox + Friends
+//
+// Editorial Teal (design canvas · "09 · People"): large title with an
+// outline "Find people" button, a pill segmented control, shares as an
+// activity feed (who shared what, with the article as a bordered card) and
+// friends as a plain hairline list.
 
 struct PeopleView: View {
     @StateObject private var viewModel = PeopleViewModel()
@@ -50,7 +55,7 @@ struct PeopleView: View {
 
                 Spacer()
 
-                IconCircleButton(systemImage: "person.badge.plus", label: "Find people", style: .accent, glyphSize: 16) {
+                IconCircleButton(systemImage: "person.badge.plus", label: "Find people", style: .outline, glyphSize: 17) {
                     showSearch = true
                 }
             }
@@ -64,12 +69,12 @@ struct PeopleView: View {
     }
 
     private var segmentedPill: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             segmentButton(.shared, title: "Shared with me")
-            segmentButton(.friends, title: "Friends")
+            segmentButton(.friends, title: viewModel.friends.isEmpty ? "Friends" : "Friends · \(viewModel.friends.count)")
         }
-        .padding(4)
-        .background(themeManager.colors.sink)
+        .padding(3)
+        .background(themeManager.colors.surface)
         .clipShape(Capsule())
     }
 
@@ -79,14 +84,12 @@ struct PeopleView: View {
             withAnimation(.easeInOut(duration: 0.15)) { viewModel.segment = segment }
         }) {
             Text(title)
-                .font(Typography.ui(13.5, weight: .semibold))
+                .font(Typography.ui(14, weight: isSelected ? .semibold : .medium))
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .frame(minHeight: Spacing.minTapTarget - 8)
-                .background(isSelected ? themeManager.colors.card : Color.clear)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(isSelected ? themeManager.colors.page : Color.clear)
                 .clipShape(Capsule())
-                .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+                .shadow(color: isSelected ? Color(hex: "#16191A").opacity(0.12) : .clear, radius: 1, x: 0, y: 1)
         }
         .buttonStyle(.plain)
         .contentShape(Capsule())
@@ -115,13 +118,13 @@ struct PeopleView: View {
                 )
             } else {
                 ScrollView {
-                    LazyVStack(spacing: Spacing.sm) {
+                    LazyVStack(spacing: 0) {
                         ForEach(viewModel.sharedArticles) { share in
                             if let article = share.article {
                                 NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
                                     ShareCard(share: share, article: article)
                                 }
-                                .buttonStyle(ScaleButtonStyle())
+                                .buttonStyle(.plain)
                                 .onAppear {
                                     if !share.isRead {
                                         Task { await viewModel.markAsRead(share) }
@@ -146,7 +149,7 @@ struct PeopleView: View {
                         }
                     }
                     .padding(.horizontal, Spacing.screenHorizontal)
-                    .padding(.top, Spacing.md)
+                    .padding(.top, Spacing.xs)
                     .padding(.bottom, Spacing.scrollBottomInset)
                 }
                 .refreshable { await viewModel.loadAll() }
@@ -173,10 +176,9 @@ struct PeopleView: View {
 
                 if !viewModel.sentRequests.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Sent")
-                            .font(Typography.sectionLabel)
-                            .textCase(.uppercase)
-                            .foregroundColor(themeManager.colors.muted)
+                        Text("Sent requests")
+                            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
+                            .foregroundColor(themeManager.colors.accent2)
 
                         VStack(spacing: 0) {
                             ForEach(viewModel.sentRequests) { request in
@@ -196,20 +198,23 @@ struct PeopleView: View {
                         .frame(maxWidth: .infinity)
                     }
                 } else {
-                    VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Friends")
+                            .font(Typography.cardTitle)
+                            .foregroundColor(themeManager.colors.text)
+                            .accessibilityAddTraits(.isHeader)
+                            .padding(.bottom, 4)
+
                         ForEach(Array(viewModel.friends.enumerated()), id: \.element.id) { index, friend in
                             FriendRow(friend: friend)
                             if index < viewModel.friends.count - 1 {
                                 Rectangle()
                                     .fill(themeManager.colors.line)
                                     .frame(height: 1)
-                                    .padding(.leading, 40 + 14 + 12)
+                                    .padding(.leading, 44 + 14)
                             }
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .background(themeManager.colors.card)
-                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
                 }
             }
             .padding(.horizontal, Spacing.screenHorizontal)
@@ -225,12 +230,13 @@ struct PeopleView: View {
         VStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(themeManager.colors.sink)
+                    .fill(themeManager.colors.surface)
                     .frame(width: 96, height: 96)
                 Image(systemName: icon)
-                    .font(.system(size: 40))
-                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+                    .font(Typography.symbol(34))
+                    .foregroundColor(themeManager.colors.muted)
             }
+            .accessibilityHidden(true)
             Text(title)
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
@@ -278,29 +284,28 @@ private struct PendingRequestRow: View {
             Button(action: onReject) {
                 Image(systemName: "xmark")
                     .font(Typography.symbol(12, weight: .bold))
-                    .foregroundColor(themeManager.colors.muted)
-                    .frame(width: 28, height: 28)
-                    .background(themeManager.colors.sink)
-                    .clipShape(Circle())
+                    .foregroundColor(themeManager.colors.text)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(themeManager.colors.surface))
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
+            .accessibilityLabel("Decline request")
 
             Button(action: onAccept) {
                 Text("Accept")
-                    .font(Typography.ui(13, weight: .bold))
+                    .font(Typography.ui(13, weight: .semibold))
                     .foregroundColor(themeManager.colors.page)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(themeManager.colors.accent)
-                    .clipShape(Capsule())
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 34)
+                    .background(Capsule().fill(themeManager.colors.accent))
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
         }
-        .padding(12)
-        .background(themeManager.colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(themeManager.colors.accent, lineWidth: 1)
-        )
+        .padding(14)
+        .background(themeManager.colors.accent200)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
     }
 }
 
@@ -334,11 +339,11 @@ private struct FriendRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            AvatarView(imageUrl: friend.user.avatarUrl, initials: friend.user.initials, size: 40)
+            AvatarView(imageUrl: friend.user.avatarUrl, initials: friend.user.initials, size: 44)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.user.displayName ?? "Unknown")
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                 if let bio = friend.user.bio, !bio.isEmpty {
                     Text(bio)
@@ -363,71 +368,89 @@ private struct ShareCard: View {
     @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                AvatarView(imageUrl: share.sharer?.avatarUrl, initials: share.sharer?.initials ?? "??", size: 32)
+        HStack(alignment: .top, spacing: 12) {
+            AvatarView(imageUrl: share.sharer?.avatarUrl, initials: share.sharer?.initials ?? "??", size: 36)
+                .accessibilityHidden(true)
 
-                (Text(share.sharer?.displayName ?? "Someone").fontWeight(.bold) + Text(" shared this"))
-                    .font(Typography.ui(14))
-                    .foregroundColor(themeManager.colors.text)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 6) {
+                    Text(share.sharer?.displayName ?? "Someone")
+                        .fontWeight(.semibold)
+                        .foregroundColor(themeManager.colors.text)
+                    Text("shared")
+                        .foregroundColor(themeManager.colors.accent2)
 
-                Spacer()
+                    Spacer(minLength: 4)
 
-                if !share.isRead {
-                    Circle().fill(themeManager.colors.accent).frame(width: 8, height: 8)
-                }
-            }
-
-            if let message = share.message, !message.isEmpty {
-                Text(message)
-                    .font(Typography.ui(14.5))
-                    .lineSpacing(8)
-                    .foregroundColor(themeManager.colors.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(themeManager.colors.sink)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            }
-
-            HStack(spacing: 12) {
-                Group {
-                    if let imageUrl = article.imageUrl {
-                        AsyncImageView(url: imageUrl, cornerRadius: 14)
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        ZStack {
-                            themeManager.colors.accent200
-                            Image(systemName: "doc.text.image")
-                                .foregroundColor(themeManager.colors.accent800.opacity(0.6))
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    if !share.isRead {
+                        Circle()
+                            .fill(themeManager.colors.accent)
+                            .frame(width: 8, height: 8)
+                            .accessibilityLabel("New")
                     }
                 }
-                .frame(width: 56, height: 56)
-                .clipped()
+                .font(Typography.ui(14, relativeTo: .subheadline))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(article.title)
-                        .font(Typography.ui(14.5, weight: .bold))
+                if let message = share.message, !message.isEmpty {
+                    Text("“\(message)”")
+                        .font(Typography.ui(14.5, relativeTo: .subheadline))
+                        .lineSpacing(3)
                         .foregroundColor(themeManager.colors.text)
-                        .lineLimit(2)
-                    Text(articleMeta)
-                        .font(Typography.meta)
-                        .foregroundColor(themeManager.colors.muted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 0)
+                HStack(spacing: 12) {
+                    Group {
+                        if let imageUrl = article.imageUrl {
+                            AsyncImageView(url: imageUrl, cornerRadius: CornerRadius.smallThumbnail)
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            ZStack {
+                                themeManager.colors.surface
+                                Image(systemName: "doc.text.image")
+                                    .foregroundColor(themeManager.colors.muted)
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.smallThumbnail))
+                        }
+                    }
+                    .frame(width: 56, height: 56)
+                    .clipped()
+                    .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(article.title)
+                            .font(Typography.ui(14.5, weight: .semibold, relativeTo: .subheadline))
+                            .foregroundColor(themeManager.colors.text)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        Text(articleMeta)
+                            .font(Typography.ui(12, relativeTo: .caption))
+                            .foregroundColor(themeManager.colors.muted)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.card)
+                        .stroke(themeManager.colors.line, lineWidth: 1)
+                )
             }
         }
-        .padding(16)
-        .background(themeManager.colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .opacity(share.isRead ? 0.75 : 1)
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(themeManager.colors.line)
+                .frame(height: 1)
+        }
+        .contentShape(Rectangle())
+        .opacity(share.isRead ? 0.8 : 1)
+        .accessibilityElement(children: .combine)
     }
 
     private var articleMeta: String {
         var parts: [String] = []
-        if let domain = article.domain { parts.append(domain) }
+        if let domain = article.domain { parts.append(domain.replacingOccurrences(of: "www.", with: "")) }
         if let time = article.estimatedReadTime { parts.append("\(time) min") }
         return parts.joined(separator: " · ")
     }
@@ -450,7 +473,8 @@ struct UserSearchSheet: View {
             VStack(spacing: Spacing.md) {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(themeManager.colors.text.opacity(0.55))
+                        .foregroundColor(themeManager.colors.muted)
+                        .accessibilityHidden(true)
                     TextField(
                         "",
                         text: $searchQuery,
@@ -461,9 +485,8 @@ struct UserSearchSheet: View {
                     .onSubmit { Task { await performSearch() } }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(themeManager.colors.sink)
-                .clipShape(Capsule())
+                .frame(minHeight: 48)
+                .overlay(Capsule().stroke(themeManager.colors.line, lineWidth: 1))
                 .padding(.horizontal, Spacing.screenHorizontal)
                 .padding(.top, Spacing.md)
 
@@ -507,11 +530,11 @@ struct UserSearchSheet: View {
 
     private func searchRow(_ user: UserProfile) -> some View {
         HStack(spacing: 14) {
-            AvatarView(imageUrl: user.avatarUrl, initials: user.initials, size: 40)
+            AvatarView(imageUrl: user.avatarUrl, initials: user.initials, size: 44)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(user.displayName ?? "Unknown")
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                 if let bio = user.bio, !bio.isEmpty {
                     Text(bio)
@@ -524,16 +547,18 @@ struct UserSearchSheet: View {
             Spacer()
 
             Button(action: { Task { await sendRequest(to: user) } }) {
-                if sentTo.contains(user.id) {
-                    Text("Sent")
-                        .font(Typography.ui(12.5, weight: .bold))
-                        .foregroundColor(themeManager.colors.accent)
-                } else {
-                    Image(systemName: "person.badge.plus")
-                        .foregroundColor(themeManager.colors.accent)
-                }
+                let sent = sentTo.contains(user.id)
+                Text(sent ? "Sent" : "Add")
+                    .font(Typography.ui(13, weight: .semibold))
+                    .foregroundColor(sent ? themeManager.colors.muted : themeManager.colors.page)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 34)
+                    .background(Capsule().fill(sent ? themeManager.colors.surface : themeManager.colors.accent))
             }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
             .disabled(sentTo.contains(user.id))
+            .accessibilityLabel(sentTo.contains(user.id) ? "Request sent" : "Add \(user.displayName ?? "user") as friend")
         }
         .padding(.vertical, 12)
     }
