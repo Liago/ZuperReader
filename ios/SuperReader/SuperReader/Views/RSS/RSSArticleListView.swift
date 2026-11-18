@@ -2,8 +2,13 @@ import SwiftUI
 import Supabase
 import Auth
 
-// MARK: - RSS Article List (per-feed) — same list/reader language as
-// Library and Reader (docs/revamp-ios/README.md), applied to RSS articles.
+// MARK: - Feed source page (per-feed article list)
+//
+// Editorial Teal (design canvas · "03 · Scheda fonte"): a centered profile
+// of the feed — monogram, name, site, three stats, "Mark all read" and
+// site / share buttons — then Unread / All tabs over the article rows.
+// The top bar keeps previous / next feed and a menu with Open website and
+// Unfollow.
 
 struct RSSArticleListView: View {
     @State private var currentFeed: RSSFeed
@@ -13,13 +18,10 @@ struct RSSArticleListView: View {
     @State private var isMarkingRead = false
     @State private var errorMessage: String?
     @State private var showReadArticles = false // Default: hide read articles
-    @State private var transitionDirection: TransitionDirection = .forward
+    @State private var showSafariView = false
+    @State private var confirmUnfollow = false
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
-
-    enum TransitionDirection {
-        case forward, backward
-    }
 
     init(feed: RSSFeed, viewModel: RSSViewModel) {
         self._currentFeed = State(initialValue: feed)
@@ -40,53 +42,66 @@ struct RSSArticleListView: View {
         return idx < viewModel.feeds.count - 1
     }
 
+    private var unreadCount: Int { articles.filter { !$0.isRead }.count }
+
+    private var siteURL: URL? {
+        URL(string: currentFeed.siteUrl ?? currentFeed.url)
+    }
+
+    private var domain: String {
+        siteURL?.host?.replacingOccurrences(of: "www.", with: "") ?? ""
+    }
+
     var body: some View {
         ZStack {
             themeManager.colors.page
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                RSSFeedHeader(
-                    feed: currentFeed,
-                    unreadCount: articles.filter { !$0.isRead }.count,
-                    isMarkingRead: isMarkingRead,
-                    hasPrev: hasPrev,
-                    hasNext: hasNext,
-                    onMarkAllRead: {
-                        Task {
-                            await markAllAsRead()
-                        }
-                    },
-                    onPrev: {
-                        if let idx = currentIndex, idx > 0 {
-                            transitionDirection = .backward
-                            withAnimation(.easeInOut(duration: 0.35)) {
-                                currentFeed = viewModel.feeds[idx - 1]
-                            }
-                        }
-                    },
-                    onNext: {
-                        if let idx = currentIndex, idx < viewModel.feeds.count - 1 {
-                            transitionDirection = .forward
-                            withAnimation(.easeInOut(duration: 0.35)) {
-                                currentFeed = viewModel.feeds[idx + 1]
-                            }
-                        }
-                    }
-                )
+            List {
+                Section {
+                    profileHeader
+                        .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(themeManager.colors.page)
+                }
 
-                content
-                    .id(currentFeed.id)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: transitionDirection == .forward ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: transitionDirection == .forward ? .leading : .trailing).combined(with: .opacity)
-                    ))
-                    .clipped()
+                Section {
+                    content
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(themeManager.colors.page)
+            .id(currentFeed.id)
+            .refreshable {
+                await refreshFeed()
             }
         }
-        .clipped()
+        .safeAreaInset(edge: .top, spacing: 0) {
+            topBar
+        }
         .navigationBarHidden(true)
         .rssLibrarySaveBanner(bottomPadding: 28)
+        .fullScreenCover(isPresented: $showSafariView) {
+            if let siteURL {
+                SafariView(url: siteURL)
+                    .edgesIgnoringSafeArea(.all)
+            }
+        }
+        .confirmationDialog(
+            "Unfollow \(currentFeed.title)?",
+            isPresented: $confirmUnfollow,
+            titleVisibility: .visible
+        ) {
+            Button("Unfollow", role: .destructive) {
+                Task {
+                    await viewModel.deleteFeed(currentFeed)
+                    dismiss()
+                }
+            }
+        } message: {
+            Text("Its articles will no longer appear in Feeds.")
+        }
         .task {
             showReadArticles = false
             await loadArticles(showLoadingIndicator: true)
@@ -99,123 +114,274 @@ struct RSSArticleListView: View {
         }
     }
 
+    // MARK: - Top bar
+
+    private var topBar: some View {
+        HStack(spacing: 4) {
+            IconCircleButton(systemImage: "chevron.backward", label: "Back", style: .outline, glyphWeight: .semibold, glyphSize: 16) {
+                dismiss()
+            }
+
+            Spacer()
+
+            IconCircleButton(systemImage: "chevron.up", label: "Previous feed", style: .outline, glyphSize: 15) {
+                goToFeed(offset: -1)
+            }
+            .opacity(hasPrev ? 1 : 0.35)
+            .disabled(!hasPrev)
+
+            IconCircleButton(systemImage: "chevron.down", label: "Next feed", style: .outline, glyphSize: 15) {
+                goToFeed(offset: 1)
+            }
+            .opacity(hasNext ? 1 : 0.35)
+            .disabled(!hasNext)
+
+            Menu {
+                if siteURL != nil {
+                    Button {
+                        showSafariView = true
+                    } label: {
+                        Label("Open website", systemImage: "safari")
+                    }
+                }
+
+                Button {
+                    Task { await markAllAsRead() }
+                } label: {
+                    Label("Mark all as read", systemImage: "checkmark.circle")
+                }
+                .disabled(unreadCount == 0)
+
+                Divider()
+
+                Button(role: .destructive) {
+                    confirmUnfollow = true
+                } label: {
+                    Label("Unfollow", systemImage: "minus.circle")
+                }
+            } label: {
+                IconCircleGlyph(systemImage: "ellipsis", style: .outline, glyphSize: 16)
+            }
+            .minimumTapTarget()
+            .accessibilityLabel("Feed options")
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .background(themeManager.colors.page)
+    }
+
+    private func goToFeed(offset: Int) {
+        guard let idx = currentIndex else { return }
+        let target = idx + offset
+        guard viewModel.feeds.indices.contains(target) else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentFeed = viewModel.feeds[target]
+        }
+    }
+
+    // MARK: - Profile header
+
+    private var profileHeader: some View {
+        VStack(spacing: 18) {
+            VStack(spacing: 10) {
+                Text(FeedSourceBubble.monogram(for: currentFeed.title))
+                    .font(Typography.display(26, weight: .heavy, relativeTo: .title))
+                    .foregroundColor(themeManager.colors.text)
+                    .frame(width: 92, height: 92)
+                    .background(Circle().fill(themeManager.colors.page))
+                    .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+                    .accessibilityHidden(true)
+
+                Text(currentFeed.title)
+                    .font(Typography.display(24, weight: .bold, relativeTo: .title2))
+                    .foregroundColor(themeManager.colors.text)
+                    .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
+
+                if !domain.isEmpty {
+                    Text("Synced from \(domain)")
+                        .font(Typography.ui(13.5, relativeTo: .footnote))
+                        .foregroundColor(themeManager.colors.muted)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            HStack(spacing: 10) {
+                statTile(value: "\(unreadCount)", label: "Unread")
+                statTile(value: "\(articles.count)", label: "Articles")
+                statTile(value: "\(articles.count - unreadCount)", label: "Read")
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    Task { await markAllAsRead() }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isMarkingRead {
+                            ProgressView()
+                                .tint(themeManager.colors.page)
+                        } else {
+                            Image(systemName: "checkmark")
+                                .font(Typography.symbol(14, weight: .semibold))
+                        }
+                        Text(unreadCount > 0 ? "Mark all read" : "All caught up")
+                            .font(Typography.ui(15, weight: .semibold))
+                    }
+                    .foregroundColor(themeManager.colors.page)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Capsule().fill(themeManager.colors.accent))
+                    .opacity(unreadCount > 0 ? 1 : 0.5)
+                }
+                .buttonStyle(ScaleButtonStyle())
+                .disabled(unreadCount == 0 || isMarkingRead)
+
+                if siteURL != nil {
+                    IconCircleButton(systemImage: "safari", label: "Open website", style: .outline, glyphSize: 17) {
+                        showSafariView = true
+                    }
+                }
+
+                if let siteURL {
+                    ShareLink(item: siteURL) {
+                        IconCircleGlyph(systemImage: "square.and.arrow.up", style: .outline, glyphSize: 17)
+                    }
+                    .buttonStyle(.plain)
+                    .minimumTapTarget()
+                    .accessibilityLabel("Share feed")
+                }
+            }
+
+            tabs
+        }
+        .padding(.top, 8)
+    }
+
+    private func statTile(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(Typography.display(19, weight: .bold, relativeTo: .title3))
+                .foregroundColor(themeManager.colors.text)
+                .contentTransition(.numericText())
+            Text(label)
+                .font(Typography.ui(12, relativeTo: .caption))
+                .foregroundColor(themeManager.colors.muted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(themeManager.colors.line, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    private var tabs: some View {
+        HStack(spacing: 0) {
+            tabButton(title: "Unread", isSelected: !showReadArticles) { showReadArticles = false }
+            tabButton(title: "All", isSelected: showReadArticles) { showReadArticles = true }
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(themeManager.colors.line)
+                .frame(height: 1)
+        }
+    }
+
+    private func tabButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.2)) { action() }
+        } label: {
+            Text(title)
+                .font(Typography.ui(14.5, weight: isSelected ? .semibold : .medium))
+                .foregroundColor(isSelected ? themeManager.colors.accent : themeManager.colors.muted)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(isSelected ? themeManager.colors.accent : Color.clear)
+                        .frame(height: 2)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
     // MARK: - Content
 
     @ViewBuilder
     private var content: some View {
         if isLoading {
-            loadingView
+            ForEach(0..<4, id: \.self) { _ in
+                ArticleRowSkeleton()
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(themeManager.colors.page)
+            }
         } else if let error = errorMessage {
-            errorView(error)
+            stateRow {
+                Text(error)
+                    .font(Typography.ui(13))
+                    .foregroundColor(themeManager.colors.muted)
+                    .multilineTextAlignment(.center)
+            }
         } else {
             let displayedArticles = articles.filter { showReadArticles || !$0.isRead }
             if displayedArticles.isEmpty {
-                emptyView
+                stateRow {
+                    VStack(spacing: 10) {
+                        Text(articles.isEmpty ? "No articles yet" : "All caught up")
+                            .font(Typography.sheetTitle)
+                            .foregroundColor(themeManager.colors.text)
+
+                        if !articles.isEmpty {
+                            Button("Show read articles") { showReadArticles = true }
+                                .font(Typography.ui(14, weight: .semibold))
+                                .foregroundColor(themeManager.colors.accent)
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
             } else {
-                listView(displayedArticles)
-            }
-        }
-    }
+                ForEach(displayedArticles) { article in
+                    let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? 0
 
-    private var loadingView: some View {
-        ScrollView {
-            VStack(spacing: Spacing.sm) {
-                ForEach(0..<6, id: \.self) { _ in
-                    ArticleRowSkeleton()
-                }
-            }
-            .padding(.horizontal, Spacing.screenHorizontal)
-            .padding(.top, Spacing.md)
-        }
-    }
+                    ZStack {
+                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex)) {
+                            EmptyView()
+                        }
+                        .opacity(0)
 
-    private func errorView(_ message: String) -> some View {
-        VStack(spacing: Spacing.sm) {
-            Spacer()
-            Text(message)
-                .font(Typography.ui(13))
-                .foregroundColor(themeManager.colors.muted)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.xl)
-            Spacer()
-        }
-    }
-
-    private var emptyView: some View {
-        ScrollView {
-            VStack(spacing: Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(themeManager.colors.sink)
-                        .frame(width: 96, height: 96)
-                    Image(systemName: articles.isEmpty ? "dot.radiowaves.up.forward" : "checkmark")
-                        .font(.system(size: 40))
-                        .foregroundColor(themeManager.colors.text.opacity(0.35))
-                }
-
-                if articles.isEmpty {
-                    Text("No articles yet")
-                        .font(Typography.sheetTitle)
-                        .foregroundColor(themeManager.colors.text)
-                } else {
-                    Text("All caught up")
-                        .font(Typography.sheetTitle)
-                        .foregroundColor(themeManager.colors.text)
-
-                    Button(action: { showReadArticles = true }) {
-                        Text("Show read articles")
-                            .font(Typography.ui(14, weight: .semibold))
-                            .foregroundColor(themeManager.colors.accent)
+                        RSSArticleRow(article: article)
                     }
-                }
-            }
-            .padding(.top, 100)
-            .frame(maxWidth: .infinity)
-        }
-        .refreshable {
-            await refreshFeed()
-        }
-    }
-
-    private func listView(_ displayedArticles: [RSSArticle]) -> some View {
-        List {
-            ForEach(Array(displayedArticles.enumerated()), id: \.element.id) { index, article in
-                let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? index
-
-                ZStack {
-                    NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex)) {
-                        EmptyView()
+                    .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
+                    .listRowSeparatorTint(themeManager.colors.line)
+                    .listRowBackground(themeManager.colors.page)
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            Task {
+                                await markAsRead(article: article, at: originalIndex)
+                            }
+                        } label: {
+                            Label("Mark as Read", systemImage: "envelope.open")
+                        }
+                        .tint(themeManager.colors.accent)
                     }
-                    .opacity(0)
-
-                    RSSArticleRow(article: article)
-                }
-                .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
-                .listRowSeparatorTint(themeManager.colors.line)
-                .listRowBackground(themeManager.colors.page)
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    Button {
+                    .rssArticleContextMenu(article: article) {
                         Task {
                             await markAsRead(article: article, at: originalIndex)
                         }
-                    } label: {
-                        Label("Mark as Read", systemImage: "envelope.open")
-                    }
-                    .tint(themeManager.colors.accent)
-                }
-                .rssArticleContextMenu(article: article) {
-                    Task {
-                        await markAsRead(article: article, at: originalIndex)
                     }
                 }
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(themeManager.colors.page)
-        .refreshable {
-            await refreshFeed()
-        }
+    }
+
+    private func stateRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 48)
+            .listRowSeparator(.hidden)
+            .listRowBackground(themeManager.colors.page)
     }
 
     // MARK: - Actions
@@ -224,24 +390,12 @@ struct RSSArticleListView: View {
         isMarkingRead = true
         await viewModel.markFeedAsRead(currentFeed)
 
-        await MainActor.run {
-            for i in articles.indices {
-                articles[i].isRead = true
-                articles[i].readAt = Date()
-            }
+        for i in articles.indices {
+            articles[i].isRead = true
+            articles[i].readAt = Date()
         }
 
-        try? await Task.sleep(nanoseconds: 400_000_000)
         isMarkingRead = false
-
-        if let idx = currentIndex, idx < viewModel.feeds.count - 1 {
-            transitionDirection = .forward
-            withAnimation(.easeInOut(duration: 0.35)) {
-                currentFeed = viewModel.feeds[idx + 1]
-            }
-        } else {
-            dismiss()
-        }
     }
 
     private func refreshFeed() async {
@@ -271,154 +425,53 @@ struct RSSArticleListView: View {
         guard let userId = AuthManager.shared.user?.id.uuidString else { return }
         do {
             try await RSSService.shared.markArticleAsRead(articleId: article.id, userId: userId)
-            var updatedArticle = article
-            updatedArticle.isRead = true
-            updatedArticle.readAt = Date()
-            articles[index] = updatedArticle
+            guard articles.indices.contains(index), articles[index].id == article.id else { return }
+            articles[index].isRead = true
+            articles[index].readAt = Date()
+            if let count = viewModel.unreadCounts[article.feedId], count > 0 {
+                viewModel.unreadCounts[article.feedId] = count - 1
+            }
         } catch {
             print("Failed to mark article as read: \(error)")
         }
     }
 }
 
-// MARK: - Feed Header
-
-struct RSSFeedHeader: View {
-    let feed: RSSFeed
-    let unreadCount: Int
-    let isMarkingRead: Bool
-    let hasPrev: Bool
-    let hasNext: Bool
-    let onMarkAllRead: () -> Void
-    let onPrev: () -> Void
-    let onNext: () -> Void
-    @Environment(\.dismiss) var dismiss
-    @State private var showSafariView = false
-
-    @EnvironmentObject var themeManager: ThemeManager
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                iconButton(systemImage: "chevron.backward", label: "Back", action: { dismiss() })
-
-                iconButton(systemImage: "arrow.backward", label: "Previous feed", enabled: hasPrev, action: onPrev)
-
-                Spacer(minLength: 4)
-
-                centerContent
-
-                Spacer(minLength: 4)
-
-                iconButton(systemImage: "arrow.forward", label: "Next feed", enabled: hasNext, action: onNext)
-
-                Button(action: onMarkAllRead) {
-                    Group {
-                        if isMarkingRead {
-                            ProgressView()
-                                .tint(themeManager.colors.page)
-                        } else {
-                            Image(systemName: "checkmark")
-                                .font(Typography.symbol(14, weight: .bold))
-                        }
-                    }
-                    .foregroundColor(themeManager.colors.page)
-                    .frame(width: Spacing.iconButtonSize, height: Spacing.iconButtonSize)
-                    .background(themeManager.colors.accent)
-                    .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .minimumTapTarget()
-                .accessibilityLabel("Mark all as read")
-                .opacity(unreadCount > 0 ? 1 : 0.35)
-                .disabled(unreadCount == 0 || isMarkingRead)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 54)
-            .padding(.bottom, 12)
-
-            Rectangle()
-                .fill(themeManager.colors.line)
-                .frame(height: 1)
-        }
-        .background(themeManager.colors.page)
-        .fullScreenCover(isPresented: $showSafariView) {
-            if let siteUrlString = feed.siteUrl, let url = URL(string: siteUrlString) {
-                SafariView(url: url)
-                    .edgesIgnoringSafeArea(.all)
-            }
-        }
-    }
-
-    private func iconButton(systemImage: String, label: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
-        IconCircleButton(systemImage: systemImage, label: label, glyphWeight: .bold, glyphSize: 14, action: action)
-        .opacity(enabled ? 1 : 0.35)
-        .disabled(!enabled)
-    }
-
-    private var centerContent: some View {
-        VStack(spacing: 2) {
-            AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(feed.url)&sz=128")) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 24, height: 24)
-                        .clipShape(Circle())
-                default:
-                    Image(systemName: "dot.radiowaves.up.forward")
-                        .font(Typography.symbol(12))
-                        .foregroundColor(themeManager.colors.accent)
-                        .frame(width: 24, height: 24)
-                        .background(Circle().fill(themeManager.colors.sink))
-                }
-            }
-            .id(feed.url)
-
-            Text(feed.title)
-                .font(Typography.ui(15, weight: .bold))
-                .foregroundColor(themeManager.colors.text)
-                .lineLimit(1)
-                .id(feed.id)
-
-            Text("\(unreadCount) unread")
-                .font(Typography.meta)
-                .foregroundColor(themeManager.colors.muted)
-                .contentTransition(.numericText())
-        }
-        .animation(.easeInOut(duration: 0.3), value: feed.id)
-        .onTapGesture {
-            if feed.siteUrl != nil {
-                showSafariView = true
-            }
-        }
-    }
-}
-
 // MARK: - Article Row
 
+/// Editorial Teal article row, shared by the Feeds tab, All feeds and the
+/// feed source page: thumbnail, source (or unread dot) and time, title,
+/// one line of snippet. `feedTitle` is shown when the list mixes feeds.
 struct RSSArticleRow: View {
     let article: RSSArticle
+    var feedTitle: String? = nil
     @ObservedObject private var saveStore = RSSLibrarySaveStore.shared
     @EnvironmentObject var themeManager: ThemeManager
+    @ScaledMetric(relativeTo: .body) private var thumbSize: CGFloat = 84
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .top, spacing: 14) {
             thumbnail
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
                     if !article.isRead {
-                        Circle().fill(themeManager.colors.accent).frame(width: 7, height: 7)
-                    }
-                    if let date = article.pubDate {
-                        Text(date.formatted(date: .abbreviated, time: .shortened))
-                            .font(Typography.meta)
-                            .foregroundColor(themeManager.colors.muted)
+                        Circle()
+                            .fill(themeManager.colors.accent)
+                            .frame(width: 7, height: 7)
+                            .accessibilityLabel("Unread")
                     }
 
-                    // Esito dell'action menu (long press → Save to Library).
+                    if let feedTitle {
+                        Text(feedTitle)
+                            .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
+                            .foregroundColor(themeManager.colors.accent)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    // Outcome of the long-press "Save to Library".
                     if saveStore.isSaving(article) {
                         ProgressView()
                             .controlSize(.mini)
@@ -427,24 +480,33 @@ struct RSSArticleRow: View {
                         Image(systemName: "bookmark.fill")
                             .font(Typography.symbol(10))
                             .foregroundColor(themeManager.colors.accent)
+                            .accessibilityLabel("Saved to Library")
+                    }
+
+                    if let date = article.pubDate {
+                        Text(date, style: .relative)
+                            .font(Typography.ui(12, relativeTo: .caption))
+                            .foregroundColor(themeManager.colors.muted)
+                            .lineLimit(1)
                     }
                 }
 
                 Text(article.title)
-                    .font(Typography.listRowTitle)
+                    .font(Typography.ui(15, weight: .semibold, relativeTo: .subheadline))
                     .foregroundColor(article.isRead ? themeManager.colors.muted : themeManager.colors.text)
-                    .lineLimit(2)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let snippet = article.contentSnippet {
-                    Text(snippet.strippingHTML())
-                        .font(Typography.bodyExcerpt)
+                if let snippet = article.contentSnippet?.strippingHTML(), !snippet.isEmpty {
+                    Text(snippet)
+                        .font(Typography.ui(13, relativeTo: .footnote))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(1)
                 }
             }
         }
-        .padding(.vertical, 14)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
     }
 
@@ -455,15 +517,16 @@ struct RSSArticleRow: View {
                     .aspectRatio(contentMode: .fill)
             } else {
                 ZStack {
-                    themeManager.colors.accent200
+                    themeManager.colors.surface
                     Image(systemName: "dot.radiowaves.up.forward")
-                        .foregroundColor(themeManager.colors.accent800.opacity(0.6))
+                        .foregroundColor(themeManager.colors.muted)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
             }
         }
-        .frame(width: 66, height: 66)
+        .frame(width: thumbSize, height: thumbSize)
         .clipped()
+        .accessibilityHidden(true)
     }
 }
 

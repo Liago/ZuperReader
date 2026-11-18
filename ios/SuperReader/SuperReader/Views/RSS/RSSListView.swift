@@ -1,10 +1,44 @@
 import SwiftUI
+import Auth
+
+// MARK: - Feeds tab
+//
+// Editorial Teal (design canvas · "02 · Feeds"), top to bottom:
+//  1. Header — "Feeds", channels / unread / last sync, settings and "Add feed";
+//  2. Search field — filters the loaded articles by title and snippet;
+//  3. Chips — All, Unread, then the channels with unread items;
+//  4. "Today in your feeds" — the newest articles with an image, as
+//     overlay cards in a horizontal carousel;
+//  5. "Latest" — newest articles across every feed ("Mark all read",
+//     "See all" → `RSSAllFeedsListView`);
+//  6. "Your channels" — every feed, opening its source page
+//     (`RSSArticleListView`).
 
 struct RSSListView: View {
     @StateObject private var viewModel = RSSViewModel()
     @EnvironmentObject var themeManager: ThemeManager
+    @StateObject private var authManager = AuthManager.shared
+
     @State private var showingDiscovery = false
     @State private var showingSettings = false
+
+    /// Newest articles across all feeds (read ones included, for "All").
+    @State private var articles: [RSSArticle] = []
+    @State private var isLoadingArticles = false
+    @State private var isMarkingAllRead = false
+    @State private var searchText = ""
+    @State private var filter: FeedFilter = .all
+
+    /// Rows under "Latest" before "See all".
+    private let latestLimit = 25
+    /// Cards in "Today in your feeds".
+    private let featuredLimit = 5
+
+    enum FeedFilter: Hashable {
+        case all
+        case unread
+        case feed(UUID)
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,16 +52,31 @@ struct RSSListView: View {
                     emptyState
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: Spacing.md) {
-                            allFeedsRow
-                            feedList
+                        VStack(alignment: .leading, spacing: 22) {
+                            searchField
+                                .padding(.horizontal, Spacing.screenHorizontal)
+
+                            chipsRow
+
+                            if !isSearching && !featuredArticles.isEmpty {
+                                featuredSection
+                            }
+
+                            latestSection
+                                .padding(.horizontal, Spacing.screenHorizontal)
+
+                            if !isSearching {
+                                channelsSection
+                                    .padding(.horizontal, Spacing.screenHorizontal)
+                            }
                         }
-                        .padding(.horizontal, Spacing.screenHorizontal)
-                        .padding(.top, Spacing.md)
+                        .padding(.top, Spacing.xs)
                         .padding(.bottom, Spacing.scrollBottomInset)
                     }
+                    .scrollDismissesKeyboard(.immediately)
                     .refreshable {
                         await viewModel.refreshFeedsViaAPI()
+                        await loadArticles()
                     }
                 }
 
@@ -39,9 +88,13 @@ struct RSSListView: View {
                 header
             }
             .toolbar(.hidden, for: .navigationBar)
+            .rssLibrarySaveBanner(bottomPadding: 28)
             .sheet(isPresented: $showingDiscovery) {
                 RSSDiscoveryView {
-                    Task { await viewModel.loadFeeds() }
+                    Task {
+                        await viewModel.loadFeeds()
+                        await loadArticles()
+                    }
                 }
                 .environmentObject(themeManager)
             }
@@ -51,42 +104,134 @@ struct RSSListView: View {
             }
             .task {
                 await viewModel.loadFeeds()
+                await loadArticles()
                 if viewModel.shouldAutoRefresh() {
                     await viewModel.refreshFeedsViaAPI()
+                    await loadArticles()
                 }
             }
         }
     }
 
+    // MARK: - Data
+
+    private func loadArticles() async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        isLoadingArticles = articles.isEmpty
+        do {
+            articles = try await RSSService.shared.getArticles(userId: userId, feedId: nil, limit: 100, includeRead: true)
+        } catch {
+            print("Failed to load feed articles: \(error)")
+        }
+        isLoadingArticles = false
+    }
+
+    private func markAsRead(_ article: RSSArticle) async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        do {
+            try await RSSService.shared.markArticleAsRead(articleId: article.id, userId: userId)
+            if let index = articles.firstIndex(where: { $0.id == article.id }) {
+                articles[index].isRead = true
+                articles[index].readAt = Date()
+            }
+            if let count = viewModel.unreadCounts[article.feedId], count > 0 {
+                viewModel.unreadCounts[article.feedId] = count - 1
+            }
+        } catch {
+            print("Failed to mark article as read: \(error)")
+        }
+    }
+
+    /// Marks every feed with unread items as read (one call per feed).
+    private func markAllAsRead() async {
+        isMarkingAllRead = true
+        let unreadFeeds = viewModel.feeds.filter { (viewModel.unreadCounts[$0.id] ?? 0) > 0 }
+        for feed in unreadFeeds {
+            await viewModel.markFeedAsRead(feed)
+        }
+        for index in articles.indices where !articles[index].isRead {
+            articles[index].isRead = true
+            articles[index].readAt = Date()
+        }
+        isMarkingAllRead = false
+    }
+
+    private func feed(for article: RSSArticle) -> RSSFeed? {
+        viewModel.feeds.first(where: { $0.id == article.feedId })
+    }
+
+    // MARK: - Filtering
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Articles matching the chip and the search text, with their index in
+    /// `articles` (the reader pages through the full array).
+    private var filteredArticles: [IndexedRSSArticle] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return articles.enumerated().compactMap { (index, article) -> IndexedRSSArticle? in
+            switch filter {
+            case .all: break
+            case .unread: if article.isRead { return nil }
+            case .feed(let id): if article.feedId != id { return nil }
+            }
+            if !query.isEmpty {
+                let haystack = (article.title + " " + (article.contentSnippet ?? "")).lowercased()
+                if !haystack.contains(query) { return nil }
+            }
+            return IndexedRSSArticle(index: index, article: article)
+        }
+    }
+
+    private var featuredArticles: [IndexedRSSArticle] {
+        Array(filteredArticles.filter { $0.article.imageUrl != nil }.prefix(featuredLimit))
+    }
+
+    /// Latest rows, without the articles already shown as featured cards.
+    private var latestArticles: [IndexedRSSArticle] {
+        let featuredIds: Set<UUID> = isSearching ? [] : Set(featuredArticles.map { $0.article.id })
+        return Array(filteredArticles.filter { !featuredIds.contains($0.article.id) }.prefix(latestLimit))
+    }
+
+    /// Channels with unread items, most unread first, for the chip row.
+    private var chipFeeds: [RSSFeed] {
+        viewModel.feeds
+            .filter { (viewModel.unreadCounts[$0.id] ?? 0) > 0 }
+            .sorted { (viewModel.unreadCounts[$0.id] ?? 0) > (viewModel.unreadCounts[$1.id] ?? 0) }
+            .prefix(8)
+            .map { $0 }
+    }
+
     // MARK: - Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Feeds")
                     .font(Typography.largeTitle)
                     .foregroundColor(themeManager.colors.text)
+                    .accessibilityAddTraits(.isHeader)
 
-                Spacer()
-
-                HStack(spacing: Spacing.sm) {
-                    IconCircleButton(systemImage: "gearshape", label: "Feed settings") {
-                        showingSettings = true
-                    }
-
-                    IconCircleButton(systemImage: "plus", label: "Add feed", style: .accent, glyphSize: 18) {
-                        showingDiscovery = true
-                    }
-                }
+                Text(subtitle)
+                    .font(Typography.ui(13, relativeTo: .footnote))
+                    .foregroundColor(themeManager.colors.muted)
+                    .lineLimit(1)
             }
 
-            Text(subtitle)
-                .font(Typography.ui(13.5))
-                .foregroundColor(themeManager.colors.muted)
+            Spacer(minLength: 8)
+
+            IconCircleButton(systemImage: "gearshape", label: "Feed settings", style: .outline, glyphSize: 17) {
+                showingSettings = true
+            }
+
+            IconCircleButton(systemImage: "plus", label: "Add feed", style: .accent, glyphSize: 18) {
+                showingDiscovery = true
+            }
         }
         .padding(.horizontal, Spacing.screenHorizontal)
         .padding(.top, Spacing.contentTop)
-        .padding(.bottom, Spacing.md)
+        .padding(.bottom, 12)
         .background(themeManager.colors.page)
     }
 
@@ -96,62 +241,194 @@ struct RSSListView: View {
         return "\(channels) channel\(channels == 1 ? "" : "s") · \(unread) unread · \(viewModel.lastSyncedDescription)"
     }
 
-    // MARK: - All Feeds Hero Row
+    // MARK: - Search
 
-    private var allFeedsRow: some View {
-        NavigationLink(destination: RSSAllFeedsListView(viewModel: viewModel)) {
-            HStack(spacing: 14) {
-                Image(systemName: "dot.radiowaves.up.forward")
-                    .font(Typography.symbol(20, weight: .semibold))
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(themeManager.colors.muted)
+                .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("All feeds")
-                        .font(Typography.display(16))
-                    Text("Everything, newest first")
-                        .font(Typography.ui(12.5))
-                        .opacity(0.85)
+            TextField(
+                "",
+                text: $searchText,
+                prompt: Text("Search articles…").foregroundColor(themeManager.colors.muted)
+            )
+            .font(Typography.ui(15, relativeTo: .subheadline))
+            .foregroundColor(themeManager.colors.text)
+            .submitLabel(.search)
+            .accessibilityLabel("Search articles")
+
+            if isSearching {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(themeManager.colors.muted)
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 50)
+        .overlay(Capsule().stroke(themeManager.colors.line, lineWidth: 1))
+    }
+
+    // MARK: - Chips
+
+    private var chipsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                FilterChip(title: "All", dotColor: nil, isSelected: filter == .all) {
+                    withAnimation(.easeOut(duration: 0.2)) { filter = .all }
+                }
+
+                FilterChip(title: "Unread", dotColor: nil, isSelected: filter == .unread) {
+                    withAnimation(.easeOut(duration: 0.2)) { filter = .unread }
+                }
+
+                ForEach(chipFeeds) { feed in
+                    FilterChip(title: feed.title, dotColor: nil, isSelected: filter == .feed(feed.id)) {
+                        withAnimation(.easeOut(duration: 0.2)) { filter = .feed(feed.id) }
+                    }
+                }
+            }
+            .padding(.horizontal, Spacing.screenHorizontal)
+        }
+    }
+
+    // MARK: - Today in your feeds
+
+    private var featuredSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Today in your feeds")
+                .font(Typography.cardTitle)
+                .foregroundColor(themeManager.colors.text)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, Spacing.screenHorizontal)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 12) {
+                    ForEach(featuredArticles) { item in
+                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: item.index)) {
+                            RSSFeaturedCard(article: item.article, feedTitle: feed(for: item.article)?.title)
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .rssArticleContextMenu(article: item.article) {
+                            Task { await markAsRead(item.article) }
+                        }
+                    }
+                }
+                .scrollTargetLayout()
+                .padding(.horizontal, Spacing.screenHorizontal)
+            }
+            .scrollTargetBehavior(.viewAligned)
+        }
+    }
+
+    // MARK: - Latest
+
+    private var latestSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(isSearching ? "Results" : "Latest")
+                    .font(Typography.cardTitle)
+                    .foregroundColor(themeManager.colors.text)
+                    .accessibilityAddTraits(.isHeader)
 
                 Spacer()
 
-                if viewModel.totalUnreadCount > 0 {
-                    Text("\(viewModel.totalUnreadCount)")
-                        .font(Typography.ui(14, weight: .heavy))
+                if viewModel.totalUnreadCount > 0 && !isSearching {
+                    Button {
+                        Task { await markAllAsRead() }
+                    } label: {
+                        if isMarkingAllRead {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(themeManager.colors.accent)
+                        } else {
+                            Text("Mark all read")
+                                .font(Typography.ui(13.5, weight: .medium))
+                                .foregroundColor(themeManager.colors.accent)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isMarkingAllRead)
+                    .minimumTapTarget()
                 }
             }
-            .foregroundColor(themeManager.colors.page)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(themeManager.colors.accent)
-            .clipShape(RoundedRectangle(cornerRadius: 22))
+
+            let rows = latestArticles
+            if isLoadingArticles && articles.isEmpty {
+                VStack(spacing: Spacing.sm) {
+                    ForEach(0..<3, id: \.self) { _ in ArticleRowSkeleton() }
+                }
+            } else if rows.isEmpty {
+                Text(isSearching ? "No articles match “\(searchText)”." : "You're all caught up.")
+                    .font(Typography.ui(14))
+                    .foregroundColor(themeManager.colors.muted)
+                    .padding(.vertical, 16)
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(rows) { item in
+                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: item.index)) {
+                            RSSArticleRow(article: item.article, feedTitle: feed(for: item.article)?.title)
+                        }
+                        .buttonStyle(.plain)
+                        .rssArticleContextMenu(article: item.article) {
+                            Task { await markAsRead(item.article) }
+                        }
+
+                        Rectangle()
+                            .fill(themeManager.colors.line)
+                            .frame(height: 1)
+                    }
+                }
+
+                NavigationLink(destination: RSSAllFeedsListView(viewModel: viewModel)) {
+                    HStack(spacing: 6) {
+                        Text("See all unread")
+                            .font(Typography.ui(14, weight: .semibold))
+                        Image(systemName: "chevron.right")
+                            .font(Typography.symbol(12, weight: .semibold))
+                    }
+                    .foregroundColor(themeManager.colors.accent)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .minimumTapTarget()
+                .padding(.top, 4)
+            }
         }
-        .buttonStyle(ScaleButtonStyle())
     }
 
-    // MARK: - Feed List
+    // MARK: - Your channels
 
-    // Folders (`RSSFeed.folderId`) aren't backed by any folder CRUD yet on
-    // either platform, so feeds render as one flat list rather than the
-    // "Design" / "Long reads" grouping in the mock.
-    private var feedList: some View {
-        VStack(spacing: 0) {
+    private var channelsSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Your channels")
+                .font(Typography.cardTitle)
+                .foregroundColor(themeManager.colors.text)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.bottom, 4)
+
+            // Folders (`RSSFeed.folderId`) have no CRUD yet on either platform,
+            // so feeds render as one flat list.
             ForEach(Array(viewModel.feeds.enumerated()), id: \.element.id) { index, feed in
                 NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: viewModel)) {
                     RSSFeedRow(feed: feed, unreadCount: viewModel.unreadCounts[feed.id] ?? 0, monogramIndex: index)
                 }
-                .buttonStyle(ScaleButtonStyle())
+                .buttonStyle(.plain)
 
                 if index < viewModel.feeds.count - 1 {
                     Rectangle()
                         .fill(themeManager.colors.line)
                         .frame(height: 1)
-                        .padding(.leading, 12 + 36 + 14)
+                        .padding(.leading, 44 + 14)
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .background(themeManager.colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
     }
 
     // MARK: - Loading
@@ -164,7 +441,7 @@ struct RSSListView: View {
                 }
             }
             .padding(.horizontal, Spacing.screenHorizontal)
-            .padding(.top, Spacing.contentTop + 60)
+            .padding(.top, Spacing.md)
         }
     }
 
@@ -174,12 +451,13 @@ struct RSSListView: View {
         VStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(themeManager.colors.sink)
+                    .fill(themeManager.colors.surface)
                     .frame(width: 96, height: 96)
                 Image(systemName: "dot.radiowaves.up.forward")
-                    .font(.system(size: 40))
-                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+                    .font(Typography.symbol(36))
+                    .foregroundColor(themeManager.colors.muted)
             }
+            .accessibilityHidden(true)
 
             Text("No feeds yet")
                 .font(Typography.sheetTitle)
@@ -192,20 +470,104 @@ struct RSSListView: View {
 
             Button(action: { showingDiscovery = true }) {
                 Text("Discover feeds")
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
+                    .frame(minHeight: 44)
                     .background(themeManager.colors.accent)
                     .clipShape(Capsule())
             }
+            .buttonStyle(.plain)
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-// MARK: - Feed Row
+// MARK: - Indexed article
+
+/// An article plus its position in the array the reader pages through.
+struct IndexedRSSArticle: Identifiable {
+    let index: Int
+    let article: RSSArticle
+    var id: UUID { article.id }
+}
+
+// MARK: - Featured Card ("Today in your feeds")
+
+struct RSSFeaturedCard: View {
+    let article: RSSArticle
+    let feedTitle: String?
+
+    @EnvironmentObject var themeManager: ThemeManager
+    @ScaledMetric(relativeTo: .body) private var width: CGFloat = 300
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 184
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            Color(hex: "#2B3A3C")
+
+            if let imageUrl = article.imageUrl {
+                AsyncImageView(url: imageUrl, cornerRadius: 0)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: width, height: height)
+                    .clipped()
+            }
+
+            LinearGradient(
+                colors: [Color(hex: "#0A0E0F").opacity(0.85), Color(hex: "#0A0E0F").opacity(0)],
+                startPoint: .bottom,
+                endPoint: .center
+            )
+
+            VStack(alignment: .leading, spacing: 4) {
+                if let feedTitle {
+                    Text(feedTitle)
+                        .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
+                        .foregroundColor(Color(hex: "#C9D9DA"))
+                        .lineLimit(1)
+                }
+                Text(article.title)
+                    .font(Typography.ui(18, weight: .bold, relativeTo: .headline))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(16)
+        }
+        .frame(width: width, height: height)
+        .overlay(alignment: .topLeading) {
+            if !article.isRead {
+                Text("New")
+                    .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color(hex: "#33666C")))
+                    .padding(14)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if let date = article.pubDate {
+                HStack(spacing: 5) {
+                    Image(systemName: "clock")
+                        .font(Typography.symbol(11, weight: .semibold))
+                    Text(date, style: .relative)
+                        .font(Typography.ui(12, weight: .medium, relativeTo: .caption))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.black.opacity(0.35)))
+                .padding(12)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Feed Row ("Your channels")
 
 struct RSSFeedRow: View {
     let feed: RSSFeed
@@ -217,33 +579,29 @@ struct RSSFeedRow: View {
         URL(string: feed.siteUrl ?? feed.url)?.host?.replacingOccurrences(of: "www.", with: "") ?? ""
     }
 
-    private var monogramLetter: String {
-        String(feed.title.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased()
-    }
-
     private var isFullyRead: Bool { unreadCount == 0 }
 
     var body: some View {
         HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(monogramIndex % 2 == 0 ? themeManager.colors.accent200 : themeManager.colors.accent2_200)
-                Text(monogramLetter)
-                    .font(Typography.ui(15, weight: .heavy))
-                    .foregroundColor(monogramIndex % 2 == 0 ? themeManager.colors.accent800 : themeManager.colors.accent2)
-            }
-            .frame(width: 36, height: 36)
+            Text(FeedSourceBubble.monogram(for: feed.title))
+                .font(Typography.ui(13, weight: .bold))
+                .foregroundColor(themeManager.colors.text)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(themeManager.colors.page))
+                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(feed.title)
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(1)
 
                 if !domain.isEmpty {
                     Text(domain)
-                        .font(Typography.ui(12.5))
+                        .font(Typography.ui(12.5, relativeTo: .caption))
                         .foregroundColor(themeManager.colors.muted)
+                        .lineLimit(1)
                 }
             }
 
@@ -251,18 +609,27 @@ struct RSSFeedRow: View {
 
             if isFullyRead {
                 Image(systemName: "checkmark")
-                    .font(Typography.symbol(13, weight: .bold))
+                    .font(Typography.symbol(13, weight: .semibold))
                     .foregroundColor(themeManager.colors.muted)
+                    .accessibilityLabel("All read")
             } else {
                 Text("\(unreadCount)")
-                    .font(Typography.ui(14, weight: .heavy))
-                    .foregroundColor(themeManager.colors.accent)
+                    .font(Typography.ui(13, weight: .semibold))
+                    .foregroundColor(themeManager.colors.page)
+                    .padding(.horizontal, 9)
+                    .frame(minHeight: 24)
+                    .background(Capsule().fill(themeManager.colors.accent))
+                    .accessibilityLabel("\(unreadCount) unread")
             }
+
+            Image(systemName: "chevron.right")
+                .font(Typography.symbol(12, weight: .semibold))
+                .foregroundColor(themeManager.colors.muted)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 12)
-        .opacity(isFullyRead ? 0.62 : 1)
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 
