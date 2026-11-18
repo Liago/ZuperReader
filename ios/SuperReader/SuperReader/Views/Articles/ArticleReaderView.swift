@@ -11,6 +11,10 @@ struct ArticleReaderView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var authManager = AuthManager.shared
     @ObservedObject private var preferencesManager = ReadingPreferencesManager.shared
+    @ObservedObject private var queueStore = ReadingQueueStore.shared
+    @ObservedObject private var categoryStore = ArticleCategoryStore.shared
+    /// Edge-to-edge hero image height (design · "04 · Reader").
+    @ScaledMetric(relativeTo: .body) private var heroHeight: CGFloat = 246
 
     @State private var article: Article?
     @State private var isLoading = true
@@ -112,7 +116,7 @@ struct ArticleReaderView: View {
         .sheet(isPresented: $showPreferences) {
             ReadingPreferencesView(preferences: $preferencesManager.preferences)
                 .environmentObject(themeManager)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $showSummarySheet) {
@@ -128,7 +132,7 @@ struct ArticleReaderView: View {
                 )
                 .environmentObject(themeManager)
                 .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .presentationDragIndicator(.hidden)
             }
         }
         .sheet(isPresented: $showComments) {
@@ -224,38 +228,52 @@ struct ArticleReaderView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if !isFocusMode {
+                        // Editorial Teal: edge-to-edge hero, then title,
+                        // byline and meta on the reader column.
+                        if let imageUrl = article.imageUrl {
+                            ZStack {
+                                readingColors.surface
+                                AsyncImageView(url: imageUrl, cornerRadius: 0)
+                                    .aspectRatio(contentMode: .fill)
+                            }
+                            .frame(height: heroHeight)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                mediaGalleryInitialIndex = 0
+                                showMediaGallery = true
+                            }
+                            .accessibilityLabel("Article image")
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint("Opens the image gallery")
+                        }
+
                         Text(article.title)
                             .font(Typography.articleTitle)
                             .tracking(-0.3)
-                            .lineSpacing(6)
+                            .lineSpacing(4)
                             .foregroundColor(readingColors.text)
+                            .fixedSize(horizontal: false, vertical: true)
                             .padding(.horizontal, Spacing.readerColumn)
-                            .padding(.top, 20)
+                            .padding(.top, 22)
+                            .accessibilityAddTraits(.isHeader)
 
                         bylineRow(article)
                             .padding(.horizontal, Spacing.readerColumn)
                             .padding(.top, 14)
 
-                        if let imageUrl = article.imageUrl {
-                            AsyncImageView(url: imageUrl, cornerRadius: 22)
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 158)
-                                .clipped()
-                                .padding(.horizontal, Spacing.readerColumn)
-                                .padding(.top, 20)
-                                .onTapGesture {
-                                    mediaGalleryInitialIndex = 0
-                                    showMediaGallery = true
-                                }
-                        }
+                        metaRow(article)
+                            .padding(.horizontal, Spacing.readerColumn)
+                            .padding(.top, 10)
                     } else {
                         Spacer().frame(height: 78)
                     }
 
                     contentColumn(article)
                         .padding(.horizontal, isFocusMode ? Spacing.focusHorizontal : Spacing.readerColumn)
-                        .padding(.top, 20)
-                        .padding(.bottom, isFocusMode ? 140 : 220)
+                        .padding(.top, 18)
+                        .padding(.bottom, isFocusMode ? 140 : 40)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -302,11 +320,14 @@ struct ArticleReaderView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .overlay(alignment: .bottom) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if !isFocusMode {
-                floatingActionBar(article)
+                readerActionBar(article)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
-            } else if let label = focusTimeRemainingLabel(article) {
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if isFocusMode, let label = focusTimeRemainingLabel(article) {
                 Text(label)
                     .font(Typography.ui(12.5, weight: .bold))
                     .foregroundColor(readingColors.muted)
@@ -332,88 +353,112 @@ struct ArticleReaderView: View {
 
     // MARK: - Top Chrome (Reader)
 
+    /// Editorial Teal (design canvas · "04 · Reader"): back, source in the
+    /// center, "Aa" and the More menu. Drawn with the reader palette so the
+    /// chrome follows Light / Sepia / Dark.
     private func readerTopChrome(_ article: Article) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                IconCircleButton(systemImage: "chevron.backward", label: "Back") {
-                    dismiss()
+        HStack(spacing: 4) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.backward")
+                    .font(Typography.symbol(19, weight: .semibold))
+                    .foregroundColor(readingColors.text)
+                    .frame(width: Spacing.minTapTarget, height: Spacing.minTapTarget)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Back")
+
+            Spacer(minLength: 4)
+
+            sourceLabel(article)
+
+            Spacer(minLength: 4)
+
+            Button(action: { showPreferences = true }) {
+                Text("Aa")
+                    .font(Typography.ui(16, weight: .bold, relativeTo: .callout))
+                    .foregroundColor(readingColors.text)
+                    .frame(width: Spacing.minTapTarget, height: Spacing.minTapTarget)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Reading preferences")
+
+            Menu {
+                Button(action: { withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true } }) {
+                    Label("Focus mode", systemImage: "arrow.up.left.and.arrow.down.right")
                 }
-
-                Text(topBarSubtitle(article))
-                    .font(Typography.ui(13, weight: .bold, relativeTo: .footnote))
-                    .foregroundColor(themeManager.colors.muted)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Spacer(minLength: 8)
-
-                IconCircleButton(systemImage: "textformat.size", label: "Reading preferences") {
-                    showPreferences = true
+                Button(action: { Task { await toggleFavorite() } }) {
+                    Label(
+                        article.isFavorite ? "Remove from favorites" : "Add to favorites",
+                        systemImage: article.isFavorite ? "star.slash" : "star"
+                    )
                 }
-
-                Menu {
-                    Button(action: { showTagEditor = true }) {
-                        Label("Manage Tags", systemImage: "tag")
-                    }
-                    if isOwner(article) {
-                        Button(action: { showPublicLinkSheet = true }) {
-                            Label(
-                                article.isPublicLinkActive ? "Public Link (On)" : "Public Link",
-                                systemImage: "globe"
-                            )
-                        }
-                    }
-                    Menu("Reading Status") {
-                        ForEach(ReadingStatus.allCases, id: \.self) { status in
-                            Button(action: { Task { await updateReadingStatus(status) } }) {
-                                Label(status.displayName, systemImage: status.icon)
-                            }
-                        }
-                    }
-                    Button(action: { Task { await toggleLike() } }) {
+                Button(action: { showTagEditor = true }) {
+                    Label("Manage Tags", systemImage: "tag")
+                }
+                if isOwner(article) {
+                    Button(action: { showPublicLinkSheet = true }) {
                         Label(
-                            hasLiked ? "Unlike" : (likeCount > 0 ? "Like (\(likeCount))" : "Like"),
-                            systemImage: hasLiked ? "hand.thumbsup.fill" : "hand.thumbsup"
+                            article.isPublicLinkActive ? "Public Link (On)" : "Public Link",
+                            systemImage: "globe"
                         )
                     }
-                    Divider()
-                    Button(role: .destructive, action: { showDeleteConfirm = true }) {
-                        Label("Delete Article", systemImage: "trash")
+                }
+                Button(action: { showShareSheet = true }) {
+                    Label("Share with friends", systemImage: "person.2")
+                }
+                Menu("Reading Status") {
+                    ForEach(ReadingStatus.allCases, id: \.self) { status in
+                        Button(action: { Task { await updateReadingStatus(status) } }) {
+                            Label(status.displayName, systemImage: status.icon)
+                        }
                     }
-                } label: {
-                    IconCircleGlyph(systemImage: "ellipsis")
                 }
-                .minimumTapTarget()
-                .accessibilityLabel("More actions")
-
-                IconCircleButton(
-                    systemImage: "arrow.up.left.and.arrow.down.right",
-                    label: "Enter Focus mode",
-                    style: .filled,
-                    glyphSize: 14
-                ) {
-                    withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true }
+                if URL(string: article.url) != nil {
+                    Button(action: { showSafariView = true }) {
+                        Label("Read Original", systemImage: "safari")
+                    }
                 }
+                Divider()
+                Button(role: .destructive, action: { showDeleteConfirm = true }) {
+                    Label("Delete Article", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(Typography.symbol(18, weight: .semibold))
+                    .foregroundColor(readingColors.text)
+                    .rotationEffect(.degrees(90))
+                    .frame(width: Spacing.minTapTarget, height: Spacing.minTapTarget)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(themeManager.colors.line)
-                    Rectangle()
-                        .fill(themeManager.colors.accent)
-                        .frame(width: geometry.size.width * readingProgress)
-                }
-            }
-            .frame(height: 2)
-            .padding(.horizontal, 18)
-            .padding(.bottom, 10)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Reading progress")
-            .accessibilityValue("\(Int(readingProgress * 100)) percent")
+            .accessibilityLabel("More: focus mode, favorites, tags, public link, delete")
         }
-        .background(themeManager.colors.page)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(readingColors.page)
+    }
+
+    /// Source monogram + name in the top bar.
+    @ViewBuilder
+    private func sourceLabel(_ article: Article) -> some View {
+        let source = sourceName(article)
+        if !source.isEmpty {
+            HStack(spacing: 8) {
+                Text(FeedSourceBubble.monogram(for: source))
+                    .font(Typography.ui(10, weight: .bold, relativeTo: .caption2))
+                    .foregroundColor(readingColors.text)
+                    .frame(width: 26, height: 26)
+                    .overlay(Circle().stroke(readingColors.line, lineWidth: 1))
+                    .accessibilityHidden(true)
+                Text(source)
+                    .font(Typography.ui(16, weight: .semibold, relativeTo: .callout))
+                    .foregroundColor(readingColors.text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+    }
+
+    private func sourceName(_ article: Article) -> String {
+        (article.domain ?? "").replacingOccurrences(of: "www.", with: "")
     }
 
     /// Only the owner can make an article public (enforced server-side too).
@@ -421,13 +466,6 @@ struct ArticleReaderView: View {
     private func isOwner(_ article: Article) -> Bool {
         guard let userId = authManager.user?.id.uuidString else { return false }
         return article.userId.lowercased() == userId.lowercased()
-    }
-
-    private func topBarSubtitle(_ article: Article) -> String {
-        var parts: [String] = []
-        if let domain = article.domain { parts.append(domain) }
-        if let readTime = article.estimatedReadTime { parts.append("\(readTime) min") }
-        return parts.joined(separator: " · ")
     }
 
     private var focusProgressLine: some View {
@@ -445,101 +483,186 @@ struct ArticleReaderView: View {
         return remaining <= 1 ? "1 min left" : "\(remaining) min left"
     }
 
-    // MARK: - Byline
+    // MARK: - Byline & meta
 
+    /// "By Andrew Cunningham  For Ars Technica".
     @ViewBuilder
     private func bylineRow(_ article: Article) -> some View {
-        if let author = article.author {
-            HStack(spacing: 10) {
-                AvatarView(initials: String(author.prefix(2)), size: 30, gradient: PremiumGradients.primary)
-                HStack(spacing: 4) {
+        let author = article.author?.trimmingCharacters(in: .whitespaces) ?? ""
+        let source = sourceName(article)
+        if !author.isEmpty || !source.isEmpty {
+            HStack(spacing: 6) {
+                if !author.isEmpty {
+                    Text("By")
+                        .foregroundColor(readingColors.muted)
                     Text(author)
-                        .fontWeight(.bold)
-                    if let date = article.formattedDate {
-                        Text("· \(date)")
+                        .fontWeight(.medium)
+                        .foregroundColor(readingColors.text)
+                        .lineLimit(1)
+                }
+                if !source.isEmpty {
+                    Text("For")
+                        .foregroundColor(readingColors.muted)
+                        .padding(.leading, author.isEmpty ? 0 : 6)
+                    Text(source)
+                        .fontWeight(.medium)
+                        .foregroundColor(readingColors.text)
+                        .lineLimit(1)
+                }
+            }
+            .font(Typography.ui(13.5, relativeTo: .footnote))
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "Technology · 9 min read          Saved 2 h ago".
+    private func metaRow(_ article: Article) -> some View {
+        HStack(spacing: 8) {
+            if let category = categoryStore.category(for: article) {
+                Text(category.displayName)
+                    .font(Typography.ui(13.5, weight: .semibold, relativeTo: .footnote))
+                    .foregroundColor(readingColors.accent)
+            }
+
+            if categoryStore.category(for: article) != nil, article.estimatedReadTime != nil {
+                Circle()
+                    .fill(readingColors.muted)
+                    .frame(width: 3, height: 3)
+                    .accessibilityHidden(true)
+            }
+
+            if let readTime = article.estimatedReadTime {
+                Text("\(readTime) min read")
+                    .font(Typography.ui(13.5, relativeTo: .footnote))
+                    .foregroundColor(readingColors.muted)
+            }
+
+            Spacer(minLength: 8)
+
+            if let date = article.formattedDate {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock")
+                        .font(Typography.symbol(13))
+                        .accessibilityHidden(true)
+                    Text("Saved \(date)")
+                        .lineLimit(1)
+                }
+                .font(Typography.ui(13.5, relativeTo: .footnote))
+                .foregroundColor(readingColors.muted)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Action Bar
+
+    /// Docked bar (design · "04 · Reader"): reading progress on top, then
+    /// Like, Comments, AI summary, Share and Up next.
+    private func readerActionBar(_ article: Article) -> some View {
+        let queued = queueStore.isQueued(article.id)
+
+        return VStack(spacing: 0) {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(readingColors.line)
+                    Rectangle()
+                        .fill(readingColors.accent)
+                        .frame(width: geometry.size.width * readingProgress)
+                }
+            }
+            .frame(height: 3)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reading progress")
+            .accessibilityValue("\(Int(readingProgress * 100)) percent")
+
+            HStack(spacing: 0) {
+                actionBarButton(
+                    systemImage: hasLiked ? "heart.fill" : "heart",
+                    label: hasLiked ? "Unlike, \(likeCount) likes" : "Like, \(likeCount) likes",
+                    count: likeCount,
+                    tint: hasLiked ? readingColors.accent : nil
+                ) {
+                    Task { await toggleLike() }
+                }
+
+                Spacer(minLength: 0)
+
+                actionBarButton(
+                    systemImage: "bubble.left",
+                    label: "Comments, \(article.commentCount)",
+                    count: article.commentCount
+                ) {
+                    showComments = true
+                }
+
+                Spacer(minLength: 0)
+
+                actionBarButton(systemImage: "sparkles", label: "AI summary") {
+                    showSummarySheet = true
+                }
+
+                Spacer(minLength: 0)
+
+                if let url = URL(string: article.url) {
+                    ShareLink(item: url) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(Typography.symbol(19))
+                            .foregroundColor(readingColors.text)
+                            .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Share")
+
+                    Spacer(minLength: 0)
                 }
-                .font(Typography.ui(13))
-                .foregroundColor(readingColors.text)
+
+                actionBarButton(
+                    systemImage: queued ? "bookmark.fill" : "bookmark",
+                    label: queued ? "In Up next, remove" : "Add to Up next",
+                    tint: queued ? readingColors.accent : nil
+                ) {
+                    Task { await toggleUpNext(article) }
+                }
+                .disabled(queueStore.isPending(article.id))
             }
+            .padding(.horizontal, 14)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+        }
+        .background(
+            readingColors.page
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(readingColors.line)
+                .frame(height: 1)
         }
     }
 
-    // MARK: - Floating Action Bar
-
-    private func floatingActionBar(_ article: Article) -> some View {
-        HStack(spacing: 0) {
-            actionBarButton(
-                systemImage: article.isFavorite ? "heart.fill" : "heart",
-                label: article.isFavorite ? "Remove from favorites" : "Add to favorites",
-                tint: article.isFavorite ? themeManager.colors.accent : themeManager.colors.text
-            ) {
-                Task { await toggleFavorite() }
-            }
-
-            actionBarButton(systemImage: "bubble.left", label: "Comments") {
-                showComments = true
-            }
-
-            if let url = URL(string: article.url) {
-                ShareLink(item: url) {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(themeManager.colors.text)
-                        .minimumTapTarget()
-                }
-                .accessibilityLabel("Share")
-            }
-
-            actionBarButton(systemImage: "wand.and.stars", label: "AI summary") {
-                showSummarySheet = true
-            }
-
-            Spacer(minLength: 0)
-
-            Button(action: { withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true } }) {
-                Text("Focus")
-                    .font(Typography.display(13.5, relativeTo: .footnote))
-                    .foregroundColor(themeManager.colors.page)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .background(themeManager.colors.accent)
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .minimumTapTarget()
-            .accessibilityLabel("Enter Focus mode")
-            .accessibilityHint("Hides the controls. Tap the article to show them again.")
-        }
-        .font(Typography.symbol(18, weight: .medium))
-        .padding(.horizontal, 10)
-        .frame(minHeight: Spacing.readerActionBarHeight)
-        .background(themeManager.colors.card)
-        .clipShape(Capsule())
-        .overlay(
-            Capsule().stroke(themeManager.colors.line, lineWidth: 1)
-        )
-        .shadow(
-            color: AppShadows.floatingBar.color,
-            radius: AppShadows.floatingBar.radius,
-            x: AppShadows.floatingBar.x,
-            y: AppShadows.floatingBar.y
-        )
-        .padding(.horizontal, 18)
-        .padding(.bottom, 22)
-    }
-
-    /// One 44×44 target in the floating bar — glyph-only, so it always carries
-    /// a VoiceOver label.
+    /// One 44pt target in the action bar, with an optional count beside it.
     private func actionBarButton(
         systemImage: String,
         label: String,
+        count: Int? = nil,
         tint: Color? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .foregroundColor(tint ?? themeManager.colors.text)
-                .minimumTapTarget()
+            HStack(spacing: 7) {
+                Image(systemName: systemImage)
+                    .font(Typography.symbol(19))
+                    .foregroundColor(tint ?? readingColors.text)
+                if let count, count > 0 {
+                    Text("\(count)")
+                        .font(Typography.ui(14.5, relativeTo: .subheadline))
+                        .foregroundColor(readingColors.muted)
+                        .contentTransition(.numericText())
+                }
+            }
+            .padding(.horizontal, 6)
+            .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
+            .contentShape(Rectangle())
         }
         .buttonStyle(ScaleButtonStyle())
         .accessibilityLabel(label)
@@ -669,17 +792,42 @@ struct ArticleReaderView: View {
     private func readOriginalButton(_ article: Article) -> some View {
         if URL(string: article.url) != nil {
             Button(action: { showSafariView = true }) {
-                HStack {
-                    Text("Read Original")
-                        .font(Typography.ui(15, weight: .bold))
+                HStack(spacing: 14) {
+                    Text(FeedSourceBubble.monogram(for: sourceName(article).isEmpty ? "Web" : sourceName(article)))
+                        .font(Typography.ui(12, weight: .bold))
+                        .foregroundColor(readingColors.text)
+                        .frame(width: 40, height: 40)
+                        .overlay(Circle().stroke(readingColors.line, lineWidth: 1))
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Read the original")
+                            .font(Typography.ui(15, weight: .semibold))
+                            .foregroundColor(readingColors.text)
+                        if !sourceName(article).isEmpty {
+                            Text(sourceName(article))
+                                .font(Typography.ui(13, relativeTo: .footnote))
+                                .foregroundColor(readingColors.muted)
+                        }
+                    }
+
+                    Spacer(minLength: 8)
+
                     Image(systemName: "arrow.up.right")
+                        .font(Typography.symbol(17, weight: .medium))
+                        .foregroundColor(readingColors.text)
+                        .accessibilityHidden(true)
                 }
-                .foregroundColor(readingColors.page)
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(readingColors.text)
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.card)
+                        .stroke(readingColors.line, lineWidth: 1)
+                )
+                .contentShape(Rectangle())
             }
+            .buttonStyle(ScaleButtonStyle())
+            .padding(.top, 8)
         }
     }
 
@@ -687,28 +835,34 @@ struct ArticleReaderView: View {
 
     private func commentsButton(_ article: Article) -> some View {
         Button(action: { showComments = true }) {
-            HStack {
-                Image(systemName: "bubble.left.and.bubble.right")
+            HStack(spacing: 12) {
+                Image(systemName: "bubble.left")
+                    .font(Typography.symbol(17))
+                    .accessibilityHidden(true)
                 Text("Comments")
                     .font(Typography.ui(15, weight: .semibold))
                 Spacer()
                 if article.commentCount > 0 {
                     Text("\(article.commentCount)")
-                        .font(Typography.ui(13, weight: .bold))
+                        .font(Typography.ui(13, weight: .semibold))
                         .foregroundColor(readingColors.page)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(readingColors.accent)
-                        .clipShape(Capsule())
+                        .padding(.horizontal, 9)
+                        .frame(minHeight: 24)
+                        .background(Capsule().fill(readingColors.accent))
                 }
                 Image(systemName: "chevron.forward")
-                    .font(Typography.symbol(13))
+                    .font(Typography.symbol(13, weight: .semibold))
+                    .foregroundColor(readingColors.muted)
+                    .accessibilityHidden(true)
             }
             .foregroundColor(readingColors.text)
-            .padding()
-            .background(readingColors.sink)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            .padding(.horizontal, 16)
+            .frame(minHeight: 54)
+            .background(readingColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
         }
+        .buttonStyle(ScaleButtonStyle())
+        .accessibilityLabel("Comments, \(article.commentCount)")
     }
 
     // MARK: - Error View
@@ -906,6 +1060,16 @@ struct ArticleReaderView: View {
             await advanceQueue()
         } catch {
             print("Failed to mark as completed: \(error)")
+        }
+    }
+
+    /// Bookmark in the action bar: adds the article to "Up next" or removes it.
+    private func toggleUpNext(_ article: Article) async {
+        guard let userId = authManager.user?.id.uuidString else { return }
+        if let item = queueStore.items.first(where: { $0.articleId.lowercased() == article.id.lowercased() }) {
+            await queueStore.remove(item)
+        } else {
+            await queueStore.add(articleId: article.id, userId: userId)
         }
     }
 
