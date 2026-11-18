@@ -43,8 +43,8 @@ struct GradientButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, Spacing.md)
             .background(gradient)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
-            .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
+            // Editorial Teal: pill buttons, no colored glow.
+            .clipShape(Capsule())
         }
         .disabled(isLoading)
         .scaleEffect(isLoading ? 0.98 : 1)

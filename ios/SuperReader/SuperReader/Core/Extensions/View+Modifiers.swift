@@ -124,7 +124,7 @@ extension View {
 // MARK: - Reading Indicator
 
 extension View {
-    func readingProgressBar(_ progress: Double, color: Color = Color(hex: "#C67139")) -> some View {
+    func readingProgressBar(_ progress: Double, color: Color = Color(hex: "#33666C")) -> some View {
         self.overlay(alignment: .top) {
             GeometryReader { geometry in
                 Rectangle()

@@ -23,7 +23,7 @@ struct ArticleRowView: View {
                     )
                     if let domain = article.domain {
                         Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(Typography.figtree(12, weight: .bold))
+                            .font(Typography.ui(12, weight: .bold))
                             .foregroundColor(themeManager.colors.muted)
                     }
                     Spacer()

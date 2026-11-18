@@ -42,7 +42,7 @@ struct ProfileView: View {
                             settingsList
 
                             Text("Version 1.0.0")
-                                .font(Typography.figtree(12.5))
+                                .font(Typography.ui(12.5))
                                 .foregroundColor(themeManager.colors.muted)
                         }
                         .padding(.horizontal, Spacing.screenHorizontal)
@@ -101,7 +101,7 @@ struct ProfileView: View {
                         .clipShape(Circle())
                 } else {
                     Text(userProfile?.initials ?? "??")
-                        .font(Typography.caprasimo(26))
+                        .font(Typography.display(26))
                         .foregroundColor(themeManager.colors.page)
                 }
             }
@@ -109,17 +109,17 @@ struct ProfileView: View {
 
             VStack(spacing: 4) {
                 Text(userProfile?.displayName ?? "Reader")
-                    .font(Typography.caprasimo(24))
+                    .font(Typography.display(24))
                     .foregroundColor(themeManager.colors.text)
 
                 Text(userProfile?.email ?? "")
-                    .font(Typography.figtree(13.5))
+                    .font(Typography.ui(13.5))
                     .foregroundColor(themeManager.colors.muted)
             }
 
             Button(action: { showEditProfile = true }) {
                 Text("Edit profile")
-                    .font(Typography.figtree(13, weight: .semibold))
+                    .font(Typography.ui(13, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -159,7 +159,7 @@ struct ProfileView: View {
                 .font(Typography.statNumber)
                 .foregroundColor(themeManager.colors.text)
             Text(label)
-                .font(Typography.figtree(11.5, weight: .heavy))
+                .font(Typography.ui(11.5, weight: .heavy))
                 .textCase(.uppercase)
                 .foregroundColor(themeManager.colors.muted)
         }
@@ -176,7 +176,7 @@ struct ProfileView: View {
                 .foregroundColor(themeManager.colors.muted)
 
             HStack(spacing: 10) {
-                appearanceSwatch(.cream, label: "Cream")
+                appearanceSwatch(.cream, label: "Light")
                 appearanceSwatch(.dark, label: "Dark")
                 appearanceSwatch(.system, label: "System")
             }
@@ -193,7 +193,7 @@ struct ProfileView: View {
                     .fill(swatchColors.page)
                     .frame(height: 76)
                 Text(label)
-                    .font(Typography.figtree(12, weight: .bold))
+                    .font(Typography.ui(12, weight: .bold))
                     .foregroundColor(swatchColors.text)
                     .padding(10)
             }
@@ -251,14 +251,14 @@ struct ProfileView: View {
                     .frame(width: 24)
 
                 Text(title)
-                    .font(Typography.figtree(15))
+                    .font(Typography.ui(15))
                     .foregroundColor(tint ?? themeManager.colors.text)
 
                 Spacer()
 
                 if let value {
                     Text(value)
-                        .font(Typography.figtree(14))
+                        .font(Typography.ui(14))
                         .foregroundColor(themeManager.colors.muted)
                 }
 

@@ -24,13 +24,13 @@ struct LoginView: View {
                     logo
 
                     Text("Everything you meant\nto read.")
-                        .font(Typography.caprasimo(40))
+                        .font(Typography.display(40))
                         .lineSpacing(2)
                         .foregroundColor(themeManager.colors.text)
                         .padding(.top, 24)
 
                     Text("Sign in with a link. No password to remember, nothing to reset.")
-                        .font(Typography.figtree(16))
+                        .font(Typography.ui(16))
                         .lineSpacing(6)
                         .foregroundColor(themeManager.colors.muted)
                         .frame(maxWidth: 280, alignment: .leading)
@@ -41,7 +41,7 @@ struct LoginView: View {
 
                     if let errorMessage {
                         Text(errorMessage)
-                            .font(Typography.figtree(13))
+                            .font(Typography.ui(13))
                             .foregroundColor(errorColor)
                             .padding(.top, 8)
                     }
@@ -50,7 +50,7 @@ struct LoginView: View {
                         .padding(.top, 16)
 
                     Text("By continuing, you agree to our Terms of Service and Privacy Policy.")
-                        .font(Typography.figtree(12.5))
+                        .font(Typography.ui(12.5))
                         .foregroundColor(themeManager.colors.muted)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
@@ -74,7 +74,7 @@ struct LoginView: View {
 
     private var logo: some View {
         Text("Z")
-            .font(Typography.caprasimo(30))
+            .font(Typography.display(30))
             .foregroundColor(themeManager.colors.page)
             .frame(width: 64, height: 64)
             .background(themeManager.colors.accent)
@@ -124,7 +124,7 @@ struct LoginView: View {
                         .tint(themeManager.colors.page)
                 } else {
                     Text("Send magic link")
-                        .font(Typography.caprasimo(16.5))
+                        .font(Typography.display(16.5))
                 }
             }
             .frame(maxWidth: .infinity)

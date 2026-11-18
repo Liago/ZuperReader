@@ -19,9 +19,9 @@ struct VideoPreviewView: View {
                     // Fallback gradient
                     LinearGradient(
                         colors: [
-                            Color.indigo.opacity(0.1),
-                            Color.purple.opacity(0.1),
-                            Color.pink.opacity(0.1)
+                            Color(hex: "#C9D9DA"),
+                            Color(hex: "#C9D9DA"),
+                            Color(hex: "#DCE7E8")
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

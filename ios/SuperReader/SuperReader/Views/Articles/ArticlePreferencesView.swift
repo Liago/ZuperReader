@@ -44,7 +44,7 @@ struct ReadingPreferencesView: View {
                     .foregroundColor(themeManager.colors.muted)
                 Spacer()
                 Text(preferences.fontSizeFormatted)
-                    .font(Typography.figtree(13, weight: .bold))
+                    .font(Typography.ui(13, weight: .bold))
                     .foregroundColor(themeManager.colors.accent700)
             }
 
@@ -93,7 +93,7 @@ struct ReadingPreferencesView: View {
                 Text("Aa")
                     .font(family.font(size: 19))
                 Text(family.displayName)
-                    .font(Typography.figtree(11.5, weight: .heavy))
+                    .font(Typography.ui(11.5, weight: .heavy))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -138,7 +138,7 @@ struct ReadingPreferencesView: View {
             withAnimation(.easeInOut(duration: 0.15)) { preferences.lineHeight = height }
         }) {
             Text(height.displayName)
-                .font(Typography.figtree(13.5, weight: .semibold))
+                .font(Typography.ui(13.5, weight: .semibold))
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -181,7 +181,7 @@ struct ReadingPreferencesView: View {
                     .fill(swatchColors.page)
                     .frame(height: 52)
                 Text(theme.displayName)
-                    .font(Typography.figtree(11, weight: .bold))
+                    .font(Typography.ui(11, weight: .bold))
                     .foregroundColor(swatchColors.text)
                     .padding(8)
             }

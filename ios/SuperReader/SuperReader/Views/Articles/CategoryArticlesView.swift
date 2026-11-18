@@ -122,7 +122,7 @@ struct CategoryArticlesView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(countLabel)
-                    .font(Typography.figtree(11, weight: .bold))
+                    .font(Typography.ui(11, weight: .bold))
                     .tracking(1.3)
                     .textCase(.uppercase)
                     .foregroundColor(themeManager.colors.muted)
@@ -138,7 +138,7 @@ struct CategoryArticlesView: View {
                 }
 
                 Text(subtitle)
-                    .font(Typography.figtree(13.5))
+                    .font(Typography.ui(13.5))
                     .lineSpacing(3)
                     .foregroundColor(themeManager.colors.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -169,7 +169,7 @@ struct CategoryArticlesView: View {
 
     private func groupHeader(_ title: String) -> some View {
         Text(title)
-            .font(Typography.figtree(11, weight: .bold))
+            .font(Typography.ui(11, weight: .bold))
             .tracking(1.3)
             .textCase(.uppercase)
             .foregroundColor(themeManager.colors.muted)
@@ -316,7 +316,7 @@ struct CategoryArticlesView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text(emptyMessage)
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
         }

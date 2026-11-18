@@ -54,7 +54,7 @@ struct UpNextSectionView: View {
             if !store.items.isEmpty {
                 NavigationLink(destination: QueueView()) {
                     Text(store.items.count > 1 ? "Reorder" : "Open")
-                        .font(Typography.figtree(13.5, weight: .semibold))
+                        .font(Typography.ui(13.5, weight: .semibold))
                         .foregroundColor(themeManager.colors.text)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -119,7 +119,7 @@ struct UpNextSectionView: View {
             NavigationLink(destination: QueueView()) {
                 HStack(spacing: 6) {
                     Text("See all · \(hidden) more in your queue")
-                        .font(Typography.figtree(13.5, weight: .semibold))
+                        .font(Typography.ui(13.5, weight: .semibold))
                     Image(systemName: "chevron.right")
                         .font(Typography.symbol(11, weight: .bold))
                 }
@@ -162,11 +162,11 @@ struct UpNextSectionView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Nothing up next")
-                    .font(Typography.figtree(16, weight: .bold))
+                    .font(Typography.ui(16, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
 
                 Text("Long-press an article below or in Feeds and choose “Add to Up next” to build your reading queue.")
-                    .font(Typography.figtree(13.5))
+                    .font(Typography.ui(13.5))
                     .lineSpacing(2)
                     .foregroundColor(themeManager.colors.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -209,7 +209,7 @@ private struct UpNextHeroCard: View {
                         nextPill
                     }
                     Text(meta)
-                        .font(Typography.figtree(12, weight: .bold))
+                        .font(Typography.ui(12, weight: .bold))
                         .foregroundColor(themeManager.colors.muted)
                         .lineLimit(1)
                 }
@@ -233,7 +233,7 @@ private struct UpNextHeroCard: View {
                     Image(systemName: "book.fill")
                         .font(Typography.symbol(12, weight: .bold))
                     Text(article.readingProgress > 0 ? "Continue reading" : "Start reading")
-                        .font(Typography.figtree(13.5, weight: .bold))
+                        .font(Typography.ui(13.5, weight: .bold))
                 }
                 .foregroundColor(themeManager.colors.page)
                 .padding(.horizontal, 16)
@@ -254,7 +254,7 @@ private struct UpNextHeroCard: View {
 
     private var nextPill: some View {
         Text("1 · NEXT")
-            .font(Typography.figtree(11, weight: .heavy))
+            .font(Typography.ui(11, weight: .heavy))
             .tracking(1.1)
             .foregroundColor(themeManager.colors.page)
             .padding(.horizontal, 10)
@@ -301,14 +301,14 @@ private struct UpNextCompactRow: View {
     var body: some View {
         HStack(spacing: 14) {
             Text("\(position)")
-                .font(Typography.figtree(12.5, weight: .bold))
+                .font(Typography.ui(12.5, weight: .bold))
                 .foregroundColor(themeManager.colors.muted)
                 .frame(width: 26, height: 26)
                 .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(article.title)
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)

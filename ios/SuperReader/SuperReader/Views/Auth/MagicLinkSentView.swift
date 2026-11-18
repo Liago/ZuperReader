@@ -29,13 +29,13 @@ struct MagicLinkSentView: View {
                     logo
 
                     Text("Check your\nemail.")
-                        .font(Typography.caprasimo(40))
+                        .font(Typography.display(40))
                         .lineSpacing(2)
                         .foregroundColor(themeManager.colors.text)
                         .padding(.top, 24)
 
                     (Text("We sent a magic link to ") + Text(email).fontWeight(.bold) + Text(". Tap it to sign in — you can close this screen."))
-                        .font(Typography.figtree(16))
+                        .font(Typography.ui(16))
                         .lineSpacing(6)
                         .foregroundColor(themeManager.colors.muted)
                         .padding(.top, 16)
@@ -48,7 +48,7 @@ struct MagicLinkSentView: View {
 
                     if let errorMessage {
                         Text(errorMessage)
-                            .font(Typography.figtree(13))
+                            .font(Typography.ui(13))
                             .foregroundColor(errorColor)
                             .padding(.top, 8)
                     }
@@ -74,7 +74,7 @@ struct MagicLinkSentView: View {
 
     private var logo: some View {
         Text("Z")
-            .font(Typography.caprasimo(30))
+            .font(Typography.display(30))
             .foregroundColor(themeManager.colors.page)
             .frame(width: 64, height: 64)
             .background(themeManager.colors.accent)
@@ -87,7 +87,7 @@ struct MagicLinkSentView: View {
         HStack(spacing: 12) {
             Rectangle().fill(themeManager.colors.line).frame(height: 1)
             Text("or paste the link here")
-                .font(Typography.figtree(12.5))
+                .font(Typography.ui(12.5))
                 .foregroundColor(themeManager.colors.muted)
                 .fixedSize()
             Rectangle().fill(themeManager.colors.line).frame(height: 1)
@@ -106,7 +106,7 @@ struct MagicLinkSentView: View {
                 text: $manualLink,
                 prompt: Text("azreader://auth/confirm?...").foregroundColor(themeManager.colors.muted)
             )
-            .font(Typography.figtree(14))
+            .font(Typography.ui(14))
             .foregroundColor(themeManager.colors.text)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
@@ -128,7 +128,7 @@ struct MagicLinkSentView: View {
                         .tint(themeManager.colors.page)
                 } else {
                     Text("Verify link")
-                        .font(Typography.caprasimo(16.5))
+                        .font(Typography.display(16.5))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -151,7 +151,7 @@ struct MagicLinkSentView: View {
                         .tint(themeManager.colors.accent)
                 } else {
                     Text("Didn't receive the email? Resend")
-                        .font(Typography.figtree(14, weight: .semibold))
+                        .font(Typography.ui(14, weight: .semibold))
                         .foregroundColor(themeManager.colors.accent)
                 }
             }
@@ -159,7 +159,7 @@ struct MagicLinkSentView: View {
 
             Button(action: onTryDifferentEmail) {
                 Text("← Try a different email")
-                    .font(Typography.figtree(14))
+                    .font(Typography.ui(14))
                     .foregroundColor(themeManager.colors.muted)
             }
         }

@@ -96,7 +96,7 @@ struct ArticleCardView: View {
 
     private func sourcePill(_ domain: String) -> some View {
         Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-            .font(Typography.figtree(11, weight: .heavy))
+            .font(Typography.ui(11, weight: .heavy))
             .tracking(1.1)
             .foregroundColor(themeManager.colors.accent800)
             .padding(.horizontal, 10)
@@ -132,7 +132,7 @@ struct ArticleCardView: View {
                     mutedColor: themeManager.colors.muted
                 )
                 Text(stateLabel)
-                    .font(Typography.figtree(12.5, weight: .bold))
+                    .font(Typography.ui(12.5, weight: .bold))
                     .foregroundColor(themeManager.colors.muted)
             }
 
@@ -160,7 +160,7 @@ struct ArticleCardView: View {
                 HStack(spacing: 6) {
                     ForEach(article.tags.prefix(2), id: \.self) { tag in
                         Text(tag)
-                            .font(Typography.figtree(12))
+                            .font(Typography.ui(12))
                             .foregroundColor(themeManager.colors.text)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
@@ -240,7 +240,7 @@ struct ArticleCardView: View {
                     )
                     if let domain = article.domain {
                         Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(Typography.figtree(12, weight: .bold))
+                            .font(Typography.ui(12, weight: .bold))
                             .foregroundColor(themeManager.colors.muted)
                     }
                     Spacer()

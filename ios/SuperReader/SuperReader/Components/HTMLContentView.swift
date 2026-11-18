@@ -163,9 +163,9 @@ struct HTMLContentView: UIViewRepresentable {
                 figure, .wp-caption, div[id^="attachment_"], .wp-block-image {
                     border-radius: 12px !important;
                     overflow: hidden !important;
-                    border: 1px solid \(preferences.colorTheme == .dark ? "rgb(51, 65, 85)" : "#E5E7EB") !important; /* slate-700 / gray-200 */
-                    background-color: \(preferences.colorTheme == .dark ? "rgb(30, 41, 59)" : "#ffffff") !important; /* slate-800 / white */
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; /* shadow-lg */
+                    border: 1px solid \(preferences.colorTheme == .dark ? "#2A3133" : "#E3E6E7") !important; /* line */
+                    background-color: \(preferences.colorTheme == .dark ? "#1B2022" : "#FFFFFF") !important; /* card */
+                    box-shadow: none !important; /* Editorial Teal: border, no shadow */
                     margin: 24px auto !important;
                     page-break-inside: avoid !important;
                     max-width: 100% !important;
@@ -186,9 +186,9 @@ struct HTMLContentView: UIViewRepresentable {
                     font-size: 0.9em !important;
                     text-align: center !important;
                     font-weight: 500 !important;
-                    color: \(preferences.colorTheme == .dark ? "rgb(209, 213, 219)" : "#4B5563") !important; /* gray-300 / gray-600 */
-                    background-color: \(preferences.colorTheme == .dark ? "rgba(30, 41, 59, 0.5)" : "rgb(249, 250, 251)") !important; /* slate-800/50 / gray-50 */
-                    border-top: 1px solid \(preferences.colorTheme == .dark ? "rgba(51, 65, 85, 0.5)" : "#F3F4F6") !important; /* slate-700/50 / gray-100 */
+                    color: \(preferences.colorTheme == .dark ? "#9AA3A5" : "#5F6668") !important; /* muted */
+                    background-color: \(preferences.colorTheme == .dark ? "#151A1B" : "#F7F8F8") !important; /* rail */
+                    border-top: 1px solid \(preferences.colorTheme == .dark ? "#2A3133" : "#EEF0F0") !important; /* line */
                     margin: 0 !important;
                     font-family: \(fontFamily) !important;
                     line-height: 1.6 !important;
@@ -244,12 +244,14 @@ struct HTMLContentView: UIViewRepresentable {
     
     private func getThemeColors(theme: ColorTheme) -> (text: String, link: String) {
         switch theme {
+        // Reader body ink is a touch softer than UI text (#24292B vs
+        // #16191A) for long-form reading; links use the theme accent.
         case .cream, .system:
-            return ("#201E1D", "#C67139") // text, accent
+            return ("#24292B", "#33666C") // text, accent
         case .sepia:
-            return ("#3A2F1F", "#C67139")
+            return ("#3B3226", "#2F5F65")
         case .dark:
-            return ("#F3EBDF", "#E2975F")
+            return ("#E3E8E8", "#7FB3B9")
         }
     }
 

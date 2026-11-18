@@ -308,7 +308,7 @@ struct ArticleReaderView: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else if let label = focusTimeRemainingLabel(article) {
                 Text(label)
-                    .font(Typography.figtree(12.5, weight: .bold))
+                    .font(Typography.ui(12.5, weight: .bold))
                     .foregroundColor(readingColors.muted)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
@@ -340,7 +340,7 @@ struct ArticleReaderView: View {
                 }
 
                 Text(topBarSubtitle(article))
-                    .font(Typography.figtree(13, weight: .bold, relativeTo: .footnote))
+                    .font(Typography.ui(13, weight: .bold, relativeTo: .footnote))
                     .foregroundColor(themeManager.colors.muted)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -459,7 +459,7 @@ struct ArticleReaderView: View {
                         Text("· \(date)")
                     }
                 }
-                .font(Typography.figtree(13))
+                .font(Typography.ui(13))
                 .foregroundColor(readingColors.text)
             }
         }
@@ -498,7 +498,7 @@ struct ArticleReaderView: View {
 
             Button(action: { withAnimation(.easeInOut(duration: 0.25)) { isFocusMode = true } }) {
                 Text("Focus")
-                    .font(Typography.caprasimo(13.5, relativeTo: .footnote))
+                    .font(Typography.display(13.5, relativeTo: .footnote))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 10)
@@ -671,7 +671,7 @@ struct ArticleReaderView: View {
             Button(action: { showSafariView = true }) {
                 HStack {
                     Text("Read Original")
-                        .font(Typography.figtree(15, weight: .bold))
+                        .font(Typography.ui(15, weight: .bold))
                     Image(systemName: "arrow.up.right")
                 }
                 .foregroundColor(readingColors.page)
@@ -690,11 +690,11 @@ struct ArticleReaderView: View {
             HStack {
                 Image(systemName: "bubble.left.and.bubble.right")
                 Text("Comments")
-                    .font(Typography.figtree(15, weight: .semibold))
+                    .font(Typography.ui(15, weight: .semibold))
                 Spacer()
                 if article.commentCount > 0 {
                     Text("\(article.commentCount)")
-                        .font(Typography.figtree(13, weight: .bold))
+                        .font(Typography.ui(13, weight: .bold))
                         .foregroundColor(readingColors.page)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
@@ -725,7 +725,7 @@ struct ArticleReaderView: View {
 
             if let error = errorMessage {
                 Text(error)
-                    .font(Typography.figtree(13))
+                    .font(Typography.ui(13))
                     .foregroundColor(themeManager.colors.muted)
                     .multilineTextAlignment(.center)
             }
@@ -733,7 +733,7 @@ struct ArticleReaderView: View {
             Button("Go Back") {
                 dismiss()
             }
-            .font(Typography.figtree(15, weight: .bold))
+            .font(Typography.ui(15, weight: .bold))
             .foregroundColor(themeManager.colors.page)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)

@@ -65,7 +65,7 @@ struct QueueView: View {
                         }
                     }) {
                         Text(editMode == .active ? "Done" : "Reorder")
-                            .font(Typography.figtree(13.5, weight: .semibold))
+                            .font(Typography.ui(13.5, weight: .semibold))
                             .foregroundColor(editMode == .active ? themeManager.colors.page : themeManager.colors.text)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
@@ -80,7 +80,7 @@ struct QueueView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(countLabel)
-                    .font(Typography.figtree(11, weight: .bold))
+                    .font(Typography.ui(11, weight: .bold))
                     .tracking(1.3)
                     .textCase(.uppercase)
                     .foregroundColor(themeManager.colors.muted)
@@ -90,7 +90,7 @@ struct QueueView: View {
                     .foregroundColor(themeManager.colors.text)
 
                 Text("An ordered shortlist to read next. Drag to reorder — finishing an article advances the queue.")
-                    .font(Typography.figtree(13.5))
+                    .font(Typography.ui(13.5))
                     .lineSpacing(3)
                     .foregroundColor(themeManager.colors.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -194,13 +194,13 @@ struct QueueView: View {
                 .font(Typography.sheetTitle)
                 .foregroundColor(themeManager.colors.text)
             Text(message)
-                .font(Typography.figtree(13))
+                .font(Typography.ui(13))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
             Button("Retry") {
                 Task { await store.refresh() }
             }
-            .font(Typography.figtree(15, weight: .bold))
+            .font(Typography.ui(15, weight: .bold))
             .foregroundColor(themeManager.colors.page)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -227,13 +227,13 @@ struct QueueView: View {
                 .foregroundColor(themeManager.colors.text)
 
             Text("Add articles to Up next from the Library, from your Feeds (long-press an article) or when you save a link.")
-                .font(Typography.figtree(15))
+                .font(Typography.ui(15))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
 
             Button(action: { dismiss() }) {
                 Text("Go to Library")
-                    .font(Typography.figtree(15, weight: .bold))
+                    .font(Typography.ui(15, weight: .bold))
                     .foregroundColor(themeManager.colors.page)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -264,7 +264,7 @@ private struct QueueRowView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(article.title)
-                    .font(Typography.figtree(16, weight: .bold))
+                    .font(Typography.ui(16, weight: .bold))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(2)
 
@@ -279,7 +279,7 @@ private struct QueueRowView: View {
             if !isEditing {
                 if isFirst {
                     Text("Continue")
-                        .font(Typography.figtree(12.5, weight: .bold))
+                        .font(Typography.ui(12.5, weight: .bold))
                         .foregroundColor(themeManager.colors.accent800)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
@@ -307,7 +307,7 @@ private struct QueueRowView: View {
 
     private var positionBadge: some View {
         Text("\(index + 1)")
-            .font(Typography.figtree(12.5, weight: .bold))
+            .font(Typography.ui(12.5, weight: .bold))
             .foregroundColor(isFirst ? themeManager.colors.page : themeManager.colors.muted)
             .frame(width: 26, height: 26)
             .background(isFirst ? themeManager.colors.accent : Color.clear)

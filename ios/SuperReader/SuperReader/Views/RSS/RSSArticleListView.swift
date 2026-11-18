@@ -133,7 +133,7 @@ struct RSSArticleListView: View {
         VStack(spacing: Spacing.sm) {
             Spacer()
             Text(message)
-                .font(Typography.figtree(13))
+                .font(Typography.ui(13))
                 .foregroundColor(themeManager.colors.muted)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xl)
@@ -164,7 +164,7 @@ struct RSSArticleListView: View {
 
                     Button(action: { showReadArticles = true }) {
                         Text("Show read articles")
-                            .font(Typography.figtree(14, weight: .semibold))
+                            .font(Typography.ui(14, weight: .semibold))
                             .foregroundColor(themeManager.colors.accent)
                     }
                 }
@@ -377,7 +377,7 @@ struct RSSFeedHeader: View {
             .id(feed.url)
 
             Text(feed.title)
-                .font(Typography.figtree(15, weight: .bold))
+                .font(Typography.ui(15, weight: .bold))
                 .foregroundColor(themeManager.colors.text)
                 .lineLimit(1)
                 .id(feed.id)
@@ -554,7 +554,7 @@ struct RSSArticleReader: View {
             }
 
             Text(topBarSubtitle)
-                .font(Typography.figtree(13, weight: .bold))
+                .font(Typography.ui(13, weight: .bold))
                 .foregroundColor(themeManager.colors.muted)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -683,7 +683,7 @@ struct RSSArticleDetailView: View {
                     .foregroundColor(themeManager.colors.text)
 
                 Text(metaLine)
-                    .font(Typography.figtree(13))
+                    .font(Typography.ui(13))
                     .foregroundColor(themeManager.colors.muted)
 
                 if let imageUrl = article.imageUrl, let url = URL(string: imageUrl) {
@@ -719,7 +719,7 @@ struct RSSArticleDetailView: View {
                     Button(action: { showSafariView = true }) {
                         HStack {
                             Text("Read Original")
-                                .font(Typography.figtree(15, weight: .bold))
+                                .font(Typography.ui(15, weight: .bold))
                             Image(systemName: "arrow.up.right")
                         }
                         .foregroundColor(themeManager.colors.page)

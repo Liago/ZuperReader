@@ -105,12 +105,12 @@ struct CategoryShelfView: View {
                 .accessibilityHidden(true)
 
             Text(section.category.displayName)
-                .font(Typography.figtree(18, weight: .bold, relativeTo: .headline))
+                .font(Typography.ui(18, weight: .bold, relativeTo: .headline))
                 .foregroundColor(themeManager.colors.text)
                 .accessibilityAddTraits(.isHeader)
 
             Text("\(section.articles.count)")
-                .font(Typography.figtree(12.5, weight: .bold))
+                .font(Typography.ui(12.5, weight: .bold))
                 .foregroundColor(themeManager.colors.muted)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -123,7 +123,7 @@ struct CategoryShelfView: View {
             NavigationLink(destination: CategoryArticlesView(category: section.category, viewModel: viewModel)) {
                 HStack(spacing: 4) {
                     Text("See all")
-                        .font(Typography.figtree(13.5, weight: .semibold))
+                        .font(Typography.ui(13.5, weight: .semibold))
                     Image(systemName: "chevron.right")
                         .font(Typography.symbol(11, weight: .bold))
                 }
@@ -170,7 +170,7 @@ private struct ShelfArticleCard: View {
                     )
                     if let domain = article.domain {
                         Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(Typography.figtree(11, weight: .bold))
+                            .font(Typography.ui(11, weight: .bold))
                             .foregroundColor(themeManager.colors.muted)
                             .lineLimit(1)
                     }
@@ -187,7 +187,7 @@ private struct ShelfArticleCard: View {
                 }
 
                 Text(article.title)
-                    .font(Typography.figtree(15, weight: .bold, relativeTo: .subheadline))
+                    .font(Typography.ui(15, weight: .bold, relativeTo: .subheadline))
                     .foregroundColor(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.text)
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
