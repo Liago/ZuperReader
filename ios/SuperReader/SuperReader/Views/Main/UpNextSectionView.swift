@@ -131,6 +131,8 @@ struct UpNextSectionView: View {
                 Label("Share", systemImage: "square.and.arrow.up")
             }
         }
+
+        PublicLinkMenuButton(article: article)
     }
 
     // MARK: - Empty
@@ -320,7 +322,7 @@ private struct UpNextCompactRow: View {
 
             thumbnail
                 .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.smallThumbnail))
+                .thumbnailClip(CornerRadius.smallThumbnail)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(article.title)

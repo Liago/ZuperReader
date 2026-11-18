@@ -515,11 +515,10 @@ struct RSSArticleRow: View {
                     Image(systemName: "dot.radiowaves.up.forward")
                         .foregroundColor(themeManager.colors.muted)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-            }
+                            }
         }
         .frame(width: thumbSize, height: thumbSize)
-        .clipped()
+        .thumbnailClip()
         .accessibilityHidden(true)
     }
 }

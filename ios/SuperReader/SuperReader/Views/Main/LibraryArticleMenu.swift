@@ -64,6 +64,8 @@ struct LibraryArticleMenuItems: View {
             }
         }
 
+        PublicLinkMenuButton(article: article)
+
         Button(role: .destructive, action: onDelete) {
             Label("Delete", systemImage: "trash")
         }

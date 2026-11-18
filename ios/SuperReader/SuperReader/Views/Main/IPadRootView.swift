@@ -35,6 +35,7 @@ struct IPadRootView: View {
     @State private var selection: IPadSection = .library
     @State private var userProfile: UserProfile?
     @State private var showAddArticle = false
+    @ObservedObject private var quickActions = QuickActionRouter.shared
 
     /// Below this width the sidebar collapses into the icon rail.
     private let sidebarMinWidth: CGFloat = 1100
@@ -57,6 +58,12 @@ struct IPadRootView: View {
             .animation(.easeInOut(duration: 0.25), value: geometry.size.width >= sidebarMinWidth)
         }
         .background(themeManager.colors.page.ignoresSafeArea())
+        .onReceive(quickActions.$pending) { action in
+            guard action == .addArticle else { return }
+            quickActions.pending = nil
+            selection = .library
+            showAddArticle = true
+        }
         .sheet(isPresented: $showAddArticle) {
             AddArticleSheet(onArticleAdded: {
                 NotificationCenter.default.post(name: NSNotification.Name("RefreshArticles"), object: nil)

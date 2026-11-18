@@ -38,6 +38,7 @@ struct ArticleCardView: View {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
             }
+            PublicLinkMenuButton(article: article)
             // HIG · Context menus: unavailable items are hidden, not dimmed.
             if queueState == nil {
                 Button(action: onAddToQueue) {
@@ -228,7 +229,7 @@ struct ArticleCardView: View {
                 }
             }
             .frame(width: 66, height: 66)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+            .thumbnailClip()
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {

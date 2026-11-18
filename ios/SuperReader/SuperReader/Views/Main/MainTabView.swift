@@ -13,6 +13,7 @@ struct MainTabView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var selectedTab = 0
+    @ObservedObject private var quickActions = QuickActionRouter.shared
     @State private var unreadSharesCount = 0
     @State private var pendingRequestsCount = 0
 
@@ -30,12 +31,17 @@ struct MainTabView: View {
             }
         }
         .tint(themeManager.colors.accent)
+        .publicLinkSheetHost()
         .environmentObject(themeManager)
         .observeSystemColorScheme()
         .task {
             await loadBadgeCounts()
         }
         .onAppear { updateTabBarAppearance() }
+        .onReceive(quickActions.$pending) { action in
+            // "Add Article" is presented by the Library tab.
+            if action == .addArticle { selectedTab = 0 }
+        }
         .onChange(of: themeManager.resolvedTheme) { _, _ in updateTabBarAppearance() }
     }
 

@@ -410,11 +410,10 @@ private struct ShareCard: View {
                                 Image(systemName: "doc.text.image")
                                     .foregroundColor(themeManager.colors.muted)
                             }
-                            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.smallThumbnail))
                         }
                     }
                     .frame(width: 56, height: 56)
-                    .clipped()
+                    .thumbnailClip(CornerRadius.smallThumbnail)
                     .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {

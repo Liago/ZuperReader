@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct SuperReaderApp: App {
+    @UIApplicationDelegateAdaptor(SuperReaderAppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -192,7 +192,7 @@ struct PublicLinksView: View {
                     }
                 }
                 .frame(width: 48, height: 48)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .thumbnailClip(CornerRadius.smallThumbnail)
                 .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 3) {

@@ -65,11 +65,10 @@ struct ArticleRowView: View {
                             .foregroundColor(themeManager.colors.text.opacity(0.3))
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-            }
+                            }
         }
         .frame(width: 66, height: 66)
-        .clipped()
+        .thumbnailClip()
     }
 
     private var progressTrack: some View {

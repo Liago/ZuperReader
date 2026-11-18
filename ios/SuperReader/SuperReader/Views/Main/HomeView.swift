@@ -30,6 +30,7 @@ struct HomeView: View {
     @ObservedObject private var categoryStore = ArticleCategoryStore.shared
 
     @State private var showAddArticle = false
+    @ObservedObject private var quickActions = QuickActionRouter.shared
     @State private var hasAppeared = false
     @State private var isSearchOpen = false
     @State private var userProfile: UserProfile?
@@ -69,6 +70,11 @@ struct HomeView: View {
                 } else {
                     hasAppeared = true
                 }
+            }
+            .onReceive(quickActions.$pending) { action in
+                guard action == .addArticle else { return }
+                quickActions.pending = nil
+                showAddArticle = true
             }
             .sheet(isPresented: $showAddArticle) {
                 AddArticleSheet(onArticleAdded: {

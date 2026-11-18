@@ -148,7 +148,7 @@ private struct ShelfArticleCard: View {
                         progressTrack
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+                .thumbnailClip()
 
             HStack(spacing: 6) {
                 if let domain = article.domain {

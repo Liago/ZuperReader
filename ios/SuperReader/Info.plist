@@ -38,6 +38,19 @@
 	</array>
     <key>NSLocalNetworkUsageDescription</key>
     <string>SuperReader needs access to your local network to communicate with the development server.</string>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>liagosoft.SuperReader.addArticle</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Add Article</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Save a link to read later</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeAdd</string>
+		</dict>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

@@ -167,3 +167,15 @@ extension View {
             .contentShape(Rectangle())
     }
 }
+
+// MARK: - Thumbnail Shape
+
+extension View {
+    /// Clips an article thumbnail to a continuous rounded rectangle.
+    /// Apply it after `.frame(...)`: `AsyncImageView` with `.fill` grows past
+    /// its frame, so a plain `.clipped()` afterwards cuts the rounded
+    /// corners back to a square.
+    func thumbnailClip(_ radius: CGFloat = CornerRadius.listThumbnail) -> some View {
+        clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
+}

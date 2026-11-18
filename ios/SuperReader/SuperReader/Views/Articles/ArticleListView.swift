@@ -479,6 +479,7 @@ struct ArticleListView: View {
                                     Label("Share", systemImage: "square.and.arrow.up")
                                 }
                             }
+                            PublicLinkMenuButton(article: article)
                             // HIG · Context menus: unavailable items are hidden, not dimmed.
                             if queueState(for: article) == nil {
                                 Button {
