@@ -12,6 +12,11 @@ struct RSSAllFeedsListView: View {
     @State private var articles: [RSSArticle] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var hasLoaded = false
+    /// Where the reader was left, to scroll back to that article (#134).
+    @State private var readerPosition: RSSReaderPosition?
+    /// Source / destination of the App Store–style article zoom (#135).
+    @Namespace private var articleZoom
 
     var body: some View {
         ZStack {
@@ -34,34 +39,67 @@ struct RSSAllFeedsListView: View {
         .navigationTitle("All feeds")
         .navigationBarTitleDisplayMode(.inline)
         .rssLibrarySaveBanner(bottomPadding: 28)
-        .task { await loadArticles() }
+        // Only the first appearance loads: coming back from the reader the
+        // list keeps its rows (read ones dimmed) and its scroll position.
+        .task {
+            guard !hasLoaded else { return }
+            hasLoaded = true
+            await loadArticles()
+        }
     }
 
     private var articleList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
-                    NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: index)) {
-                        RSSArticleRow(article: article, feedTitle: feedTitle(for: article))
-                    }
-                    .buttonStyle(ScaleButtonStyle())
-                    .rssArticleContextMenu(article: article) {
-                        Task { await markAsRead(article: article, at: index) }
-                    }
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
+                        NavigationLink(
+                            destination: RSSArticleReader(
+                                articles: $articles,
+                                initialIndex: index,
+                                onPositionChange: { readerPosition = $0 }
+                            )
+                            .articleZoomDestination(id: article.id, in: articleZoom)
+                        ) {
+                            RSSArticleRow(article: article, feedTitle: feedTitle(for: article))
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .articleZoomSource(id: article.id, in: articleZoom)
+                        .rssArticleContextMenu(article: article) {
+                            Task { await markAsRead(article: article, at: index) }
+                        }
 
-                    if index < articles.count - 1 {
-                        Rectangle()
-                            .fill(themeManager.colors.line)
-                            .frame(height: 1)
+                        if index < articles.count - 1 {
+                            Rectangle()
+                                .fill(themeManager.colors.line)
+                                .frame(height: 1)
 
+                        }
                     }
                 }
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .padding(.top, Spacing.md)
+                .padding(.bottom, Spacing.scrollBottomInset)
             }
-            .padding(.horizontal, Spacing.screenHorizontal)
-            .padding(.top, Spacing.md)
-            .padding(.bottom, Spacing.scrollBottomInset)
+            .refreshable { await loadArticles() }
+            .onAppear {
+                restoreScrollPosition(with: proxy)
+            }
         }
-        .refreshable { await loadArticles() }
+    }
+
+    /// Back from the reader: if the user paged to another article, scroll
+    /// to it so the list stays where the reading ended (#134).
+    private func restoreScrollPosition(with proxy: ScrollViewProxy) {
+        guard let position = readerPosition else { return }
+        readerPosition = nil
+        guard position.currentId != position.openedId,
+              articles.contains(where: { $0.id == position.currentId }) else { return }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            proxy.scrollTo(position.currentId, anchor: .center)
+        }
     }
 
     private func feedTitle(for article: RSSArticle) -> String {
@@ -106,7 +144,7 @@ struct RSSAllFeedsListView: View {
 
     private func loadArticles() async {
         guard let userId = authManager.user?.id.uuidString else { return }
-        isLoading = true
+        isLoading = articles.isEmpty
         errorMessage = nil
 
         do {

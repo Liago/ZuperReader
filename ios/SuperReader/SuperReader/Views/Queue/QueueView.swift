@@ -10,6 +10,8 @@ import Auth
 
 struct QueueView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @StateObject private var authManager = AuthManager.shared
     @ObservedObject private var store = ReadingQueueStore.shared
     @Environment(\.dismiss) private var dismiss
@@ -121,7 +123,8 @@ struct QueueView: View {
             ForEach(Array(store.items.enumerated()), id: \.element.id) { index, item in
                 if let article = item.article {
                     ZStack {
-                        NavigationLink(destination: ArticleReaderView(articleId: item.articleId)) {
+                        NavigationLink(destination: ArticleReaderView(articleId: item.articleId)
+                            .articleZoomDestination(id: item.articleId, in: articleZoom)) {
                             EmptyView()
                         }
                         .opacity(0)
@@ -133,6 +136,7 @@ struct QueueView: View {
                             onRemove: { Task { await store.remove(item) } }
                         )
                     }
+                    .articleZoomSource(id: item.articleId, in: articleZoom)
                     .listRowInsets(EdgeInsets(
                         top: 0,
                         leading: Spacing.screenHorizontal,

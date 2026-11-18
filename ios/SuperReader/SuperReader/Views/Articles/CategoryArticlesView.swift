@@ -24,6 +24,8 @@ struct CategoryArticlesView: View {
     var showsBackButton: Bool = true
 
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @ObservedObject private var categoryStore = ArticleCategoryStore.shared
     @Environment(\.dismiss) private var dismiss
@@ -220,13 +222,15 @@ struct CategoryArticlesView: View {
 
     private func listRow(for article: Article) -> some View {
         ZStack {
-            NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+            NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                .articleZoomDestination(id: article.id, in: articleZoom)) {
                 EmptyView()
             }
             .opacity(0)
 
             ArticleRowView(article: article, queueState: queueState(for: article))
         }
+        .articleZoomSource(id: article.id, in: articleZoom)
         .listRowInsets(EdgeInsets(
             top: 0,
             leading: Spacing.screenHorizontal,
@@ -263,7 +267,8 @@ struct CategoryArticlesView: View {
                 ForEach(groups) { group in
                     Section {
                         ForEach(group.articles) { article in
-                            NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                            NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                                .articleZoomDestination(id: article.id, in: articleZoom)) {
                                 ArticleCardView(
                                     article: article,
                                     queueState: queueState(for: article),
@@ -275,6 +280,7 @@ struct CategoryArticlesView: View {
                                 )
                             }
                             .buttonStyle(.plain)
+                            .articleZoomSource(id: article.id, in: articleZoom)
                         }
                     } header: {
                         if let title = group.title {

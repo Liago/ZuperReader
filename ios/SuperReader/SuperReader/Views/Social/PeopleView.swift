@@ -13,6 +13,8 @@ struct PeopleView: View {
     @StateObject private var viewModel = PeopleViewModel()
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @State private var showSearch = false
 
     var body: some View {
@@ -121,10 +123,12 @@ struct PeopleView: View {
                     LazyVStack(spacing: 0) {
                         ForEach(viewModel.sharedArticles) { share in
                             if let article = share.article {
-                                NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                                NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                                    .articleZoomDestination(id: share.id, in: articleZoom)) {
                                     ShareCard(share: share, article: article)
                                 }
                                 .buttonStyle(.plain)
+                                .articleZoomSource(id: share.id, in: articleZoom)
                                 .onAppear {
                                     if !share.isRead {
                                         Task { await viewModel.markAsRead(share) }

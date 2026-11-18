@@ -15,11 +15,23 @@ struct RSSArticleListView: View {
     @ObservedObject var viewModel: RSSViewModel
     @State private var articles: [RSSArticle] = []
     @State private var isLoading = true
+    @State private var hasLoaded = false
     @State private var isMarkingRead = false
     @State private var errorMessage: String?
     @State private var showReadArticles = false // Default: hide read articles
     @State private var showSafariView = false
     @State private var confirmUnfollow = false
+    /// Articles that were unread when the "Unread" tab was shown: they stay
+    /// in the list after being read in the reader, so coming back the list
+    /// does not shift under the user (issue #134).
+    @State private var keptUnreadIds: Set<UUID> = []
+    /// Where the reader was left, to scroll the list back to that article.
+    @State private var readerPosition: RSSReaderPosition?
+    /// Compact header shown once the profile header scrolls away (#132).
+    @State private var isHeaderCollapsed = false
+    @State private var profileHeaderHeight: CGFloat = 0
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
 
@@ -52,33 +64,64 @@ struct RSSArticleListView: View {
         siteURL?.host?.replacingOccurrences(of: "www.", with: "") ?? ""
     }
 
+    /// Scroll offset after which the compact header replaces the full one:
+    /// when the stats and the buttons have gone under the top bar.
+    private var collapseThreshold: CGFloat {
+        max(120, profileHeaderHeight - 44 - 48)
+    }
+
     var body: some View {
         ZStack {
             themeManager.colors.page
                 .ignoresSafeArea()
 
-            List {
-                Section {
-                    profileHeader
-                        .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(themeManager.colors.page)
-                }
+            ScrollViewReader { proxy in
+                List {
+                    Section {
+                        profileHeader
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                                profileHeaderHeight = height
+                            }
+                            .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(themeManager.colors.page)
+                    }
 
-                Section {
-                    content
+                    Section {
+                        content
+                    }
                 }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(themeManager.colors.page)
-            .id(currentFeed.id)
-            .refreshable {
-                await refreshFeed()
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(themeManager.colors.page)
+                .id(currentFeed.id)
+                .refreshable {
+                    await refreshFeed()
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top > collapseThreshold
+                } action: { _, collapsed in
+                    guard collapsed != isHeaderCollapsed else { return }
+                    withAnimation(.snappy(duration: 0.25)) {
+                        isHeaderCollapsed = collapsed
+                    }
+                }
+                .onAppear {
+                    restoreScrollPosition(with: proxy)
+                }
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            topBar
+            VStack(spacing: 0) {
+                topBar
+
+                if isHeaderCollapsed {
+                    compactHeader
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .background(themeManager.colors.page)
+            .clipped()
         }
         .navigationBarHidden(true)
         .rssLibrarySaveBanner(bottomPadding: 28)
@@ -102,13 +145,19 @@ struct RSSArticleListView: View {
         } message: {
             Text("Its articles will no longer appear in Feeds.")
         }
+        // Only the first appearance loads: coming back from the reader the
+        // list keeps its articles and its scroll position (#134).
         .task {
+            guard !hasLoaded else { return }
+            hasLoaded = true
             showReadArticles = false
             await loadArticles(showLoadingIndicator: true)
         }
         .onChange(of: currentFeed.id) { _, _ in
             Task {
                 showReadArticles = false
+                isHeaderCollapsed = false
+                readerPosition = nil
                 await loadArticles(showLoadingIndicator: true)
             }
         }
@@ -180,6 +229,15 @@ struct RSSArticleListView: View {
         }
     }
 
+    /// The first feed after the current one (wrapping around) that still
+    /// has unread articles: feeds with nothing new are skipped (#133).
+    private func nextFeedWithUnread() -> RSSFeed? {
+        guard let idx = currentIndex else { return nil }
+        let feeds = viewModel.feeds
+        let ordered = Array(feeds[(idx + 1)...]) + Array(feeds[..<idx])
+        return ordered.first { (viewModel.unreadCounts[$0.id] ?? 0) > 0 }
+    }
+
     // MARK: - Profile header
 
     private var profileHeader: some View {
@@ -202,11 +260,7 @@ struct RSSArticleListView: View {
             }
             .frame(maxWidth: .infinity)
 
-            HStack(spacing: 10) {
-                statTile(value: "\(unreadCount)", label: "Unread")
-                statTile(value: "\(articles.count)", label: "Articles")
-                statTile(value: "\(articles.count - unreadCount)", label: "Read")
-            }
+            statsRow(compact: false)
 
             HStack(spacing: 10) {
                 Button {
@@ -252,28 +306,140 @@ struct RSSArticleListView: View {
         .padding(.top, 8)
     }
 
-    private func statTile(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(Typography.display(19, weight: .bold, relativeTo: .title3))
-                .foregroundColor(themeManager.colors.text)
-                .contentTransition(.numericText())
-            Text(label)
-                .font(Typography.ui(12, relativeTo: .caption))
-                .foregroundColor(themeManager.colors.muted)
+    // MARK: - Compact header (#132)
+
+    /// The profile header shrunk into the top bar while scrolling: small
+    /// avatar and title, the three stats and the buttons resized, and the
+    /// Unread / All tabs pinned.
+    private var compactHeader: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                FeedAvatar(feed: currentFeed, size: 34, monogramFont: Typography.ui(11, weight: .bold, relativeTo: .caption))
+
+                Text(currentFeed.title)
+                    .font(Typography.ui(16, weight: .bold, relativeTo: .headline))
+                    .foregroundColor(themeManager.colors.text)
+                    .lineLimit(1)
+
+                Spacer(minLength: 4)
+
+                HStack(spacing: 0) {
+                    Button {
+                        Task { await markAllAsRead() }
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(themeManager.colors.accent)
+                            if isMarkingRead {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(themeManager.colors.page)
+                            } else {
+                                Image(systemName: "checkmark")
+                                    .font(Typography.symbol(13, weight: .bold))
+                                    .foregroundColor(themeManager.colors.page)
+                            }
+                        }
+                        .frame(width: 34, height: 34)
+                        .opacity(unreadCount > 0 ? 1 : 0.5)
+                        .minimumTapTarget()
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                    .disabled(unreadCount == 0 || isMarkingRead)
+                    .accessibilityLabel(unreadCount > 0 ? "Mark all read" : "All caught up")
+
+                    if siteURL != nil {
+                        Button {
+                            showSafariView = true
+                        } label: {
+                            compactCircleGlyph("safari")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Open website")
+                    }
+
+                    if let siteURL {
+                        ShareLink(item: siteURL) {
+                            compactCircleGlyph("square.and.arrow.up")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Share feed")
+                    }
+                }
+            }
+
+            statsRow(compact: true)
+
+            tabs
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(themeManager.colors.line, lineWidth: 1)
-        )
-        .accessibilityElement(children: .combine)
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.top, 2)
+    }
+
+    private func compactCircleGlyph(_ systemImage: String) -> some View {
+        Image(systemName: systemImage)
+            .font(Typography.symbol(14, weight: .semibold))
+            .foregroundColor(themeManager.colors.text)
+            .frame(width: 34, height: 34)
+            .background(Circle().fill(themeManager.colors.page))
+            .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+            .minimumTapTarget()
+    }
+
+    private func statsRow(compact: Bool) -> some View {
+        HStack(spacing: compact ? 8 : 10) {
+            statTile(value: "\(unreadCount)", label: "Unread", compact: compact)
+            statTile(value: "\(articles.count)", label: "Articles", compact: compact)
+            statTile(value: "\(articles.count - unreadCount)", label: "Read", compact: compact)
+        }
+    }
+
+    @ViewBuilder
+    private func statTile(value: String, label: String, compact: Bool) -> some View {
+        if compact {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                Text(value)
+                    .font(Typography.display(15, weight: .bold, relativeTo: .subheadline))
+                    .foregroundColor(themeManager.colors.text)
+                    .contentTransition(.numericText())
+                Text(label)
+                    .font(Typography.ui(11.5, relativeTo: .caption2))
+                    .foregroundColor(themeManager.colors.muted)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(themeManager.colors.line, lineWidth: 1)
+            )
+            .accessibilityElement(children: .combine)
+        } else {
+            VStack(spacing: 2) {
+                Text(value)
+                    .font(Typography.display(19, weight: .bold, relativeTo: .title3))
+                    .foregroundColor(themeManager.colors.text)
+                    .contentTransition(.numericText())
+                Text(label)
+                    .font(Typography.ui(12, relativeTo: .caption))
+                    .foregroundColor(themeManager.colors.muted)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(themeManager.colors.line, lineWidth: 1)
+            )
+            .accessibilityElement(children: .combine)
+        }
     }
 
     private var tabs: some View {
         HStack(spacing: 0) {
-            tabButton(title: "Unread", isSelected: !showReadArticles) { showReadArticles = false }
+            tabButton(title: "Unread", isSelected: !showReadArticles) {
+                showReadArticles = false
+                keptUnreadIds = currentUnreadIds
+            }
             tabButton(title: "All", isSelected: showReadArticles) { showReadArticles = true }
         }
         .overlay(alignment: .bottom) {
@@ -303,6 +469,16 @@ struct RSSArticleListView: View {
 
     // MARK: - Content
 
+    private var currentUnreadIds: Set<UUID> {
+        Set(articles.filter { !$0.isRead }.map(\.id))
+    }
+
+    /// Unread tab: the unread articles plus the ones read since the tab was
+    /// shown (they stay, dimmed, until the tab or the feed changes).
+    private var displayedArticles: [RSSArticle] {
+        articles.filter { showReadArticles || !$0.isRead || keptUnreadIds.contains($0.id) }
+    }
+
     @ViewBuilder
     private var content: some View {
         if isLoading {
@@ -319,8 +495,8 @@ struct RSSArticleListView: View {
                     .multilineTextAlignment(.center)
             }
         } else {
-            let displayedArticles = articles.filter { showReadArticles || !$0.isRead }
-            if displayedArticles.isEmpty {
+            let rows = displayedArticles
+            if rows.isEmpty {
                 stateRow {
                     VStack(spacing: 10) {
                         Text(articles.isEmpty ? "No articles yet" : "All caught up")
@@ -336,17 +512,25 @@ struct RSSArticleListView: View {
                     }
                 }
             } else {
-                ForEach(displayedArticles) { article in
+                ForEach(rows) { article in
                     let originalIndex = articles.firstIndex(where: { $0.id == article.id }) ?? 0
 
                     ZStack {
-                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: originalIndex)) {
+                        NavigationLink(
+                            destination: RSSArticleReader(
+                                articles: $articles,
+                                initialIndex: originalIndex,
+                                onPositionChange: { readerPosition = $0 }
+                            )
+                            .articleZoomDestination(id: article.id, in: articleZoom)
+                        ) {
                             EmptyView()
                         }
                         .opacity(0)
 
                         RSSArticleRow(article: article)
                     }
+                    .articleZoomSource(id: article.id, in: articleZoom)
                     .listRowInsets(EdgeInsets(top: 0, leading: Spacing.screenHorizontal, bottom: 0, trailing: Spacing.screenHorizontal))
                     .listRowSeparatorTint(themeManager.colors.line)
                     .listRowBackground(themeManager.colors.page)
@@ -378,18 +562,45 @@ struct RSSArticleListView: View {
             .listRowBackground(themeManager.colors.page)
     }
 
+    /// Back from the reader: if the user paged to another article, the list
+    /// scrolls to it, so it stays where the reading ended (#134).
+    private func restoreScrollPosition(with proxy: ScrollViewProxy) {
+        guard let position = readerPosition else { return }
+        readerPosition = nil
+        guard position.currentId != position.openedId,
+              displayedArticles.contains(where: { $0.id == position.currentId }) else { return }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            proxy.scrollTo(position.currentId, anchor: .center)
+        }
+    }
+
     // MARK: - Actions
 
     private func markAllAsRead() async {
         isMarkingRead = true
         await viewModel.markFeedAsRead(currentFeed)
 
-        for i in articles.indices {
-            articles[i].isRead = true
-            articles[i].readAt = Date()
+        // The view model rolls the count back when the call fails.
+        let succeeded = (viewModel.unreadCounts[currentFeed.id] ?? 0) == 0
+
+        if succeeded {
+            for i in articles.indices {
+                articles[i].isRead = true
+                articles[i].readAt = Date()
+            }
+            keptUnreadIds = []
         }
 
         isMarkingRead = false
+
+        // Move on to the next feed that has something to read (#133).
+        if succeeded, let next = nextFeedWithUnread() {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentFeed = next
+            }
+        }
     }
 
     private func refreshFeed() async {
@@ -409,6 +620,7 @@ struct RSSArticleListView: View {
         do {
             guard let userId = AuthManager.shared.user?.id.uuidString else { return }
             self.articles = try await RSSService.shared.getArticles(userId: userId, feedId: currentFeed.id, includeRead: true)
+            keptUnreadIds = currentUnreadIds
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -420,8 +632,12 @@ struct RSSArticleListView: View {
         do {
             try await RSSService.shared.markArticleAsRead(articleId: article.id, userId: userId)
             guard articles.indices.contains(index), articles[index].id == article.id else { return }
-            articles[index].isRead = true
-            articles[index].readAt = Date()
+            withAnimation(.easeOut(duration: 0.2)) {
+                articles[index].isRead = true
+                articles[index].readAt = Date()
+                // An explicit "Mark as read" removes the row from Unread.
+                keptUnreadIds.remove(article.id)
+            }
             if let count = viewModel.unreadCounts[article.feedId], count > 0 {
                 viewModel.unreadCounts[article.feedId] = count - 1
             }
@@ -429,6 +645,15 @@ struct RSSArticleListView: View {
             print("Failed to mark article as read: \(error)")
         }
     }
+}
+
+// MARK: - Reader position
+
+/// The article a reader was opened on and the one it shows now: lists use
+/// it to scroll back to where the reading ended.
+struct RSSReaderPosition: Equatable {
+    let openedId: UUID
+    let currentId: UUID
 }
 
 // MARK: - Article Row
@@ -528,7 +753,11 @@ struct RSSArticleRow: View {
 struct RSSArticleReader: View {
     @Binding var articles: [RSSArticle]
     let initialIndex: Int
+    /// Reports the article on screen (and the one opened), so the list can
+    /// keep its position on the last article read.
+    var onPositionChange: ((RSSReaderPosition) -> Void)? = nil
     @State private var currentIndex: Int = 0
+    @State private var openedArticleId: UUID?
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
     @Environment(\.openURL) private var openURL
@@ -536,9 +765,6 @@ struct RSSArticleReader: View {
     @ObservedObject private var saveStore = RSSLibrarySaveStore.shared
     @State private var hasInitialized = false
     @State private var displayedContent: String = ""
-
-    // Track vertical drag for dismissal
-    @State private var dragOffset: CGSize = .zero
 
     var currentArticle: RSSArticle {
         if articles.indices.contains(currentIndex) {
@@ -574,34 +800,31 @@ struct RSSArticleReader: View {
             actionBar
         }
         .rssLibrarySaveBanner(bottomPadding: 80)
+        // Drag-down to dismiss comes from the zoom navigation transition
+        // (App Store–style card), so there is no custom drag gesture here.
         .onAppear {
             if !hasInitialized {
                 currentIndex = initialIndex
+                if articles.indices.contains(initialIndex) {
+                    openedArticleId = articles[initialIndex].id
+                }
                 hasInitialized = true
             }
             markAsRead()
+            reportPosition()
         }
         .onChange(of: currentIndex) { _, _ in
             resetState()
             markAsRead()
+            reportPosition()
         }
-        .offset(y: dragOffset.height > 0 ? dragOffset.height : 0)
-        .simultaneousGesture(
-            DragGesture()
-                .onChanged { value in
-                    if value.translation.height > 0 && abs(value.translation.width) < value.translation.height {
-                        dragOffset = value.translation
-                    }
-                }
-                .onEnded { value in
-                    if value.translation.height > 100 && abs(value.translation.width) < value.translation.height {
-                        dismiss()
-                    }
-                    withAnimation {
-                        dragOffset = .zero
-                    }
-                }
-        )
+    }
+
+    private func reportPosition() {
+        guard let onPositionChange,
+              let openedArticleId,
+              articles.indices.contains(currentIndex) else { return }
+        onPositionChange(RSSReaderPosition(openedId: openedArticleId, currentId: articles[currentIndex].id))
     }
 
     // MARK: - Top Bar

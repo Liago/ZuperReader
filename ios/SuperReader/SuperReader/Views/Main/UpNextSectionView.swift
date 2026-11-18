@@ -9,6 +9,8 @@ import SwiftUI
 
 struct UpNextSectionView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @ObservedObject private var store = ReadingQueueStore.shared
 
     /// Rows shown under the hero; the rest live in `QueueView`.
@@ -72,10 +74,12 @@ struct UpNextSectionView: View {
         let items = queuedItems
 
         if let first = items.first, let article = first.article {
-            NavigationLink(destination: ArticleReaderView(articleId: first.articleId)) {
+            NavigationLink(destination: ArticleReaderView(articleId: first.articleId)
+                .articleZoomDestination(id: first.articleId, in: articleZoom)) {
                 UpNextHeroCard(article: article)
             }
             .buttonStyle(ScaleButtonStyle())
+            .articleZoomSource(id: first.articleId, in: articleZoom)
             .contextMenu { menuItems(for: first, article: article) }
             // Outside the link's label, so the tap reaches the button.
             .overlay(alignment: .topTrailing) {
@@ -100,10 +104,12 @@ struct UpNextSectionView: View {
             VStack(spacing: 0) {
                 ForEach(Array(following.enumerated()), id: \.element.id) { offset, item in
                     if let article = item.article {
-                        NavigationLink(destination: ArticleReaderView(articleId: item.articleId)) {
+                        NavigationLink(destination: ArticleReaderView(articleId: item.articleId)
+                            .articleZoomDestination(id: item.articleId, in: articleZoom)) {
                             UpNextCompactRow(position: offset + 2, article: article)
                         }
                         .buttonStyle(.plain)
+                        .articleZoomSource(id: item.articleId, in: articleZoom)
                         .contextMenu { menuItems(for: item, article: article) }
 
                         if offset < following.count - 1 {

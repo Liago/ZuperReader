@@ -28,6 +28,14 @@ struct RSSListView: View {
     @State private var isMarkingAllRead = false
     @State private var searchText = ""
     @State private var filter: FeedFilter = .all
+    @State private var hasLoaded = false
+    /// Articles unread when the "Unread" chip was picked: they stay listed
+    /// after being read, so the list does not shift under the user (#134).
+    @State private var keptUnreadIds: Set<UUID> = []
+    /// Where the reader was left, to scroll back to that article (#134).
+    @State private var readerPosition: RSSReaderPosition?
+    /// Source / destination of the App Store–style article zoom (#135).
+    @Namespace private var articleZoom
 
     /// Rows under "Latest" before "See all".
     private let latestLimit = 25
@@ -51,32 +59,37 @@ struct RSSListView: View {
                 } else if viewModel.feeds.isEmpty {
                     emptyState
                 } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 22) {
-                            searchField
-                                .padding(.horizontal, Spacing.screenHorizontal)
-
-                            chipsRow
-
-                            if !isSearching && !featuredArticles.isEmpty {
-                                featuredSection
-                            }
-
-                            latestSection
-                                .padding(.horizontal, Spacing.screenHorizontal)
-
-                            if !isSearching {
-                                channelsSection
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 22) {
+                                searchField
                                     .padding(.horizontal, Spacing.screenHorizontal)
+
+                                chipsRow
+
+                                if !isSearching && !featuredArticles.isEmpty {
+                                    featuredSection
+                                }
+
+                                latestSection
+                                    .padding(.horizontal, Spacing.screenHorizontal)
+
+                                if !isSearching {
+                                    channelsSection
+                                        .padding(.horizontal, Spacing.screenHorizontal)
+                                }
                             }
+                            .padding(.top, Spacing.xs)
+                            .padding(.bottom, Spacing.scrollBottomInset)
                         }
-                        .padding(.top, Spacing.xs)
-                        .padding(.bottom, Spacing.scrollBottomInset)
-                    }
-                    .scrollDismissesKeyboard(.immediately)
-                    .refreshable {
-                        await viewModel.refreshFeedsViaAPI()
-                        await loadArticles()
+                        .scrollDismissesKeyboard(.immediately)
+                        .refreshable {
+                            await viewModel.refreshFeedsViaAPI()
+                            await loadArticles()
+                        }
+                        .onAppear {
+                            restoreScrollPosition(with: proxy)
+                        }
                     }
                 }
 
@@ -103,11 +116,25 @@ struct RSSListView: View {
                     .environmentObject(themeManager)
             }
             .task {
+                // Back from a reader or a feed page: the list keeps its
+                // articles (and scroll position), only read states and
+                // unread counts are synced (#134).
+                if hasLoaded {
+                    await viewModel.loadFeeds()
+                    await syncReadState()
+                    return
+                }
+                hasLoaded = true
                 await viewModel.loadFeeds()
                 await loadArticles()
                 if viewModel.shouldAutoRefresh() {
                     await viewModel.refreshFeedsViaAPI()
                     await loadArticles()
+                }
+            }
+            .onChange(of: filter) { _, newFilter in
+                if newFilter == .unread {
+                    keptUnreadIds = Set(articles.filter { !$0.isRead }.map(\.id))
                 }
             }
         }
@@ -126,6 +153,38 @@ struct RSSListView: View {
         isLoadingArticles = false
     }
 
+    /// Updates read state of the loaded articles without replacing the
+    /// array, so rows and scroll position stay where they are.
+    private func syncReadState() async {
+        guard let userId = authManager.user?.id.uuidString, !articles.isEmpty else { return }
+        do {
+            let fresh = try await RSSService.shared.getArticles(userId: userId, feedId: nil, limit: 100, includeRead: true)
+            let byId = Dictionary(fresh.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for index in articles.indices {
+                guard let updated = byId[articles[index].id],
+                      updated.isRead != articles[index].isRead else { continue }
+                articles[index].isRead = updated.isRead
+                articles[index].readAt = updated.readAt
+            }
+        } catch {
+            print("Failed to sync feed articles: \(error)")
+        }
+    }
+
+    /// Back from the reader: if the user paged to another article, scroll
+    /// to it so the list stays where the reading ended (#134).
+    private func restoreScrollPosition(with proxy: ScrollViewProxy) {
+        guard let position = readerPosition else { return }
+        readerPosition = nil
+        guard position.currentId != position.openedId,
+              latestArticles.contains(where: { $0.article.id == position.currentId }) else { return }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            proxy.scrollTo(position.currentId, anchor: .center)
+        }
+    }
+
     private func markAsRead(_ article: RSSArticle) async {
         guard let userId = authManager.user?.id.uuidString else { return }
         do {
@@ -134,6 +193,8 @@ struct RSSListView: View {
                 articles[index].isRead = true
                 articles[index].readAt = Date()
             }
+            // An explicit "Mark as read" removes the row from Unread.
+            keptUnreadIds.remove(article.id)
             if let count = viewModel.unreadCounts[article.feedId], count > 0 {
                 viewModel.unreadCounts[article.feedId] = count - 1
             }
@@ -153,6 +214,7 @@ struct RSSListView: View {
             articles[index].isRead = true
             articles[index].readAt = Date()
         }
+        keptUnreadIds = []
         isMarkingAllRead = false
     }
 
@@ -173,7 +235,7 @@ struct RSSListView: View {
         return articles.enumerated().compactMap { (index, article) -> IndexedRSSArticle? in
             switch filter {
             case .all: break
-            case .unread: if article.isRead { return nil }
+            case .unread: if article.isRead && !keptUnreadIds.contains(article.id) { return nil }
             case .feed(let id): if article.feedId != id { return nil }
             }
             if !query.isEmpty {
@@ -311,10 +373,11 @@ struct RSSListView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
                     ForEach(featuredArticles) { item in
-                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: item.index)) {
+                        NavigationLink(destination: reader(for: item)) {
                             RSSFeaturedCard(article: item.article, feedTitle: feed(for: item.article)?.title)
                         }
                         .buttonStyle(ScaleButtonStyle())
+                        .articleZoomSource(id: item.article.id, in: articleZoom, cornerRadius: 18)
                         .rssArticleContextMenu(article: item.article) {
                             Task { await markAsRead(item.article) }
                         }
@@ -325,6 +388,16 @@ struct RSSListView: View {
             }
             .scrollTargetBehavior(.viewAligned)
         }
+    }
+
+    /// Paged reader opened with the zoom transition from the tapped item.
+    private func reader(for item: IndexedRSSArticle) -> some View {
+        RSSArticleReader(
+            articles: $articles,
+            initialIndex: item.index,
+            onPositionChange: { readerPosition = $0 }
+        )
+        .articleZoomDestination(id: item.article.id, in: articleZoom)
     }
 
     // MARK: - Latest
@@ -372,10 +445,11 @@ struct RSSListView: View {
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(rows) { item in
-                        NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: item.index)) {
+                        NavigationLink(destination: reader(for: item)) {
                             RSSArticleRow(article: item.article, feedTitle: feed(for: item.article)?.title)
                         }
                         .buttonStyle(.plain)
+                        .articleZoomSource(id: item.article.id, in: articleZoom)
                         .rssArticleContextMenu(article: item.article) {
                             Task { await markAsRead(item.article) }
                         }

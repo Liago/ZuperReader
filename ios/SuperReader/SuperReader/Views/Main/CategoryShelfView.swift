@@ -12,6 +12,8 @@ struct CategoryShelfView: View {
     @ObservedObject var viewModel: LibraryHomeViewModel
 
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @ObservedObject private var categoryStore = ArticleCategoryStore.shared
 
@@ -40,7 +42,8 @@ struct CategoryShelfView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top, spacing: 14) {
                 ForEach(section.articles.prefix(shelfLimit)) { article in
-                    NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                    NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                        .articleZoomDestination(id: article.id, in: articleZoom)) {
                         ShelfArticleCard(
                             article: article,
                             category: section.category,
@@ -48,6 +51,7 @@ struct CategoryShelfView: View {
                         )
                     }
                     .buttonStyle(ScaleButtonStyle())
+                    .articleZoomSource(id: article.id, in: articleZoom)
                     .contextMenu { menuItems(for: article) }
                 }
             }
@@ -63,11 +67,13 @@ struct CategoryShelfView: View {
 
         return VStack(spacing: 0) {
             ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
-                NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                    .articleZoomDestination(id: article.id, in: articleZoom)) {
                     ArticleRowView(article: article, queueState: queueState(for: article))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .articleZoomSource(id: article.id, in: articleZoom)
                 .contextMenu { menuItems(for: article) }
 
                 if index < articles.count - 1 {

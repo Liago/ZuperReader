@@ -233,6 +233,8 @@ struct ArticleListView: View {
     @ObservedObject var viewModel: ArticleListViewModel
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @EnvironmentObject var themeManager: ThemeManager
+    /// Source / destination of the App Store–style article zoom.
+    @Namespace private var articleZoom
     var onAddArticle: () -> Void = {}
 
     private let gridColumns = [
@@ -356,7 +358,8 @@ struct ArticleListView: View {
         ScrollView {
             LazyVGrid(columns: gridColumns, spacing: Spacing.md) {
                 ForEach(viewModel.filteredArticles) { article in
-                    NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                    NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                        .articleZoomDestination(id: article.id, in: articleZoom)) {
                         ArticleCardView(
                             article: article,
                             queueState: queueState(for: article),
@@ -366,6 +369,7 @@ struct ArticleListView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .articleZoomSource(id: article.id, in: articleZoom)
                 }
 
                 // Load more trigger
@@ -423,13 +427,15 @@ struct ArticleListView: View {
                 Section {
                     ForEach(group.articles) { article in
                         ZStack {
-                            NavigationLink(destination: ArticleReaderView(articleId: article.id)) {
+                            NavigationLink(destination: ArticleReaderView(articleId: article.id)
+                                .articleZoomDestination(id: article.id, in: articleZoom)) {
                                 EmptyView()
                             }
                             .opacity(0)
 
                             ArticleRowView(article: article, queueState: queueState(for: article))
                         }
+                        .articleZoomSource(id: article.id, in: articleZoom)
                         .listRowInsets(EdgeInsets(
                             top: 0,
                             leading: Spacing.screenHorizontal,
