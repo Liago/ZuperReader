@@ -291,13 +291,7 @@ struct IPadRootView: View {
         let unread = feedsViewModel.unreadCounts[feed.id] ?? 0
         return Button(action: { select(.feed(feed.id)) }) {
             HStack(spacing: 10) {
-                Text(FeedSourceBubble.monogram(for: feed.title))
-                    .font(Typography.ui(9, weight: .bold, relativeTo: .caption2))
-                    .foregroundColor(themeManager.colors.text)
-                    .frame(width: 24, height: 24)
-                    .background(Circle().fill(themeManager.colors.page))
-                    .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
-                    .accessibilityHidden(true)
+                FeedAvatar(feed: feed, size: 24, monogramFont: Typography.ui(9, weight: .bold, relativeTo: .caption2))
                 Text(feed.title)
                     .font(Typography.ui(14, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(themeManager.colors.text)

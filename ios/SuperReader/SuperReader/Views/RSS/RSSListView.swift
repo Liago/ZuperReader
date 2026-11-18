@@ -583,13 +583,7 @@ struct RSSFeedRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Text(FeedSourceBubble.monogram(for: feed.title))
-                .font(Typography.ui(13, weight: .bold))
-                .foregroundColor(themeManager.colors.text)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(themeManager.colors.page))
-                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
-                .accessibilityHidden(true)
+            FeedAvatar(feed: feed, size: 44, monogramFont: Typography.ui(13, weight: .bold))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(feed.title)
