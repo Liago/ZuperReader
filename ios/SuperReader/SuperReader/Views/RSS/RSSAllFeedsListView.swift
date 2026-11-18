@@ -1,8 +1,8 @@
 import SwiftUI
 import Auth
 
-// MARK: - All Feeds (combined, unread) — destination of the Feeds screen's
-// "All feeds" hero row (docs/revamp-ios/README.md · "06 Feeds").
+// MARK: - All Feeds (combined, unread) — destination of the Feeds tab's
+// "See all unread" link and of "All feeds" in the home sources row.
 
 struct RSSAllFeedsListView: View {
     @ObservedObject var viewModel: RSSViewModel
@@ -42,7 +42,7 @@ struct RSSAllFeedsListView: View {
             LazyVStack(spacing: 0) {
                 ForEach(Array(articles.enumerated()), id: \.element.id) { index, article in
                     NavigationLink(destination: RSSArticleReader(articles: $articles, initialIndex: index)) {
-                        row(for: article)
+                        RSSArticleRow(article: article, feedTitle: feedTitle(for: article))
                     }
                     .buttonStyle(ScaleButtonStyle())
                     .rssArticleContextMenu(article: article) {
@@ -53,7 +53,7 @@ struct RSSAllFeedsListView: View {
                         Rectangle()
                             .fill(themeManager.colors.line)
                             .frame(height: 1)
-                            .padding(.leading, 56 + 14)
+
                     }
                 }
             }
@@ -64,51 +64,6 @@ struct RSSAllFeedsListView: View {
         .refreshable { await loadArticles() }
     }
 
-    private func row(for article: RSSArticle) -> some View {
-        HStack(spacing: 14) {
-            Group {
-                if let imageUrl = article.imageUrl {
-                    AsyncImageView(url: imageUrl, cornerRadius: CornerRadius.listThumbnail)
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    ZStack {
-                        themeManager.colors.accent200
-                        Image(systemName: "dot.radiowaves.up.forward")
-                            .foregroundColor(themeManager.colors.accent800.opacity(0.6))
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-                }
-            }
-            .frame(width: 56, height: 56)
-            .clipped()
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    if !article.isRead {
-                        Circle().fill(themeManager.colors.accent).frame(width: 6, height: 6)
-                    }
-                    Text(feedTitle(for: article).uppercased())
-                        .font(Typography.ui(11, weight: .bold))
-                        .foregroundColor(themeManager.colors.muted)
-                        .lineLimit(1)
-                    Spacer()
-                    if let date = article.pubDate {
-                        Text(date, style: .relative)
-                            .font(Typography.meta)
-                            .foregroundColor(themeManager.colors.muted)
-                    }
-                }
-
-                Text(article.title)
-                    .font(Typography.listRowTitle)
-                    .foregroundColor(article.isRead ? themeManager.colors.muted : themeManager.colors.text)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-    }
-
     private func feedTitle(for article: RSSArticle) -> String {
         viewModel.feeds.first(where: { $0.id == article.feedId })?.title ?? "Feed"
     }
@@ -117,11 +72,11 @@ struct RSSAllFeedsListView: View {
         VStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(themeManager.colors.sink)
+                    .fill(themeManager.colors.surface)
                     .frame(width: 96, height: 96)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 36))
-                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+                    .font(Typography.symbol(34))
+                    .foregroundColor(themeManager.colors.muted)
             }
 
             Text("All caught up")
