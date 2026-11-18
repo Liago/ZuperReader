@@ -14,6 +14,9 @@ struct QueueView: View {
     @ObservedObject private var store = ReadingQueueStore.shared
     @Environment(\.dismiss) private var dismiss
 
+    /// `false` when Up next is a root page (iPad sidebar).
+    var showsBackButton: Bool = true
+
     @State private var editMode: EditMode = .inactive
 
     var body: some View {
@@ -52,8 +55,10 @@ struct QueueView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: 12) {
-                IconCircleButton(systemImage: "chevron.backward", label: "Back") {
-                    dismiss()
+                if showsBackButton {
+                    IconCircleButton(systemImage: "chevron.backward", label: "Back", style: .outline) {
+                        dismiss()
+                    }
                 }
 
                 Spacer()

@@ -19,6 +19,9 @@ enum LibraryArticlesScope: Hashable {
 struct CategoryArticlesView: View {
     let scope: LibraryArticlesScope
     @ObservedObject var viewModel: LibraryHomeViewModel
+    /// `false` when this page is a root (iPad sidebar), where there is
+    /// nothing to go back to.
+    var showsBackButton: Bool = true
 
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject private var queueStore = ReadingQueueStore.shared
@@ -33,9 +36,10 @@ struct CategoryArticlesView: View {
         self.init(scope: .category(category), viewModel: viewModel)
     }
 
-    init(scope: LibraryArticlesScope, viewModel: LibraryHomeViewModel) {
+    init(scope: LibraryArticlesScope, viewModel: LibraryHomeViewModel, showsBackButton: Bool = true) {
         self.scope = scope
         self.viewModel = viewModel
+        self.showsBackButton = showsBackButton
     }
 
     private var readingStatus: ReadingStatus? {
@@ -106,8 +110,10 @@ struct CategoryArticlesView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                IconCircleButton(systemImage: "chevron.backward", label: "Back") {
-                    dismiss()
+                if showsBackButton {
+                    IconCircleButton(systemImage: "chevron.backward", label: "Back", style: .outline) {
+                        dismiss()
+                    }
                 }
                 Spacer()
 
