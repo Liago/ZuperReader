@@ -95,39 +95,23 @@ struct CategoryShelfView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(systemName: section.category.icon)
-                .font(Typography.symbol(14, weight: .bold))
-                .foregroundColor(themeManager.colors.accent800)
-                .frame(width: 30, height: 30)
-                .background(themeManager.colors.accent200)
-                .clipShape(Circle())
-                .accessibilityHidden(true)
-
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(section.category.displayName)
-                .font(Typography.ui(18, weight: .bold, relativeTo: .headline))
+                .font(Typography.ui(17, weight: .semibold, relativeTo: .headline))
                 .foregroundColor(themeManager.colors.text)
                 .accessibilityAddTraits(.isHeader)
 
             Text("\(section.articles.count)")
-                .font(Typography.ui(12.5, weight: .bold))
+                .font(Typography.ui(13, relativeTo: .footnote))
                 .foregroundColor(themeManager.colors.muted)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(themeManager.colors.sink)
-                .clipShape(Capsule())
                 .accessibilityLabel("\(section.articles.count) articles")
 
             Spacer()
 
             NavigationLink(destination: CategoryArticlesView(category: section.category, viewModel: viewModel)) {
-                HStack(spacing: 4) {
-                    Text("See all")
-                        .font(Typography.ui(13.5, weight: .semibold))
-                    Image(systemName: "chevron.right")
-                        .font(Typography.symbol(11, weight: .bold))
-                }
-                .foregroundColor(themeManager.colors.accent800)
+                Text("See all")
+                    .font(Typography.ui(13.5, weight: .medium))
+                    .foregroundColor(themeManager.colors.accent)
             }
             .buttonStyle(.plain)
             .minimumTapTarget()
@@ -152,61 +136,54 @@ private struct ShelfArticleCard: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ScaledMetric(relativeTo: .body) private var cardWidth: CGFloat = 220
 
+    // Editorial Teal shelf card: image tile on its own (no card fill, no
+    // shadow), then source line, title and read time underneath.
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 8) {
             thumbnail
                 .frame(width: cardWidth, height: 124)
                 .clipped()
-
-            progressTrack
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    ReadingStateDot(
-                        status: article.readingStatus,
-                        accentColor: themeManager.colors.accent,
-                        accent2Color: themeManager.colors.accent2,
-                        mutedColor: themeManager.colors.muted
-                    )
-                    if let domain = article.domain {
-                        Text(domain.replacingOccurrences(of: "www.", with: "").uppercased())
-                            .font(Typography.ui(11, weight: .bold))
-                            .foregroundColor(themeManager.colors.muted)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    if article.isFavorite {
-                        Image(systemName: "heart.fill")
-                            .font(Typography.symbol(10, weight: .bold))
-                            .foregroundColor(themeManager.colors.accent)
-                            .accessibilityLabel("Favorite")
-                    }
-                    if let queueState {
-                        QueueStateGlyph(state: queueState, size: 10)
+                .overlay(alignment: .bottom) {
+                    if progressFraction > 0 {
+                        progressTrack
                     }
                 }
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
 
-                Text(article.title)
-                    .font(Typography.ui(15, weight: .bold, relativeTo: .subheadline))
-                    .foregroundColor(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.text)
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-
+            HStack(spacing: 6) {
+                if let domain = article.domain {
+                    Text(domain.replacingOccurrences(of: "www.", with: ""))
+                        .font(Typography.ui(12, weight: .semibold, relativeTo: .caption))
+                        .foregroundColor(themeManager.colors.accent)
+                        .lineLimit(1)
+                }
                 Spacer(minLength: 0)
-
-                if let readTime = article.estimatedReadTime {
-                    Text("\(readTime) min")
-                        .font(Typography.meta)
-                        .foregroundColor(themeManager.colors.muted)
+                if article.isFavorite {
+                    Image(systemName: "heart.fill")
+                        .font(Typography.symbol(10, weight: .bold))
+                        .foregroundColor(themeManager.colors.accent)
+                        .accessibilityLabel("Favorite")
+                }
+                if let queueState {
+                    QueueStateGlyph(state: queueState, size: 10)
                 }
             }
-            .padding(14)
-            .frame(width: cardWidth, height: 128, alignment: .topLeading)
+
+            Text(article.title)
+                .font(Typography.ui(15, weight: .semibold, relativeTo: .subheadline))
+                .foregroundColor(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.text)
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+
+            if let readTime = article.estimatedReadTime {
+                Text(article.readingStatus == .completed ? "Read" : "\(readTime) min")
+                    .font(Typography.ui(12, relativeTo: .caption))
+                    .foregroundColor(themeManager.colors.muted)
+            }
         }
-        .background(themeManager.colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-        .shadow(color: AppShadows.card.color, radius: 12, x: 0, y: 4)
+        .frame(width: cardWidth, alignment: .topLeading)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
@@ -220,10 +197,10 @@ private struct ShelfArticleCard: View {
             }
         } else {
             ZStack {
-                themeManager.colors.accent2_200
+                themeManager.colors.surface
                 Image(systemName: category.icon)
-                    .font(Typography.symbol(30, weight: .semibold))
-                    .foregroundColor(themeManager.colors.accent2)
+                    .font(Typography.symbol(28, weight: .regular))
+                    .foregroundColor(themeManager.colors.muted)
             }
             .accessibilityHidden(true)
         }
@@ -232,13 +209,14 @@ private struct ShelfArticleCard: View {
     private var progressTrack: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                Rectangle().fill(themeManager.colors.line)
+                Rectangle().fill(Color.white.opacity(0.6))
                 Rectangle()
-                    .fill(article.readingStatus == .completed ? themeManager.colors.muted.opacity(0.45) : themeManager.colors.accent)
+                    .fill(article.readingStatus == .completed ? themeManager.colors.muted : themeManager.colors.accent)
                     .frame(width: geometry.size.width * progressFraction)
             }
         }
-        .frame(width: cardWidth, height: 2)
+        .frame(width: cardWidth, height: 3)
+        .accessibilityHidden(true)
     }
 
     private var progressFraction: CGFloat {

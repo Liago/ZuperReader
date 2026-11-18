@@ -18,6 +18,9 @@ struct IconCircleButton: View {
         case accent
         /// `text` fill, `page` glyph — an active / toggled state.
         case filled
+        /// `page` fill with a 1pt `line` ring, `text` glyph — Editorial
+        /// Teal's secondary header button (search, settings, share).
+        case outline
     }
 
     let systemImage: String
@@ -58,7 +61,7 @@ struct IconCircleGlyph: View {
 
     private var foreground: Color {
         switch style {
-        case .sink: return themeManager.colors.text
+        case .sink, .outline: return themeManager.colors.text
         case .accent, .filled: return themeManager.colors.page
         }
     }
@@ -68,6 +71,7 @@ struct IconCircleGlyph: View {
         case .sink: return themeManager.colors.sink
         case .accent: return themeManager.colors.accent
         case .filled: return themeManager.colors.text
+        case .outline: return themeManager.colors.page
         }
     }
 
@@ -78,6 +82,10 @@ struct IconCircleGlyph: View {
             .frame(width: circleSize, height: circleSize)
             .background(background)
             .clipShape(Circle())
+            .overlay(
+                Circle()
+                    .stroke(themeManager.colors.line, lineWidth: style == .outline ? 1 : 0)
+            )
     }
 }
 

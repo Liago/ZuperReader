@@ -436,13 +436,14 @@ struct Spacing {
     static let readerColumn: CGFloat = 26
     static let focusHorizontal: CGFloat = 30
     static let loginHorizontal: CGFloat = 32
-    static let contentTop: CGFloat = 26
+    static let contentTop: CGFloat = 12
     static let profileTop: CGFloat = 30
     static let tabBarHeight: CGFloat = 84
     static let scrollBottomInset: CGFloat = 100
     static let minTapTarget: CGFloat = 44
     static let readerActionBarHeight: CGFloat = 60
-    static let iconButtonSize: CGFloat = 38
+    /// Editorial Teal header buttons are full 44pt circles.
+    static let iconButtonSize: CGFloat = 44
 }
 
 // MARK: - Corner Radius
