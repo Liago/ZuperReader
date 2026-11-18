@@ -6,13 +6,16 @@ import Auth
 
 // MARK: - Home View
 //
-// The Library tab, top to bottom:
-//  1. "Up next" — the reading queue, the first thing on screen;
-//  2. "All articles" — shortcut to the whole Library as one list, newest
-//     save first (`CategoryArticlesView`, scope `.all`);
-//  3. "Your library" — every other article, grouped into topic shelves by
-//     the smart categorization (`ArticleCategoryStore`).
-// Typing in the search bar swaps the shelves for the flat, paginated results.
+// The Library tab — Editorial Teal (design canvas · "01 · Library (Home)"),
+// top to bottom:
+//  1. Header — avatar, greeting, "Your library", Search and "Save a link";
+//  2. Feed sources — the user's RSS feeds as round monograms, with an accent
+//     dot on the ones that have unread items ("All feeds" closes the row);
+//  3. "Up next" — the reading queue: hero article + the next ones;
+//  4. "Your shelves" — category chips over the topic shelves, plus the
+//     "All articles" link to the whole Library (`CategoryArticlesView`, `.all`).
+// The Search button opens the search field; typing swaps the home for the
+// flat, paginated results.
 
 struct HomeView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -21,11 +24,21 @@ struct HomeView: View {
     @StateObject private var viewModel = ArticleListViewModel()
     /// Whole Library behind the category shelves.
     @StateObject private var homeViewModel = LibraryHomeViewModel()
+    /// Feeds behind the sources row (same data as the Feeds tab).
+    @StateObject private var feedsViewModel = RSSViewModel()
     @ObservedObject private var queueStore = ReadingQueueStore.shared
     @ObservedObject private var categoryStore = ArticleCategoryStore.shared
 
     @State private var showAddArticle = false
     @State private var hasAppeared = false
+    @State private var isSearchOpen = false
+    @State private var userProfile: UserProfile?
+    /// Category chip selected under "Your shelves" (`nil` = All).
+    @State private var selectedCategory: ArticleCategory?
+    @FocusState private var searchFocused: Bool
+
+    /// Feeds shown in the sources row before "All feeds".
+    private let sourcesLimit = 12
 
     private var isSearching: Bool {
         !viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -38,14 +51,11 @@ struct HomeView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: Spacing.md) {
-                    // Header
                     headerView
 
                     if isSearching {
-                        // Filter Bar
                         filterBar
 
-                        // Search results
                         ArticleListView(viewModel: viewModel, onAddArticle: { showAddArticle = true })
                     } else {
                         homeContent
@@ -74,12 +84,13 @@ struct HomeView: View {
             }
         }
         .task {
-            if let userId = authManager.user?.id.uuidString {
-                async let articles: Void = viewModel.loadArticles(userId: userId)
-                async let library: Void = homeViewModel.load(userId: userId)
-                async let queue: Void = queueStore.load(userId: userId)
-                _ = await (articles, library, queue)
-            }
+            guard let userId = authManager.user?.id.uuidString else { return }
+            async let articles: Void = viewModel.loadArticles(userId: userId)
+            async let library: Void = homeViewModel.load(userId: userId)
+            async let queue: Void = queueStore.load(userId: userId)
+            async let feeds: Void = feedsViewModel.loadFeeds()
+            async let profile: Void = loadProfile(userId: userId)
+            _ = await (articles, library, queue, feeds, profile)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshArticles"))) { _ in
             Task {
@@ -94,52 +105,110 @@ struct HomeView: View {
         guard let userId = authManager.user?.id.uuidString else { return }
         async let library: Void = homeViewModel.load(userId: userId)
         async let queue: Void = queueStore.load(userId: userId)
-        _ = await (library, queue)
+        async let feeds: Void = feedsViewModel.loadFeeds()
+        _ = await (library, queue, feeds)
+    }
+
+    private func loadProfile(userId: String) async {
+        if let profile = try? await SupabaseService.shared.getUserProfile(userId: userId) {
+            userProfile = profile
+        }
     }
 
     // MARK: - Header
 
     private var headerView: some View {
-        VStack(spacing: Spacing.md) {
-            HStack {
-                Text("Library")
-                    .font(Typography.largeTitle)
-                    .foregroundColor(themeManager.colors.text)
+        VStack(spacing: 14) {
+            HStack(spacing: 12) {
+                avatar
 
-                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(greeting)
+                        .font(Typography.ui(12, relativeTo: .caption))
+                        .foregroundColor(themeManager.colors.muted)
+                    Text("Your library")
+                        .font(Typography.ui(17, weight: .bold, relativeTo: .headline))
+                        .foregroundColor(themeManager.colors.text)
+                        .accessibilityAddTraits(.isHeader)
+                }
 
-                HStack(spacing: Spacing.sm) {
-                    // View Mode Toggle (shelves, search results and category pages):
-                    // the glyph shows the mode a tap switches to.
-                    IconCircleButton(
-                        systemImage: themeManager.viewMode == .list ? "square.grid.2x2.fill" : "list.bullet",
-                        label: themeManager.viewMode == .list ? "Switch to grid view" : "Switch to list view"
-                    ) {
-                        themeManager.toggleViewMode()
-                    }
+                Spacer(minLength: 8)
 
-                    // Add Article Button
-                    IconCircleButton(systemImage: "plus", label: "Save a link", style: .accent, glyphSize: 18) {
-                        showAddArticle = true
-                    }
+                IconCircleButton(
+                    systemImage: "magnifyingglass",
+                    label: "Search your library",
+                    style: .outline,
+                    glyphSize: 17
+                ) {
+                    if isSearchOpen { closeSearch() } else { openSearch() }
+                }
+
+                IconCircleButton(systemImage: "plus", label: "Save a link", style: .accent, glyphSize: 18) {
+                    showAddArticle = true
                 }
             }
 
-            // Search Bar
+            if isSearchOpen {
+                searchField
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, Spacing.screenHorizontal)
+        .padding(.top, Spacing.contentTop)
+    }
+
+    private var avatar: some View {
+        ZStack {
+            Circle()
+                .fill(themeManager.colors.accent200)
+
+            if let url = userProfile?.avatarUrl, !url.isEmpty {
+                AsyncImageView(url: url, cornerRadius: 22)
+            } else {
+                Text(avatarInitials)
+                    .font(Typography.ui(15, weight: .bold))
+                    .foregroundColor(themeManager.colors.accent700)
+            }
+        }
+        .frame(width: 44, height: 44)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+    }
+
+    private var avatarInitials: String {
+        guard let profile = userProfile else { return "ZR" }
+        let initials = profile.initials
+        return initials == "??" ? "ZR" : initials
+    }
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good morning"
+        case 12..<18: return "Good afternoon"
+        default: return "Good evening"
+        }
+    }
+
+    // MARK: - Search
+
+    private var searchField: some View {
+        HStack(spacing: 12) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(themeManager.colors.text.opacity(0.55))
+                    .foregroundColor(themeManager.colors.muted)
                     .accessibilityHidden(true)
 
                 TextField(
                     "",
                     text: $viewModel.searchQuery,
-                    prompt: Text("Search articles").foregroundColor(themeManager.colors.muted)
+                    prompt: Text("Search your library").foregroundColor(themeManager.colors.muted)
                 )
                 .font(Typography.ui(15, relativeTo: .subheadline))
                 .foregroundColor(themeManager.colors.text)
                 .submitLabel(.search)
-                .accessibilityLabel("Search articles")
+                .focused($searchFocused)
+                .accessibilityLabel("Search your library")
 
                 if isSearching {
                     Button {
@@ -153,79 +222,100 @@ struct HomeView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 11)
-            .frame(minHeight: Spacing.minTapTarget)
-            .background(themeManager.colors.sink)
+            .frame(minHeight: 46)
+            .background(themeManager.colors.page)
             .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(
+                        searchFocused ? themeManager.colors.accent : themeManager.colors.line,
+                        lineWidth: searchFocused ? 1.5 : 1
+                    )
+            )
+
+            Button {
+                closeSearch()
+            } label: {
+                Text("Cancel")
+                    .font(Typography.ui(15, weight: .semibold))
+                    .foregroundColor(themeManager.colors.accent)
+            }
+            .buttonStyle(.plain)
+            .minimumTapTarget()
         }
-        .padding(.horizontal, Spacing.screenHorizontal)
-        .padding(.top, Spacing.contentTop)
+        .onAppear { searchFocused = true }
     }
 
-    // MARK: - Home Content (Up next + category shelves)
+    private func openSearch() {
+        withAnimation(.easeOut(duration: 0.2)) { isSearchOpen = true }
+    }
+
+    private func closeSearch() {
+        viewModel.searchQuery = ""
+        searchFocused = false
+        withAnimation(.easeOut(duration: 0.2)) { isSearchOpen = false }
+    }
+
+    // MARK: - Home Content (sources + Up next + shelves)
 
     private var homeContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 30) {
-                UpNextSectionView()
-
-                if !homeViewModel.articles.isEmpty {
-                    allArticlesShortcut
+            VStack(alignment: .leading, spacing: 26) {
+                if !feedsViewModel.feeds.isEmpty {
+                    feedSourcesRow
                 }
 
-                librarySection
+                UpNextSectionView()
+
+                shelvesSection
             }
             .padding(.top, Spacing.xs)
             .padding(.bottom, Spacing.scrollBottomInset)
         }
+        .scrollDismissesKeyboard(.immediately)
         .refreshable {
             await refreshHome()
         }
     }
 
-    /// Shortcut to the whole Library as one list, newest save first.
-    private var allArticlesShortcut: some View {
-        NavigationLink(destination: CategoryArticlesView(scope: .all, viewModel: homeViewModel)) {
-            HStack(spacing: 12) {
-                Image(systemName: "tray.full")
-                    .font(Typography.symbol(15, weight: .bold))
-                    .foregroundColor(themeManager.colors.accent800)
-                    .frame(width: 36, height: 36)
-                    .background(themeManager.colors.accent200)
-                    .clipShape(Circle())
-                    .accessibilityHidden(true)
+    // MARK: - Feed sources row
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("All articles")
-                        .font(Typography.ui(16, weight: .bold, relativeTo: .headline))
-                        .foregroundColor(themeManager.colors.text)
-                    Text("\(homeViewModel.articles.count) saved · newest first")
-                        .font(Typography.meta)
-                        .foregroundColor(themeManager.colors.muted)
+    /// Feeds with unread items first, then the rest, capped at `sourcesLimit`.
+    private var sourceFeeds: [RSSFeed] {
+        let counts = feedsViewModel.unreadCounts
+        let sorted = feedsViewModel.feeds.enumerated().sorted { lhs, rhs in
+            let left = counts[lhs.element.id] ?? 0
+            let right = counts[rhs.element.id] ?? 0
+            if (left > 0) != (right > 0) { return left > 0 }
+            return lhs.offset < rhs.offset
+        }
+        return sorted.prefix(sourcesLimit).map { $0.element }
+    }
+
+    private var feedSourcesRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 14) {
+                ForEach(sourceFeeds) { feed in
+                    NavigationLink(destination: RSSArticleListView(feed: feed, viewModel: feedsViewModel)) {
+                        FeedSourceBubble(
+                            title: feed.title,
+                            monogram: FeedSourceBubble.monogram(for: feed.title),
+                            unreadCount: feedsViewModel.unreadCounts[feed.id] ?? 0
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
                 }
 
-                Spacer(minLength: 0)
-
-                Image(systemName: "chevron.right")
-                    .font(Typography.symbol(13, weight: .bold))
-                    .foregroundColor(themeManager.colors.muted)
-                    .accessibilityHidden(true)
+                NavigationLink(destination: RSSAllFeedsListView(viewModel: feedsViewModel)) {
+                    FeedSourceBubble(title: "All feeds", monogram: "···", unreadCount: 0)
+                }
+                .buttonStyle(ScaleButtonStyle())
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(themeManager.colors.card)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.listThumbnail)
-                    .stroke(themeManager.colors.line, lineWidth: 1)
-            )
-            .contentShape(Rectangle())
+            .padding(.horizontal, Spacing.screenHorizontal)
         }
-        .buttonStyle(ScaleButtonStyle())
-        .padding(.horizontal, Spacing.screenHorizontal)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Shows every saved article, newest first")
     }
+
+    // MARK: - Your shelves
 
     private var sections: [LibraryCategorySection] {
         homeViewModel.sections(
@@ -235,40 +325,119 @@ struct HomeView: View {
         )
     }
 
-    private var librarySection: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Your library")
-                        .font(Typography.sheetTitle)
-                        .foregroundColor(themeManager.colors.text)
-                        .accessibilityAddTraits(.isHeader)
+    private var shelvesSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 6) {
+                Text("Your shelves")
+                    .font(Typography.cardTitle)
+                    .foregroundColor(themeManager.colors.text)
+                    .accessibilityAddTraits(.isHeader)
 
-                    Spacer()
+                Spacer()
 
-                    if categoryStore.isRefining {
-                        HStack(spacing: 6) {
-                            ProgressView()
-                                .controlSize(.mini)
-                                .tint(themeManager.colors.accent)
-                            Text("Sorting by topic…")
-                                .font(Typography.meta)
-                                .foregroundColor(themeManager.colors.muted)
-                        }
-                        .accessibilityElement(children: .combine)
+                shelvesOptionsMenu
+
+                if !homeViewModel.articles.isEmpty {
+                    NavigationLink(destination: CategoryArticlesView(scope: .all, viewModel: homeViewModel)) {
+                        Text("All articles")
+                            .font(Typography.ui(13.5, weight: .medium))
+                            .foregroundColor(themeManager.colors.accent)
                     }
+                    .buttonStyle(.plain)
+                    .minimumTapTarget()
+                    .accessibilityHint("Shows every saved article, newest first")
+                }
+            }
+            .padding(.horizontal, Spacing.screenHorizontal)
+
+            if categoryStore.isRefining {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(themeManager.colors.accent)
+                    Text("Sorting by topic…")
+                        .font(Typography.meta)
+                        .foregroundColor(themeManager.colors.muted)
                 }
                 .padding(.horizontal, Spacing.screenHorizontal)
-
-                filterBar
+                .accessibilityElement(children: .combine)
             }
 
-            libraryBody
+            let sections = self.sections
+            if sections.count > 1 {
+                categoryChips(sections)
+            }
+
+            libraryBody(sections)
+        }
+    }
+
+    private var readingStatusBinding: Binding<ReadingStatus?> {
+        Binding(
+            get: { viewModel.filters.readingStatus },
+            set: { viewModel.setReadingStatusFilter($0) }
+        )
+    }
+
+    /// Reading-status filter and list / cards toggle, kept off the main
+    /// header so the shelves match the design's single chip row.
+    private var shelvesOptionsMenu: some View {
+        let isFiltered = viewModel.filters.readingStatus != nil
+
+        return Menu {
+            Picker("Show", selection: readingStatusBinding) {
+                Text("All").tag(ReadingStatus?.none)
+                Text("Unread").tag(ReadingStatus?.some(.unread))
+                Text("Reading").tag(ReadingStatus?.some(.reading))
+                Text("Done").tag(ReadingStatus?.some(.completed))
+            }
+
+            Divider()
+
+            Button {
+                themeManager.toggleViewMode()
+            } label: {
+                Label(
+                    themeManager.viewMode == .list ? "Show as cards" : "Show as list",
+                    systemImage: themeManager.viewMode == .list ? "square.grid.2x2" : "list.bullet"
+                )
+            }
+        } label: {
+            Image(systemName: isFiltered
+                  ? "line.3.horizontal.decrease.circle.fill"
+                  : "line.3.horizontal.decrease.circle")
+                .font(Typography.symbol(19))
+                .foregroundColor(isFiltered ? themeManager.colors.accent : themeManager.colors.muted)
+                .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
+        }
+        .accessibilityLabel(isFiltered ? "Shelf options, filtered" : "Shelf options")
+    }
+
+    private func categoryChips(_ sections: [LibraryCategorySection]) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                FilterChip(
+                    title: "All",
+                    dotColor: nil,
+                    isSelected: selectedCategory == nil,
+                    action: { withAnimation(.easeOut(duration: 0.2)) { selectedCategory = nil } }
+                )
+
+                ForEach(sections) { section in
+                    FilterChip(
+                        title: section.category.displayName,
+                        dotColor: nil,
+                        isSelected: selectedCategory == section.category,
+                        action: { withAnimation(.easeOut(duration: 0.2)) { selectedCategory = section.category } }
+                    )
+                }
+            }
+            .padding(.horizontal, Spacing.screenHorizontal)
         }
     }
 
     @ViewBuilder
-    private var libraryBody: some View {
+    private func libraryBody(_ sections: [LibraryCategorySection]) -> some View {
         if homeViewModel.isLoading && homeViewModel.articles.isEmpty {
             VStack(spacing: Spacing.sm) {
                 ForEach(0..<3, id: \.self) { _ in
@@ -292,23 +461,24 @@ struct HomeView: View {
                 actionTitle: "Add article",
                 action: { showAddArticle = true }
             )
+        } else if sections.isEmpty {
+            libraryMessage(
+                icon: viewModel.filters.readingStatus == nil ? "list.number" : "line.3.horizontal.decrease.circle",
+                title: viewModel.filters.readingStatus == nil ? "Everything is up next" : "No articles here",
+                message: viewModel.filters.readingStatus == nil
+                    ? "All your saved articles are in the Up next queue."
+                    : "No articles outside Up next match this filter.",
+                actionTitle: viewModel.filters.readingStatus == nil ? nil : "Show all",
+                action: { viewModel.setReadingStatusFilter(nil) }
+            )
         } else {
-            let sections = self.sections
-            if sections.isEmpty {
-                libraryMessage(
-                    icon: viewModel.filters.readingStatus == nil ? "list.number" : "line.3.horizontal.decrease.circle",
-                    title: viewModel.filters.readingStatus == nil ? "Everything is up next" : "No articles here",
-                    message: viewModel.filters.readingStatus == nil
-                        ? "All your saved articles are in the Up next queue."
-                        : "No articles outside Up next match this filter.",
-                    actionTitle: viewModel.filters.readingStatus == nil ? nil : "Show all",
-                    action: { viewModel.setReadingStatusFilter(nil) }
-                )
-            } else {
-                LazyVStack(alignment: .leading, spacing: 28) {
-                    ForEach(sections) { section in
-                        CategoryShelfView(section: section, viewModel: homeViewModel)
-                    }
+            // A chip whose category has emptied out (filter, queue) falls back to All.
+            let picked = sections.filter { $0.category == selectedCategory }
+            let visible = picked.isEmpty ? sections : picked
+
+            LazyVStack(alignment: .leading, spacing: 28) {
+                ForEach(visible) { section in
+                    CategoryShelfView(section: section, viewModel: homeViewModel)
                 }
             }
         }
@@ -324,11 +494,11 @@ struct HomeView: View {
         VStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(themeManager.colors.sink)
+                    .fill(themeManager.colors.surface)
                     .frame(width: 80, height: 80)
                 Image(systemName: icon)
-                    .font(.system(size: 32))
-                    .foregroundColor(themeManager.colors.text.opacity(0.35))
+                    .font(Typography.symbol(30))
+                    .foregroundColor(themeManager.colors.muted)
             }
             .accessibilityHidden(true)
 
@@ -344,13 +514,14 @@ struct HomeView: View {
             if let actionTitle {
                 Button(action: action) {
                     Text(actionTitle)
-                        .font(Typography.ui(15, weight: .bold))
+                        .font(Typography.ui(15, weight: .semibold))
                         .foregroundColor(themeManager.colors.page)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
+                        .frame(minHeight: 44)
                         .background(themeManager.colors.accent)
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, Spacing.xl)
@@ -358,11 +529,11 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Filter Bar
+    // MARK: - Filter Bar (search results)
 
     private var filterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 7) {
+            HStack(spacing: 8) {
                 FilterChip(
                     title: "All",
                     dotColor: nil,
@@ -372,14 +543,14 @@ struct HomeView: View {
 
                 FilterChip(
                     title: "Unread",
-                    dotColor: themeManager.colors.accent2,
+                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == .unread,
                     action: { viewModel.setReadingStatusFilter(.unread) }
                 )
 
                 FilterChip(
                     title: "Reading",
-                    dotColor: themeManager.colors.accent,
+                    dotColor: nil,
                     isSelected: viewModel.filters.readingStatus == .reading,
                     action: { viewModel.setReadingStatusFilter(.reading) }
                 )
@@ -396,8 +567,68 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Feed Source Bubble
+
+/// One feed in the home sources row: a round monogram with an accent dot
+/// when the feed has unread items, and its name underneath.
+struct FeedSourceBubble: View {
+    let title: String
+    let monogram: String
+    let unreadCount: Int
+
+    @EnvironmentObject var themeManager: ThemeManager
+    @ScaledMetric(relativeTo: .body) private var size: CGFloat = 52
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(monogram)
+                .font(Typography.ui(13, weight: .bold))
+                .foregroundColor(themeManager.colors.text)
+                .frame(width: size, height: size)
+                .background(Circle().fill(themeManager.colors.page))
+                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+                .overlay(alignment: .topTrailing) {
+                    if unreadCount > 0 {
+                        Circle()
+                            .fill(themeManager.colors.accent)
+                            .frame(width: 11, height: 11)
+                            .overlay(Circle().stroke(themeManager.colors.page, lineWidth: 2))
+                            .offset(x: -1, y: 1)
+                    }
+                }
+
+            Text(title)
+                .font(Typography.ui(11.5, relativeTo: .caption2))
+                .foregroundColor(themeManager.colors.accent2)
+                .lineLimit(1)
+                .frame(width: size + 12)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(unreadCount > 0 ? "\(title), \(unreadCount) unread" : title)
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// "Il Post" → "IP", "The Verge" → "TV", "Nautilus" → "Na".
+    static func monogram(for title: String) -> String {
+        let words = title
+            .split(whereSeparator: { $0 == " " || $0 == "-" || $0 == "|" })
+            .map(String.init)
+            .filter { !$0.isEmpty }
+
+        if words.count >= 2 {
+            return (String(words[0].prefix(1)) + String(words[1].prefix(1))).uppercased()
+        }
+        if let first = words.first {
+            return String(first.prefix(2)).capitalized
+        }
+        return "··"
+    }
+}
+
 // MARK: - Filter Chip
 
+/// Editorial Teal chip: accent fill when selected, `surface` fill otherwise.
 struct FilterChip: View {
     let title: String
     let dotColor: Color?
@@ -414,17 +645,13 @@ struct FilterChip: View {
                         .frame(width: 6, height: 6)
                 }
                 Text(title)
-                    .font(Typography.ui(13.5, weight: .semibold, relativeTo: .footnote))
+                    .font(Typography.ui(13.5, weight: isSelected ? .semibold : .medium, relativeTo: .footnote))
             }
             .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSelected ? themeManager.colors.text : Color.clear)
+            .padding(.horizontal, 16)
+            .frame(minHeight: 36)
+            .background(isSelected ? themeManager.colors.accent : themeManager.colors.surface)
             .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
         .minimumTapTarget()

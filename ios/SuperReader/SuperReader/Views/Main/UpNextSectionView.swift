@@ -1,20 +1,21 @@
 import SwiftUI
 
-// MARK: - Up Next Section (home · first thing on screen)
+// MARK: - Up Next Section (home)
 //
-// The reading queue opens the home: the next article as a hero card, then
-// the following ones as a short numbered list. Reordering and the full queue
-// live in `QueueView` ("Reorder" / "See all").
+// Editorial Teal (design canvas · "01 · Library (Home)"): the next article in
+// the queue as an image-led hero — progress badge, "remove" bookmark, progress
+// bar, title, excerpt and byline — followed by the next few articles as
+// numbered rows. "See all" opens `QueueView` (full queue, reordering).
 
 struct UpNextSectionView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject private var store = ReadingQueueStore.shared
 
-    /// Rows shown under the hero before "See all".
-    private let followingLimit = 4
+    /// Rows shown under the hero; the rest live in `QueueView`.
+    private let followingLimit = 3
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             header
 
             if store.isLoading && store.items.isEmpty {
@@ -36,33 +37,22 @@ struct UpNextSectionView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Up next")
-                    .font(Typography.sheetTitle)
-                    .foregroundColor(themeManager.colors.text)
-                    .accessibilityAddTraits(.isHeader)
-
-                if !store.items.isEmpty {
-                    Text(countLabel)
-                        .font(Typography.meta)
-                        .foregroundColor(themeManager.colors.muted)
-                }
-            }
+            Text("Up next")
+                .font(Typography.cardTitle)
+                .foregroundColor(themeManager.colors.text)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
             if !store.items.isEmpty {
                 NavigationLink(destination: QueueView()) {
-                    Text(store.items.count > 1 ? "Reorder" : "Open")
-                        .font(Typography.ui(13.5, weight: .semibold))
-                        .foregroundColor(themeManager.colors.text)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .overlay(Capsule().stroke(themeManager.colors.line, lineWidth: 1))
+                    Text("See all")
+                        .font(Typography.ui(13.5, weight: .medium))
+                        .foregroundColor(themeManager.colors.accent)
                 }
                 .buttonStyle(.plain)
                 .minimumTapTarget()
-                .accessibilityLabel("Open Up next queue")
+                .accessibilityLabel("See all Up next, \(countLabel)")
             }
         }
     }
@@ -71,7 +61,7 @@ struct UpNextSectionView: View {
         let n = store.items.count
         var label = "\(n) \(n == 1 ? "article" : "articles")"
         let minutes = store.totalMinutes
-        if minutes > 0 { label += " · \(minutes) min" }
+        if minutes > 0 { label += ", \(minutes) minutes" }
         return label
     }
 
@@ -87,6 +77,22 @@ struct UpNextSectionView: View {
             }
             .buttonStyle(ScaleButtonStyle())
             .contextMenu { menuItems(for: first, article: article) }
+            // Outside the link's label, so the tap reaches the button.
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    Task { await store.remove(first) }
+                } label: {
+                    Image(systemName: "bookmark.fill")
+                        .font(Typography.symbol(14, weight: .semibold))
+                        .foregroundColor(themeManager.colors.accent)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color.white))
+                }
+                .buttonStyle(.plain)
+                .minimumTapTarget()
+                .padding(6)
+                .accessibilityLabel("Remove from Up next")
+            }
         }
 
         let following = Array(items.dropFirst().prefix(followingLimit))
@@ -104,30 +110,11 @@ struct UpNextSectionView: View {
                             Rectangle()
                                 .fill(themeManager.colors.line)
                                 .frame(height: 1)
-                                .padding(.leading, 26 + 14)
                         }
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .background(themeManager.colors.card)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
-        }
-
-        let hidden = items.count - 1 - following.count
-        if hidden > 0 {
-            NavigationLink(destination: QueueView()) {
-                HStack(spacing: 6) {
-                    Text("See all · \(hidden) more in your queue")
-                        .font(Typography.ui(13.5, weight: .semibold))
-                    Image(systemName: "chevron.right")
-                        .font(Typography.symbol(11, weight: .bold))
-                }
-                .foregroundColor(themeManager.colors.accent800)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .minimumTapTarget()
+            .padding(.top, 6)
         }
     }
 
@@ -150,19 +137,16 @@ struct UpNextSectionView: View {
 
     private var emptyCard: some View {
         HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(themeManager.colors.accent2_200)
-                    .frame(width: 44, height: 44)
-                Image(systemName: "list.number")
-                    .font(Typography.symbol(17, weight: .bold))
-                    .foregroundColor(themeManager.colors.accent2)
-            }
-            .accessibilityHidden(true)
+            Image(systemName: "bookmark")
+                .font(Typography.symbol(17, weight: .semibold))
+                .foregroundColor(themeManager.colors.accent)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(themeManager.colors.accent200))
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Nothing up next")
-                    .font(Typography.ui(16, weight: .bold))
+                    .font(Typography.ui(16, weight: .semibold))
                     .foregroundColor(themeManager.colors.text)
 
                 Text("Long-press an article below or in Feeds and choose “Add to Up next” to build your reading queue.")
@@ -174,8 +158,8 @@ struct UpNextSectionView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(themeManager.colors.sink)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.listThumbnail))
+        .background(themeManager.colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
         .accessibilityElement(children: .combine)
     }
 }
@@ -186,107 +170,136 @@ private struct UpNextHeroCard: View {
     let article: Article
 
     @EnvironmentObject var themeManager: ThemeManager
+    @ScaledMetric(relativeTo: .body) private var imageHeight: CGFloat = 176
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if article.imageUrl != nil {
-                ZStack(alignment: .topLeading) {
-                    themeManager.colors.accent200
-                    AsyncImageView(url: article.imageUrl, cornerRadius: 0)
-                        .aspectRatio(contentMode: .fill)
-                    nextPill
-                        .padding(12)
-                }
-                .frame(height: 170)
-                .clipped()
-            }
+        VStack(alignment: .leading, spacing: 10) {
+            imageBlock
 
-            progressTrack
+            Text(article.title)
+                .font(Typography.display(21, weight: .bold, relativeTo: .title3))
+                .foregroundColor(themeManager.colors.text)
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
 
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 6) {
-                    if article.imageUrl == nil {
-                        nextPill
-                    }
-                    Text(meta)
-                        .font(Typography.ui(12, weight: .bold))
-                        .foregroundColor(themeManager.colors.muted)
-                        .lineLimit(1)
-                }
-
-                Text(article.title)
-                    .font(Typography.cardTitle)
-                    .foregroundColor(themeManager.colors.text)
-                    .lineLimit(3)
+            if let excerpt = article.excerpt, !excerpt.isEmpty {
+                Text(excerpt)
+                    .font(Typography.ui(14, relativeTo: .subheadline))
+                    .lineSpacing(2)
+                    .foregroundColor(themeManager.colors.muted)
+                    .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let excerpt = article.excerpt, !excerpt.isEmpty {
-                    Text(excerpt)
-                        .font(Typography.bodyExcerpt)
-                        .foregroundColor(themeManager.colors.muted)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "book.fill")
-                        .font(Typography.symbol(12, weight: .bold))
-                    Text(article.readingProgress > 0 ? "Continue reading" : "Start reading")
-                        .font(Typography.ui(13.5, weight: .bold))
-                }
-                .foregroundColor(themeManager.colors.page)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(themeManager.colors.accent)
-                .clipShape(Capsule())
-                .padding(.top, 4)
             }
-            .padding(18)
+
+            byline
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(themeManager.colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
-        .shadow(color: AppShadows.card.color, radius: AppShadows.card.radius, x: AppShadows.card.x, y: AppShadows.card.y)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint("Opens the next article in your queue")
     }
 
-    private var nextPill: some View {
-        Text("1 · NEXT")
-            .font(Typography.ui(11, weight: .heavy))
-            .tracking(1.1)
-            .foregroundColor(themeManager.colors.page)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(themeManager.colors.accent)
-            .clipShape(Capsule())
+    // MARK: Image
+
+    private var imageBlock: some View {
+        ZStack(alignment: .topLeading) {
+            themeManager.colors.accent200
+
+            if article.imageUrl != nil {
+                AsyncImageView(url: article.imageUrl, cornerRadius: 0)
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(systemName: "photo")
+                    .font(Typography.symbol(32, weight: .light))
+                    .foregroundColor(themeManager.colors.accent)
+                    .opacity(0.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityHidden(true)
+            }
+
+            Text(badge)
+                .font(Typography.ui(11.5, weight: .semibold, relativeTo: .caption2))
+                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color(hex: "#16191A").opacity(0.62)))
+                .padding(12)
+        }
+        .frame(height: imageHeight)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .bottom) { progressTrack }
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.card))
+    }
+
+    private var progressFraction: CGFloat {
+        min(max(CGFloat(article.readingProgress) / 100, 0), 1)
     }
 
     private var progressTrack: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                Rectangle().fill(themeManager.colors.line)
+                Rectangle().fill(Color.white.opacity(0.55))
                 Rectangle()
                     .fill(themeManager.colors.accent)
-                    .frame(width: geometry.size.width * min(max(CGFloat(article.readingProgress) / 100, 0), 1))
+                    .frame(width: geometry.size.width * progressFraction)
             }
         }
-        .frame(height: 3)
+        .frame(height: 4)
+        .accessibilityHidden(true)
     }
 
-    private var meta: String {
-        var parts: [String] = []
-        if let domain = article.domain, !domain.isEmpty {
-            parts.append(domain.replacingOccurrences(of: "www.", with: "").uppercased())
+    private var badge: String {
+        article.readingProgress > 0 ? "Reading · \(article.readingProgress)%" : "Up next"
+    }
+
+    // MARK: Byline
+
+    private var byline: some View {
+        HStack(spacing: 4) {
+            if let author = article.author?.trimmingCharacters(in: .whitespaces), !author.isEmpty {
+                Text("By")
+                    .foregroundColor(themeManager.colors.muted)
+                Text(author)
+                    .fontWeight(.medium)
+                    .foregroundColor(themeManager.colors.text)
+                    .lineLimit(1)
+            }
+
+            if let source {
+                Text(article.author?.isEmpty == false ? "for" : "From")
+                    .foregroundColor(themeManager.colors.muted)
+                    .padding(.leading, article.author?.isEmpty == false ? 4 : 0)
+                Text(source)
+                    .fontWeight(.medium)
+                    .foregroundColor(themeManager.colors.text)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            if let timeLabel {
+                Text(timeLabel)
+                    .foregroundColor(themeManager.colors.muted)
+                    .layoutPriority(1)
+            }
         }
-        if let minutes = article.estimatedReadTime, minutes > 0 {
-            parts.append("\(minutes) MIN")
+        .font(Typography.ui(13, relativeTo: .footnote))
+    }
+
+    private var source: String? {
+        guard let domain = article.domain, !domain.isEmpty else { return nil }
+        return domain.replacingOccurrences(of: "www.", with: "")
+    }
+
+    /// "7 min left" while reading, the full estimate otherwise.
+    private var timeLabel: String? {
+        guard let minutes = article.estimatedReadTime, minutes > 0 else { return nil }
+        guard article.readingProgress > 0, article.readingStatus != .completed else {
+            return "\(minutes) min"
         }
-        if article.readingProgress > 0 && article.readingStatus != .completed {
-            parts.append("\(article.readingProgress)%")
-        }
-        return parts.joined(separator: " · ")
+        let left = Int((Double(minutes) * Double(100 - article.readingProgress) / 100).rounded(.up))
+        return "\(max(left, 1)) min left"
     }
 }
 
@@ -299,46 +312,67 @@ private struct UpNextCompactRow: View {
     @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Text("\(position)")
-                .font(Typography.ui(12.5, weight: .bold))
+                .font(Typography.ui(13, weight: .bold))
                 .foregroundColor(themeManager.colors.muted)
-                .frame(width: 26, height: 26)
-                .overlay(Circle().stroke(themeManager.colors.line, lineWidth: 1))
+                .frame(width: 18)
+
+            thumbnail
+                .frame(width: 56, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.smallThumbnail))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(article.title)
-                    .font(Typography.ui(15, weight: .bold))
+                    .font(Typography.ui(14.5, weight: .semibold, relativeTo: .subheadline))
                     .foregroundColor(themeManager.colors.text)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
-                Text(meta)
-                    .font(Typography.meta)
-                    .foregroundColor(themeManager.colors.muted)
+                metaLine
+                    .font(Typography.ui(12, relativeTo: .caption))
                     .lineLimit(1)
             }
 
-            Spacer(minLength: 8)
-
-            Image(systemName: "chevron.right")
-                .font(Typography.symbol(12, weight: .bold))
-                .foregroundColor(themeManager.colors.muted.opacity(0.6))
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Number \(position). \(article.title)")
     }
 
-    private var meta: String {
-        var parts: [String] = []
-        if let domain = article.domain, !domain.isEmpty {
-            parts.append(domain.replacingOccurrences(of: "www.", with: ""))
+    @ViewBuilder
+    private var thumbnail: some View {
+        ZStack {
+            themeManager.colors.surface
+            if article.imageUrl != nil {
+                AsyncImageView(url: article.imageUrl, cornerRadius: 0)
+                    .aspectRatio(contentMode: .fill)
+            }
         }
-        if let minutes = article.estimatedReadTime, minutes > 0 {
-            parts.append("\(minutes) min")
+        .accessibilityHidden(true)
+    }
+
+    /// "source · 9 min", with the time in the accent color.
+    private var metaLine: some View {
+        let domain = (article.domain ?? "").replacingOccurrences(of: "www.", with: "")
+        let minutes = article.estimatedReadTime ?? 0
+
+        return HStack(spacing: 0) {
+            if !domain.isEmpty {
+                Text(domain)
+                    .foregroundColor(themeManager.colors.muted)
+            }
+            if !domain.isEmpty && minutes > 0 {
+                Text(" · ")
+                    .foregroundColor(themeManager.colors.muted)
+            }
+            if minutes > 0 {
+                Text("\(minutes) min")
+                    .fontWeight(.semibold)
+                    .foregroundColor(themeManager.colors.accent)
+            }
         }
-        return parts.joined(separator: " · ")
     }
 }
