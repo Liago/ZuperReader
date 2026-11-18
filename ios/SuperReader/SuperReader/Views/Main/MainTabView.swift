@@ -10,6 +10,8 @@ struct MainTabView: View {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var authManager = AuthManager.shared
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @State private var selectedTab = 0
     @State private var unreadSharesCount = 0
     @State private var pendingRequestsCount = 0
@@ -19,6 +21,27 @@ struct MainTabView: View {
     }
 
     var body: some View {
+        Group {
+            if horizontalSizeClass == .regular {
+                // iPad (and large split-view widths): sidebar / icon rail.
+                IPadRootView(peopleBadgeCount: peopleBadgeCount)
+            } else {
+                tabs
+            }
+        }
+        .tint(themeManager.colors.accent)
+        .environmentObject(themeManager)
+        .observeSystemColorScheme()
+        .task {
+            await loadBadgeCounts()
+        }
+        .onAppear { updateTabBarAppearance() }
+        .onChange(of: themeManager.resolvedTheme) { _, _ in updateTabBarAppearance() }
+    }
+
+    // MARK: - iPhone tab bar
+
+    private var tabs: some View {
         TabView(selection: $selectedTab) {
             // Library
             HomeView()
@@ -49,14 +72,6 @@ struct MainTabView: View {
                 }
                 .tag(3)
         }
-        .tint(themeManager.colors.accent)
-        .environmentObject(themeManager)
-        .observeSystemColorScheme()
-        .task {
-            await loadBadgeCounts()
-        }
-        .onAppear { updateTabBarAppearance() }
-        .onChange(of: themeManager.resolvedTheme) { _, _ in updateTabBarAppearance() }
     }
 
     // Organic design system tab bar chrome (rail fill, 1pt top hairline).
