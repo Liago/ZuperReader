@@ -1,77 +1,64 @@
 import SwiftUI
 
-// MARK: - Reading Preferences Sheet (05)
+// MARK: - Reading Preferences Sheet ("Aa")
 
-/// Half-height sheet over the dimmed article — every control applies
-/// immediately, there is no Done-to-commit step (docs/revamp-ios/README.md ·
-/// "05 Reading preferences sheet").
+/// Editorial Teal (design canvas · "14 · Preferenze lettura"): a sheet over
+/// the dimmed article — typeface cards, text size, line spacing and reader
+/// theme. Every control applies immediately; "Done" only closes the sheet.
 struct ReadingPreferencesView: View {
     @Binding var preferences: ReadingPreferences
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
                 .fill(themeManager.colors.line)
-                .frame(width: 42, height: 5)
+                .frame(width: 36, height: 5)
                 .padding(.top, 10)
-                .padding(.bottom, 4)
+                .accessibilityHidden(true)
+
+            HStack {
+                Text("Reading preferences")
+                    .font(Typography.ui(17, weight: .bold, relativeTo: .headline))
+                    .foregroundColor(themeManager.colors.text)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(Typography.ui(15, weight: .semibold))
+                    .foregroundColor(themeManager.colors.accent)
+                    .buttonStyle(.plain)
+                    .minimumTapTarget()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    sizeControl
+                VStack(alignment: .leading, spacing: 22) {
                     typefaceControl
+                    sizeControl
                     spacingControl
                     themeControl
                 }
-                .padding(.horizontal, 22)
-                .padding(.top, 12)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
                 .padding(.bottom, 30)
             }
         }
-        .background(themeManager.colors.card)
-        .cornerRadius(CornerRadius.sheet, corners: [.topLeft, .topRight])
+        .background(themeManager.colors.page)
     }
 
-    // MARK: Size
-
-    private var sizeControl: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Size")
-                    .font(Typography.sectionLabel)
-                    .textCase(.uppercase)
-                    .foregroundColor(themeManager.colors.muted)
-                Spacer()
-                Text(preferences.fontSizeFormatted)
-                    .font(Typography.ui(13, weight: .bold))
-                    .foregroundColor(themeManager.colors.accent700)
-            }
-
-            PillSlider(
-                value: Binding(
-                    get: { preferences.fontSize },
-                    set: { preferences.fontSize = $0 }
-                ),
-                range: 14...28,
-                step: 0.5,
-                accessibilityLabel: "Text size",
-                trackColor: themeManager.colors.line,
-                fillColor: themeManager.colors.accent,
-                knobFillColor: themeManager.colors.accent,
-                knobBorderColor: themeManager.colors.card
-            )
-        }
+    private func sectionLabel(_ title: String) -> some View {
+        Text(title)
+            .font(Typography.ui(13, weight: .semibold, relativeTo: .footnote))
+            .foregroundColor(themeManager.colors.accent2)
     }
 
     // MARK: Typeface
 
     private var typefaceControl: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Typeface")
-                .font(Typography.sectionLabel)
-                .textCase(.uppercase)
-                .foregroundColor(themeManager.colors.muted)
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("Typeface")
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
@@ -89,22 +76,24 @@ struct ReadingPreferencesView: View {
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { preferences.fontFamily = family }
         }) {
-            VStack(spacing: 8) {
-                Text("Aa")
-                    .font(family.font(size: 19))
+            VStack(spacing: 4) {
+                Text("Ag")
+                    .font(family.font(size: 22))
                 Text(family.displayName)
-                    .font(Typography.ui(11.5, weight: .heavy))
+                    .font(Typography.ui(12.5, weight: isSelected ? .semibold : .medium, relativeTo: .caption))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundColor(isSelected ? themeManager.colors.page : themeManager.colors.text)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(isSelected ? themeManager.colors.text : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            .foregroundColor(themeManager.colors.text)
+            .frame(maxWidth: .infinity, minHeight: 74)
+            .background(isSelected ? themeManager.colors.accent200 : themeManager.colors.page)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(isSelected ? Color.clear : themeManager.colors.line, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(
+                        isSelected ? themeManager.colors.accent : themeManager.colors.line,
+                        lineWidth: isSelected ? 2 : 1
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -112,22 +101,59 @@ struct ReadingPreferencesView: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
+    // MARK: Size
+
+    private var sizeControl: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                sectionLabel("Text size")
+                Spacer()
+                Text(preferences.fontSizeFormatted)
+                    .font(Typography.ui(13, weight: .semibold))
+                    .foregroundColor(themeManager.colors.accent)
+            }
+
+            HStack(spacing: 12) {
+                Text("A")
+                    .font(Typography.ui(13, weight: .semibold))
+                    .foregroundColor(themeManager.colors.text)
+                    .accessibilityHidden(true)
+
+                PillSlider(
+                    value: Binding(
+                        get: { preferences.fontSize },
+                        set: { preferences.fontSize = $0 }
+                    ),
+                    range: 14...28,
+                    step: 0.5,
+                    accessibilityLabel: "Text size",
+                    trackColor: themeManager.colors.line,
+                    fillColor: themeManager.colors.accent,
+                    knobFillColor: Color.white,
+                    knobBorderColor: themeManager.colors.accent
+                )
+
+                Text("A")
+                    .font(Typography.ui(22, weight: .semibold, relativeTo: .title2))
+                    .foregroundColor(themeManager.colors.text)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
     // MARK: Spacing
 
     private var spacingControl: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Spacing")
-                .font(Typography.sectionLabel)
-                .textCase(.uppercase)
-                .foregroundColor(themeManager.colors.muted)
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("Line spacing")
 
-            HStack(spacing: 4) {
+            HStack(spacing: 2) {
                 ForEach(Typography.LineHeight.allCases, id: \.self) { height in
                     spacingSegment(height)
                 }
             }
-            .padding(4)
-            .background(themeManager.colors.sink)
+            .padding(3)
+            .background(themeManager.colors.surface)
             .clipShape(Capsule())
         }
     }
@@ -138,14 +164,12 @@ struct ReadingPreferencesView: View {
             withAnimation(.easeInOut(duration: 0.15)) { preferences.lineHeight = height }
         }) {
             Text(height.displayName)
-                .font(Typography.ui(13.5, weight: .semibold))
+                .font(Typography.ui(13.5, weight: isSelected ? .semibold : .regular))
                 .foregroundColor(isSelected ? themeManager.colors.text : themeManager.colors.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .frame(minHeight: Spacing.minTapTarget - 8)
-                .background(isSelected ? themeManager.colors.card : Color.clear)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(isSelected ? themeManager.colors.page : Color.clear)
                 .clipShape(Capsule())
-                .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+                .shadow(color: isSelected ? Color(hex: "#16191A").opacity(0.12) : .clear, radius: 1, x: 0, y: 1)
         }
         .buttonStyle(.plain)
         .contentShape(Capsule())
@@ -156,11 +180,8 @@ struct ReadingPreferencesView: View {
     // MARK: Theme
 
     private var themeControl: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Theme")
-                .font(Typography.sectionLabel)
-                .textCase(.uppercase)
-                .foregroundColor(themeManager.colors.muted)
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("Theme")
 
             HStack(spacing: 10) {
                 themeSwatch(.cream)
@@ -176,25 +197,19 @@ struct ReadingPreferencesView: View {
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { preferences.colorTheme = theme }
         }) {
-            ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(swatchColors.page)
-                    .frame(height: 52)
-                Text(theme.displayName)
-                    .font(Typography.ui(11, weight: .bold))
-                    .foregroundColor(swatchColors.text)
-                    .padding(8)
-            }
-            .frame(maxWidth: .infinity)
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(themeManager.colors.line, lineWidth: 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .inset(by: 2)
-                    .stroke(themeManager.colors.accent, lineWidth: isSelected ? 2 : 0)
-            )
+            Text(theme.displayName)
+                .font(Typography.ui(14, weight: isSelected ? .semibold : .medium))
+                .foregroundColor(swatchColors.text)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(swatchColors.page)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(
+                            isSelected ? themeManager.colors.accent : themeManager.colors.line,
+                            lineWidth: isSelected ? 2 : 1
+                        )
+                )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(theme.displayName) theme")
