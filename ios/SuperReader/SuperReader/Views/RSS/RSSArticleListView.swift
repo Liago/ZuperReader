@@ -114,14 +114,25 @@ struct RSSArticleListView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 0) {
                 topBar
+                    .zIndex(1)
 
                 if isHeaderCollapsed {
                     compactHeader
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(.opacity.combined(with: .offset(y: -8)))
                 }
             }
-            .background(themeManager.colors.page)
-            .clipped()
+            // The page color must also cover the status bar strip (time,
+            // Wi-Fi, battery), otherwise the rows show through it while
+            // scrolling (#136). No `.clipped()` here: it would cut the
+            // background back to the bar's own frame.
+            .background(themeManager.colors.page, ignoresSafeAreaEdges: .top)
+            .overlay(alignment: .bottom) {
+                if isHeaderCollapsed {
+                    Rectangle()
+                        .fill(themeManager.colors.line)
+                        .frame(height: 1)
+                }
+            }
         }
         .navigationBarHidden(true)
         .rssLibrarySaveBanner(bottomPadding: 28)
