@@ -124,13 +124,14 @@ export default function PublicLinkButton({
 								aria-label="Toggle public link"
 								onClick={handleToggle}
 								disabled={busy}
-								className={`relative mt-0.5 h-6 w-11 flex-none rounded-full transition-colors disabled:opacity-60 ${
+								className={`relative mt-0.5 block h-6 w-11 flex-none shrink-0 cursor-pointer rounded-full p-0 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
 									isPublic ? 'bg-accent' : 'bg-app-line'
 								}`}
 							>
 								<span
-									className={`absolute top-0.5 h-5 w-5 rounded-full bg-app-card shadow transition-transform ${
-										isPublic ? 'translate-x-[22px]' : 'translate-x-0.5'
+									aria-hidden="true"
+									className={`pointer-events-none absolute left-0.5 top-0.5 block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ease-out ${
+										isPublic ? 'translate-x-5' : 'translate-x-0'
 									}`}
 								/>
 							</button>
