@@ -84,22 +84,7 @@ struct VideoPreviewView: View {
     }
     
     private func getYouTubeId(from url: String) -> String? {
-        let pattern = "^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|&v=)([^#&?]*).*"
-        
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: .caseInsensitive)
-            let nsString = url as NSString
-            let range = NSRange(location: 0, length: nsString.length)
-            
-            if let match = regex.firstMatch(in: url, options: [], range: range), match.numberOfRanges > 2 {
-                let id = nsString.substring(with: match.range(at: 2))
-                return id.count == 11 ? id : nil
-            }
-        } catch {
-            print("Regex error: \(error)")
-        }
-        
-        return nil
+        VideoEmbed.youTubeId(from: url)
     }
 }
 

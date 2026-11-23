@@ -279,7 +279,7 @@ struct HTMLContentView: UIViewRepresentable {
         var imageUrls: [String] = []
 
         // Simple regex pattern to find img src attributes
-        let pattern = "<img[^>]+src=\"([^\"]+)\""
+        let pattern = "<img\\b[^>]*?\\ssrc\\s*=\\s*[\"']([^\"']+)[\"']"
         if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
             let nsString = html as NSString
             let matches = regex.matches(in: html, options: [], range: NSRange(location: 0, length: nsString.length))

@@ -99,6 +99,22 @@ struct ArticleReaderView: View {
         return items
     }
 
+    /// Gallery position of a tapped inline image. Matches by URL (the web view reports
+    /// the resolved `img.src`), falling back to the positional index when no match.
+    private func galleryIndex(forTapped url: String, fallback: Int) -> Int {
+        let items = mediaItems
+        let key = { (raw: String) in GalleryImageLoader.normalizedURLs(for: raw).first?.absoluteString ?? raw }
+        let tappedKey = key(url)
+        // Prefer inline images (skip the hero) so a hero duplicated in the body
+        // opens at the tapped position.
+        let start = article?.imageUrl != nil ? 1 : 0
+        if let match = items.indices.dropFirst(start).first(where: { key(items[$0].url) == tappedKey })
+            ?? items.indices.first(where: { key(items[$0].url) == tappedKey }) {
+            return match
+        }
+        return items.isEmpty ? 0 : min(max(fallback, 0), items.count - 1)
+    }
+
     var body: some View {
         ZStack {
             if isLoading {
@@ -703,7 +719,7 @@ struct ArticleReaderView: View {
                                 // Add local index within this block
                                 globalIndex += localIndex
 
-                                mediaGalleryInitialIndex = globalIndex
+                                mediaGalleryInitialIndex = galleryIndex(forTapped: url, fallback: globalIndex)
                                 showMediaGallery = true
                             },
                             onBodyTap: exitFocusModeIfNeeded
@@ -752,7 +768,7 @@ struct ArticleReaderView: View {
                 // Open media gallery with the tapped image
                 // Add 1 to index if hero image exists (it's at index 0)
                 let adjustedIndex = article?.imageUrl != nil ? index + 1 : index
-                mediaGalleryInitialIndex = adjustedIndex
+                mediaGalleryInitialIndex = galleryIndex(forTapped: url, fallback: adjustedIndex)
                 showMediaGallery = true
             },
             onBodyTap: exitFocusModeIfNeeded
